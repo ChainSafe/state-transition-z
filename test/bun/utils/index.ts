@@ -1,4 +1,4 @@
-import {resolve} from "node:path";
+import { resolve } from "node:path";
 export const BINDINGS_NAME = "libstate_transition_utils";
 
 export const ROOT_DIR = resolve(__dirname, "../../..");
@@ -6,7 +6,9 @@ export const PREBUILD_DIR = resolve(ROOT_DIR, "zig-out/lib");
 
 class NotBunError extends Error {
 	constructor(missingItem: string) {
-		super(`blst-bun bindings only run in a Bun context. No ${missingItem} found.`);
+		super(
+			`blst-bun bindings only run in a Bun context. No ${missingItem} found.`,
+		);
 	}
 }
 

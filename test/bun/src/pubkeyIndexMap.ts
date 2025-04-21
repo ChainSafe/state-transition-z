@@ -1,4 +1,4 @@
-import {binding} from "./binding.js";
+import { binding } from "./binding.js";
 
 export class PubkeyIndexMap {
 	private native_ptr: number;
@@ -19,7 +19,12 @@ export class PubkeyIndexMap {
 	}
 
 	set(key: Uint8Array, value: number): void {
-		const res = binding.pubkeyIndexMapSet(this.native_ptr, key, key.length, value);
+		const res = binding.pubkeyIndexMapSet(
+			this.native_ptr,
+			key,
+			key.length,
+			value,
+		);
 		if (res !== 0) {
 			throw new Error("Failed to set value in PubkeyIndexMap");
 		}

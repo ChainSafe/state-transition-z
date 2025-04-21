@@ -1,12 +1,12 @@
-import {dlopen, ptr} from "bun:ffi";
-import {getBinaryName, getPrebuiltBinaryPath} from "../utils/index.js";
+import { dlopen, ptr } from "bun:ffi";
+import { getBinaryName, getPrebuiltBinaryPath } from "../utils/index.js";
 
 const binaryName = getBinaryName();
 const binaryPath = getPrebuiltBinaryPath(binaryName);
 
 // Load the compiled Zig shared library
 const lib = dlopen(binaryPath, {
-  createPubkeyIndexMap: {
+	createPubkeyIndexMap: {
 		args: [],
 		returns: "ptr",
 	},
