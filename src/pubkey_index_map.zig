@@ -10,7 +10,7 @@ const AutoHashMap = std.AutoHashMap(Key, Val);
 
 /// a generic implementation for both zig application and Bun ffi
 pub const PubkeyIndexMap = struct {
-    // TODO: seems this HashMap allocates items using its own allocator
+    // this HashMap copies key/value using its own allocator
     // this duplicates all items at Bun side
     map: AutoHashMap,
 

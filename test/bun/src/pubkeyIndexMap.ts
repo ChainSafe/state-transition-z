@@ -8,8 +8,8 @@ const NOT_FOUND_INDEX = binding.getNotFoundIndex();
  * This has the same interface to the napi-rs implementation in https://github.com/ChainSafe/pubkey-index-map/blob/main/index.d.ts
  */
 export class PubkeyIndexMap {
-	// even through zig returns u64, it's safe to use number at Bun side
-	// see https://bun.sh/docs/api/ffi#pointers
+  // even through zig returns u64, it's safe to use number at Bun side
+  // see https://bun.sh/docs/api/ffi#pointers
 	private native_ptr: number;
 	constructor() {
 		const pointer = binding.createPubkeyIndexMap();
