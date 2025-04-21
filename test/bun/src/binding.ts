@@ -14,6 +14,10 @@ const lib = dlopen(binaryPath, {
 		args: ["ptr"],
 		returns: "void",
 	},
+	getNotFoundIndex: {
+		args: [],
+		returns: "u32",
+	},
 	pubkeyIndexMapSet: {
 		args: ["ptr", "ptr", "u32", "u32"],
 		returns: "u32",

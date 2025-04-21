@@ -2,12 +2,16 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 pub const PUBKEY_INDEX_MAP_KEY_SIZE = 48;
+// max value of u32 is 4,294,967,295 which is enough for Ethereum
+// this value is the same to napi-rs binding, see https://github.com/ChainSafe/pubkey-index-map/blob/09cf357940e43742bcb29c1c35472d82a8aa52cb/src/lib.rs#L9
 pub const Val = u32;
 pub const Key = [PUBKEY_INDEX_MAP_KEY_SIZE]u8;
 const AutoHashMap = std.AutoHashMap(Key, Val);
 
 /// a generic implementation for both zig application and Bun ffi
 pub const PubkeyIndexMap = struct {
+    // TODO: seems this HashMap allocates items using its own allocator
+    // this duplicates all items at Bun side
     map: AutoHashMap,
 
     pub fn init(allocator: Allocator) !*PubkeyIndexMap {

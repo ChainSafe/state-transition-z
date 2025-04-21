@@ -1,6 +1,15 @@
 import { binding } from "./binding.js";
 
+// this is to sync the constant from zig to Bun which is 0xffffffff
+const NOT_FOUND_INDEX = binding.getNotFoundIndex();
+
+/**
+ * Bun bindings for PubkeyIndexMap zig implementation.
+ * This has the same interface to the napi-rs implementation in https://github.com/ChainSafe/pubkey-index-map/blob/main/index.d.ts
+ */
 export class PubkeyIndexMap {
+	// even through zig returns u64, it's safe to use number at Bun side
+	// see https://bun.sh/docs/api/ffi#pointers
 	private native_ptr: number;
 	constructor() {
 		const pointer = binding.createPubkeyIndexMap();
@@ -12,7 +21,7 @@ export class PubkeyIndexMap {
 
 	get(key: Uint8Array): number | null {
 		const index = binding.pubkeyIndexMapGet(this.native_ptr, key, key.length);
-		if (index === 0xffffffff) {
+		if (index === NOT_FOUND_INDEX) {
 			return null;
 		}
 		return index;
