@@ -1,0 +1,75 @@
+name: Zig Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  zig-build-test:
+    strategy:
+      matrix:
+        settings:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+          - os: macos-13
+            arch: x86_64
+          - os: macos-latest
+            arch: aarch64
+
+    runs-on: ${{ matrix.settings.os }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # Ensures submodules are cloned
+          fetch-depth: 0        # Fetches the entire history for all branches
+
+      - name: Print OS ${{ matrix.settings.os }}
+        run: uname -a
+      - name: Print Architecture ${{ matrix.settings.arch }}
+        run: uname -m
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: "0.13.0" # Set the required Zig version
+
+      - name: Build and Test
+        run: |
+          zig build test
+
+      - name: Build binary
+        run: zig build -Doptimize=ReleaseSafe
+
+      - name: Check binary
+        run: |
+          ls -la zig-out/lib
+
+      # Unit tests blst-bun
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          # Append Bun's bin folder to the GitHub Actions PATH.
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bun --version
+
+      # (Optional) Install dependencies if you use bun install.
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./test/bun
+
+      - name: Bun - Lint Code
+        run: bun lint
+        working-directory: ./test/bun
+
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./test/bun
