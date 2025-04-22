@@ -3,6 +3,10 @@ import { binding } from "./binding.js";
 // this is to sync the constant from zig to Bun which is 0xffffffff
 const NOT_FOUND_INDEX = binding.getNotFoundIndex();
 
+const registry = new FinalizationRegistry((ptr) => {
+	binding.destroyPubkeyIndexMap(ptr);
+});
+
 /**
  * Bun bindings for PubkeyIndexMap zig implementation.
  * This has the same interface to the napi-rs implementation in https://github.com/ChainSafe/pubkey-index-map/blob/main/index.d.ts
@@ -17,6 +21,7 @@ export class PubkeyIndexMap {
 			throw new Error("Failed to create PubkeyIndexMap");
 		}
 		this.native_ptr = pointer;
+		registry.register(this, this.native_ptr);
 	}
 
 	get(key: Uint8Array): number | null {
