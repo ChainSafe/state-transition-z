@@ -41,6 +41,14 @@ pub fn build(b: *std.Build) void {
     // step when running `zig build`).
     b.installArtifact(exe);
 
+    const sharedLib = b.addSharedLibrary(.{
+        .name = "state_transition_utils",
+        .root_source_file = b.path("src/state_transition_utils.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.installArtifact(sharedLib);
+
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
@@ -63,6 +71,14 @@ pub fn build(b: *std.Build) void {
     // This will evaluate the `run` step rather than the default, which is "install".
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    const shared_lib_unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/state_transition_utils.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const run_shared_lib_unit_tests = b.addRunArtifact(shared_lib_unit_tests);
 
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
@@ -88,4 +104,5 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
+    test_step.dependOn(&run_shared_lib_unit_tests.step);
 }
