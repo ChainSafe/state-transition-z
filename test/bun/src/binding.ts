@@ -46,6 +46,15 @@ const lib = dlopen(binaryPath, {
 		args: ["ptr"],
 		returns: "u32",
 	},
+	// binding for shuffe
+	shuffleList: {
+		args: ["ptr", "u32", "ptr", "u32", "u8"],
+		returns: "u32",
+	},
+	unShuffleList: {
+		args: ["ptr", "u32", "ptr", "u32", "u8"],
+		returns: "u32",
+	},
 });
 
 export const binding = lib.symbols;

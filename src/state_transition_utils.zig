@@ -1,6 +1,7 @@
 const std = @import("std");
 pub const PubkeyIndexMap = @import("pubkey_index_map.zig").PubkeyIndexMap;
 const PUBKEY_INDEX_MAP_KEY_SIZE = @import("pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
+const innerShuffleList = @import("shuffle.zig").innerShuffleList;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 const STATE_TRANSITION_UTILS_SUCCESS: c_uint = 0;
@@ -85,6 +86,35 @@ export fn pubkeyIndexMapDelete(nbr_ptr: u64, key: [*c]const u8, key_length: c_ui
 export fn pubkeyIndexMapSize(nbr_ptr: u64) c_uint {
     const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
     return instance_ptr.size();
+}
+
+/// C-ABI functions for shuffle_list
+export fn shuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_len: usize, rounds: u8) c_uint {
+    if (len == 0 or seed_len == 0) {
+        return STATE_TRANSITION_UTILS_INVALID_INPUTS;
+    }
+
+    innerShuffleList(
+        active_indices[0..len],
+        seed[0..seed_len],
+        rounds,
+        true,
+    ) catch return STATE_TRANSITION_UTILS_ERROR;
+    return STATE_TRANSITION_UTILS_SUCCESS;
+}
+
+export fn unShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_len: usize, rounds: u8) c_uint {
+    if (len == 0 or seed_len == 0) {
+        return STATE_TRANSITION_UTILS_INVALID_INPUTS;
+    }
+
+    innerShuffleList(
+        active_indices[0..len],
+        seed[0..seed_len],
+        rounds,
+        false,
+    ) catch return STATE_TRANSITION_UTILS_ERROR;
+    return STATE_TRANSITION_UTILS_SUCCESS;
 }
 
 test "PubkeyIndexMap C-ABI functions" {
