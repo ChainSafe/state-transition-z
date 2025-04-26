@@ -59,7 +59,7 @@ const POLL_STATUS_SUCCESS = 0;
  *
  * see https://github.com/ChainSafe/blst-bun/issues/13#issuecomment-2814425010
  */
-export function setupAsyncShuffle(
+export function withPollingParams(
 	timeToWaitMs: number,
 	pollEveryMs: number,
 	timeoutMs: number,

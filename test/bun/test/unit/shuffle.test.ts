@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
-	setupAsyncShuffle,
 	shuffleList,
 	unshuffleList,
+	withPollingParams,
 } from "../../src/shuffle.js";
 
 describe("unshuffleList", () => {
@@ -34,7 +34,7 @@ describe("unshuffleList", () => {
 		});
 
 		// start polling right after the call for every 1ms, throw error if after 100ms
-		const { asyncShuffleList, asyncUnshuffleList } = setupAsyncShuffle(
+		const { asyncShuffleList, asyncUnshuffleList } = withPollingParams(
 			0,
 			1,
 			100,

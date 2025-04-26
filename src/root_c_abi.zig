@@ -7,7 +7,7 @@ const SEED_SIZE = @import("shuffle.zig").SEED_SIZE;
 const ErrorCode = @import("error.zig").ErrorCode;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-// this is specifical 4,294,967,295 to mark a not found index
+// this special index 4,294,967,295 is used to mark a not found
 const NOT_FOUND_INDEX: c_uint = 0xffffffff;
 
 /// C-ABI functions for PubkeyIndexMap
@@ -101,6 +101,7 @@ const Status = enum {
     Error,
 };
 
+/// object to store result from another thread and for bun to poll
 const AsyncResult = struct {
     allocator: std.mem.Allocator,
     status: Status,
@@ -189,6 +190,9 @@ fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, s
     return pointer_index;
 }
 
+/// bun to store a pointer index
+/// zig to get pointer u64 from async_result_pointer_indices and restore AsyncResult pointer
+/// then release it
 export fn releaseAsyncResult(pointer_index_param: usize) void {
     mutex.lock();
     defer mutex.unlock();
@@ -204,6 +208,9 @@ export fn releaseAsyncResult(pointer_index_param: usize) void {
     async_result_pointer_indices[pointer_index] = 0;
 }
 
+/// bun to store a pointer index
+/// zig to get pointer u64 from async_result_pointer_indices and restore AsyncResult pointer
+/// then check value inside it
 export fn pollAsyncResult(pointer_index_param: usize) c_uint {
     mutex.lock();
     defer mutex.unlock();
@@ -301,6 +308,7 @@ test "PubkeyIndexMap C-ABI functions" {
     try std.testing.expectEqual(1, pubkeyIndexMapSize(cloned_map));
 }
 
+// more tests for async shuffle and unshuffle at bun side
 test "asyncShuffleList - issue single thread and poll the result" {
     var input = [_]u32{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
     var seed = [_]u8{0} ** SEED_SIZE;
