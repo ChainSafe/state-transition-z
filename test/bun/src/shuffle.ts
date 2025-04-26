@@ -48,7 +48,9 @@ export function unshuffleList(
 	return activeIndices;
 }
 
+// same value to ErrorCode.Pending at zig side
 const POLL_STATUS_PENDING = 10;
+// same value to ErrorCode.Success at zig side
 const POLL_STATUS_SUCCESS = 0;
 
 /**
