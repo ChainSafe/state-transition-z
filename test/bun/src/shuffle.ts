@@ -33,7 +33,7 @@ export function unshuffleList(
 	seed: Uint8Array,
 	rounds: number,
 ): Uint32Array {
-	const result = binding.unShuffleList(
+	const result = binding.unshuffleList(
 		activeIndices,
 		activeIndices.length,
 		seed,

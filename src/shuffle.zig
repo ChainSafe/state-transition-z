@@ -3,7 +3,7 @@ const Sha256 = std.crypto.hash.sha2.Sha256;
 const builtin = @import("builtin");
 const native_endian = builtin.target.cpu.arch.endian();
 
-const SEED_SIZE = 32;
+pub const SEED_SIZE = 32;
 const ROUND_SIZE = 1;
 const POSITION_WINDOW_SIZE = 4;
 const PIVOT_VIEW_SIZE = SEED_SIZE + ROUND_SIZE;

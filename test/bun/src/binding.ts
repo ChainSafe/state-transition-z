@@ -51,7 +51,7 @@ const lib = dlopen(binaryPath, {
 		args: ["ptr", "u32", "ptr", "u32", "u8"],
 		returns: "u32",
 	},
-	unShuffleList: {
+	unshuffleList: {
 		args: ["ptr", "u32", "ptr", "u32", "u8"],
 		returns: "u32",
 	},
