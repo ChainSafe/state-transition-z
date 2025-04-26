@@ -55,6 +55,22 @@ const lib = dlopen(binaryPath, {
 		args: ["ptr", "u32", "ptr", "u32", "u8"],
 		returns: "u32",
 	},
+	asyncShuffleList: {
+		args: ["ptr", "u32", "ptr", "u32", "u8"],
+		returns: "u32",
+	},
+	asyncUnshuffleList: {
+		args: ["ptr", "u32", "ptr", "u32", "u8"],
+		returns: "u32",
+	},
+	pollAsyncResult: {
+		args: ["u32"],
+		returns: "u32",
+	},
+	releaseAsyncResult: {
+		args: ["u32"],
+		returns: "void",
+	},
 });
 
 export const binding = lib.symbols;

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { shuffleList, unshuffleList } from "../../src/shuffle.js";
+import {
+	setupAsyncShuffle,
+	shuffleList,
+	unshuffleList,
+} from "../../src/shuffle.js";
 
 describe("unshuffleList", () => {
 	const testCases: { input: Uint32Array; expected: Uint32Array }[] = [
@@ -18,15 +22,62 @@ describe("unshuffleList", () => {
 		},
 	];
 
+	const seed = new Uint8Array(32).fill(0);
+	const rounds = 32;
 	for (const [i, { input, expected }] of testCases.entries()) {
-		it(`should unshuffle ${i}`, () => {
+		it(`synced unshuffle then shuffle, test case ${i}`, () => {
 			const shuffled = input.slice();
-			const seed = new Uint8Array(32).fill(0);
-			const rounds = 32;
 			const result = unshuffleList(shuffled, seed, rounds);
 			expect(result).toEqual(expected);
 			const result2 = shuffleList(result, seed, rounds);
 			expect(result2).toEqual(input);
 		});
+
+		// start polling right after the call for every 1ms, throw error if after 100ms
+		const { asyncShuffleList, asyncUnshuffleList } = setupAsyncShuffle(
+			0,
+			1,
+			100,
+		);
+
+		const testWithNFactor = async (n: number) => {
+			let promises: Promise<Uint32Array>[] = [];
+			// call asyncUnshuffleList in parallel n times
+			for (let j = 0; j < n; j++) {
+				const shuffled = input.slice();
+				promises.push(asyncUnshuffleList(shuffled, seed, rounds));
+			}
+
+			const results = await Promise.all(promises);
+			for (const result of results) {
+				expect(result).toEqual(expected);
+			}
+
+			promises = [];
+			for (let j = 0; j < n; j++) {
+				promises.push(asyncShuffleList(results[j], seed, rounds));
+			}
+
+			const results2 = await Promise.all(promises);
+			for (const result of results2) {
+				expect(result).toEqual(input);
+			}
+		};
+
+		it(`async unshuffle then async shuffle, test case ${i}`, async () => {
+			await testWithNFactor(1);
+		});
+
+		it(`async unshuffle then async shuffle, 4 in parallel, test case ${i}`, async () => {
+			await testWithNFactor(4);
+		});
+
+		it(`async unshuffle then async shuffle, 4 in parallel, 10 times, test case ${i}`, async () => {
+			for (let i = 0; i < 10; i++) {
+				await testWithNFactor(4);
+			}
+		});
+
+		// TODO: add negative unit test, do a lot in parallel and it fails
 	}
 });

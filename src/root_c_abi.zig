@@ -137,7 +137,7 @@ const AsyncResult = struct {
 /// return an u64 which is the index within `MAX_ASYNC_RESULT_SIZE`
 /// consumer needs to poll the AsyncResult via pollAsyncResult() using that index and
 /// then release the AsyncResult via releaseAsyncResult() when done
-export fn asyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8) u64 {
+export fn asyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8) usize {
     const forwards = true;
     return doAsyncShuffleList(active_indices, len, seed, seed_len, rounds, forwards);
 }
@@ -146,12 +146,12 @@ export fn asyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const 
 /// return an u64 which is the index within `MAX_ASYNC_RESULT_SIZE`
 /// consumer needs to poll the AsyncResult via pollAsyncResult() using that index and
 /// then release the AsyncResult via releaseAsyncResult() when done
-export fn asyncUnshuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8) u64 {
+export fn asyncUnshuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8) usize {
     const forwards = false;
     return doAsyncShuffleList(active_indices, len, seed, seed_len, rounds, forwards);
 }
 
-fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8, forwards: bool) u64 {
+fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, seed_len: usize, rounds: u8, forwards: bool) usize {
     if (len == 0 or seed_len == 0) {
         return ErrorCode.InvalidInput;
     }
@@ -200,15 +200,16 @@ export fn releaseAsyncResult(pointer_index_param: usize) void {
     }
     const result_ptr: *AsyncResult = @ptrFromInt(async_result_ptr);
     result_ptr.deinit();
+    // native pointer cannot be 0 https://zig.guide/language-basics/pointers/
     async_result_pointer_indices[pointer_index] = 0;
 }
 
-export fn pollAsyncResult(pointer_index_param: u64) c_uint {
+export fn pollAsyncResult(pointer_index_param: usize) c_uint {
     mutex.lock();
     defer mutex.unlock();
     const pointer_index = pointer_index_param % MAX_ASYNC_RESULT_SIZE;
     const async_result_ptr = async_result_pointer_indices[pointer_index];
-    // avoid invalid pointer
+    // native pointer cannot be 0 https://zig.guide/language-basics/pointers/
     if (async_result_ptr == 0) {
         return ErrorCode.InvalidPointerError;
     }
