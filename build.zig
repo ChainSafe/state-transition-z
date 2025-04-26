@@ -43,11 +43,14 @@ pub fn build(b: *std.Build) void {
 
     const sharedLib = b.addSharedLibrary(.{
         .name = "state_transition_utils",
-        .root_source_file = b.path("src/state_transition_utils.zig"),
+        .root_source_file = b.path("src/root_c_abi.zig"),
         .target = target,
         .optimize = optimize,
     });
     b.installArtifact(sharedLib);
+
+    // need libc for threading capability
+    sharedLib.linkLibC();
 
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
@@ -73,7 +76,7 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     const shared_lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/state_transition_utils.zig"),
+        .root_source_file = b.path("src/root_c_abi.zig"),
         .target = target,
         .optimize = optimize,
     });
