@@ -49,6 +49,9 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(sharedLib);
 
+    // need libc for threading capability
+    sharedLib.linkLibC();
+
     // This *creates* a Run step in the build graph, to be executed when another
     // step is evaluated that depends on it. The next line below will establish
     // such a dependency.
