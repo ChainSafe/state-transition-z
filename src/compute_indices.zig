@@ -128,6 +128,71 @@ pub const ComputeShuffledIndex = struct {
     }
 };
 
+const ByteCount = enum(u8) {
+    One = 1,
+    Two = 2,
+};
+
+/// the same to Rust implementation with "out" param to simplify memory allocation
+fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices: []const u32, effective_balance_increments: []const u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+    const max_random_value: usize = if (rand_byte_count == .One) 0xff else 0xffff;
+    const max_effective_balance_increment: usize = max_effective_balance / effective_balance_increment;
+
+    const compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, active_indices.len, rounds);
+    const shuffled_result = U32U32HashMap.init(allocator);
+    defer shuffled_result.deinit();
+
+    var i: u32 = 0;
+    var cached_hash_input = [_]u8{0} ** (32 + 8);
+    // seed should have 32 bytes as checked in ComputeShuffledIndex.init
+    @memcpy(cached_hash_input[0..32], seed);
+    var cached_hash = [_]u8{0} ** 32;
+    var next_committee_index: usize = 0;
+
+    while (next_committee_index < out.len) {
+        const index: u32 = @intCast(i % active_indices.len());
+        var shuffled_index = try shuffled_result.get(index);
+        if (shuffled_index == null) {
+            const _shuffled_index = try compute_shuffled_index.get(index);
+            try shuffled_result.put(index, _shuffled_index);
+            shuffled_index = _shuffled_index;
+        }
+        const candidate_index = active_indices[@intCast(shuffled_index.?)];
+
+        const hash_increment = if (rand_byte_count == .One) 32 else 16;
+        if (i % hash_increment == 0) {
+            const num_hash_increment = @divFloor(i, hash_increment);
+            // suppose number of hash_increment always fit u32, the last 4 bytes of cached_hash_input is always 0
+            // this is the same to below Rust implementation
+            // cached_hash_input[32..36].copy_from_slice(&(i / hash_increment).to_le_bytes());
+            const u32_slice = std.mem.bytesAsSlice(u32, cached_hash_input[32..36]);
+            u32_slice[0] = if (native_endian == .big) @byteSwap(num_hash_increment) else num_hash_increment;
+            Sha256.hash(cached_hash_input[0..], cached_hash[0..], .{});
+        }
+
+        const random_bytes = cached_hash;
+        const random_value: usize = switch (rand_byte_count) {
+            .One => {
+                const offset: usize = @intCast(i % 32);
+                return random_bytes[offset];
+            },
+            .Two => {
+                const offset: usize = @intCast((i % 16) * 2);
+                const value = std.mem.bytesAsValue(usize, random_bytes[offset..(offset + 2)]);
+                return if (native_endian == .big) @byteSwap(value) else value;
+            },
+        };
+
+        const candidate_effective_balance_increment = effective_balance_increments[@intCast(candidate_index)];
+        if (candidate_effective_balance_increment * max_random_value >= max_effective_balance_increment * random_value) {
+            out[next_committee_index] = candidate_index;
+            next_committee_index += 1;
+        }
+
+        i += 1;
+    }
+}
+
 test "ComputeShuffledIndex" {
     const allocator = std.testing.allocator;
     const seed = [_]u8{1} ** SEED_SIZE;
