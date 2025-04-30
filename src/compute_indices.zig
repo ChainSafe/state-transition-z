@@ -128,6 +128,46 @@ pub const ComputeShuffledIndex = struct {
     }
 };
 
+pub fn compute_proposer_index_electra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) !u32 {
+    var out = [_]u32{0};
+    try get_committee_indices(allocator, seed, active_indices, effective_balance_increments, ByteCount.Two, max_effective_balance_electra, effective_balance_increment, rounds, out[0..]);
+    return out[0];
+}
+
+pub fn compute_proposer_index(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !u32 {
+    var out = [_]u32{0};
+    try get_committee_indices(allocator, seed, active_indices, effective_balance_increments, rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..]);
+    return out[0];
+}
+
+pub fn compute_sync_committee_indices_electra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+    try get_committee_indices(
+        allocator,
+        seed,
+        active_indices,
+        effective_balance_increments,
+        ByteCount.Two,
+        max_effective_balance_electra,
+        effective_balance_increment,
+        rounds,
+        out,
+    );
+}
+
+pub fn compute_sync_committee_indices(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+    try get_committee_indices(
+        allocator,
+        seed,
+        active_indices,
+        effective_balance_increments,
+        rand_byte_count,
+        max_effective_balance_electra,
+        effective_balance_increment,
+        rounds,
+        out,
+    );
+}
+
 const ByteCount = enum(u8) {
     One = 1,
     Two = 2,
@@ -138,8 +178,9 @@ fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices:
     const max_random_value: usize = if (rand_byte_count == .One) 0xff else 0xffff;
     const max_effective_balance_increment: usize = max_effective_balance / effective_balance_increment;
 
-    const compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, active_indices.len, rounds);
-    const shuffled_result = U32U32HashMap.init(allocator);
+    var compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, @intCast(active_indices.len), rounds);
+    defer compute_shuffled_index.deinit();
+    var shuffled_result = U32U32HashMap.init(allocator);
     defer shuffled_result.deinit();
 
     var i: u32 = 0;
@@ -150,8 +191,8 @@ fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices:
     var next_committee_index: usize = 0;
 
     while (next_committee_index < out.len) {
-        const index: u32 = @intCast(i % active_indices.len());
-        var shuffled_index = try shuffled_result.get(index);
+        const index: u32 = @intCast(i % active_indices.len);
+        var shuffled_index = shuffled_result.get(index);
         if (shuffled_index == null) {
             const _shuffled_index = try compute_shuffled_index.get(index);
             try shuffled_result.put(index, _shuffled_index);
@@ -159,7 +200,7 @@ fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices:
         }
         const candidate_index = active_indices[@intCast(shuffled_index.?)];
 
-        const hash_increment = if (rand_byte_count == .One) 32 else 16;
+        const hash_increment: u32 = if (rand_byte_count == .One) 32 else 16;
         if (i % hash_increment == 0) {
             const num_hash_increment = @divFloor(i, hash_increment);
             // suppose number of hash_increment always fit u32, the last 4 bytes of cached_hash_input is always 0
@@ -172,14 +213,16 @@ fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices:
 
         const random_bytes = cached_hash;
         const random_value: usize = switch (rand_byte_count) {
-            .One => {
+            .One => blk: {
                 const offset: usize = @intCast(i % 32);
-                return random_bytes[offset];
+                break :blk @intCast(random_bytes[offset]);
             },
-            .Two => {
+            .Two => blk: {
                 const offset: usize = @intCast((i % 16) * 2);
-                const value = std.mem.bytesAsValue(usize, random_bytes[offset..(offset + 2)]);
-                return if (native_endian == .big) @byteSwap(value) else value;
+                const u16_slice = std.mem.bytesAsSlice(u16, random_bytes[offset..(offset + 2)]);
+                const value = u16_slice[0];
+                const le_value = if (native_endian == .big) @byteSwap(value) else value;
+                break :blk @intCast(le_value);
             },
         };
 
@@ -211,4 +254,62 @@ test "ComputeShuffledIndex" {
             try std.testing.expectEqual(expected[i], shuffled_index);
         }
     }
+}
+
+test "compute_proposer_index" {
+    const allocator = std.testing.allocator;
+    const seed = [_]u8{1} ** SEED_SIZE;
+    const index_count = 1000;
+    // SHUFFLE_ROUND_COUNT is 90 in ethereum mainnet
+    const rounds = 90;
+    var active_indices = [_]u32{0} ** index_count;
+    for (0..index_count) |i| {
+        active_indices[i] = @intCast(i);
+    }
+    var effective_balance_increments = [_]u16{0} ** index_count;
+    for (0..index_count) |i| {
+        effective_balance_increments[i] = @intCast(32 + 32 * (i % 64));
+    }
+    // phase0
+    const MAX_EFFECTIVE_BALANCE: u64 = 32000000000;
+    const EFFECTIVE_BALANCE_INCREMENT: u32 = 1000000000;
+    const phase0_index = try compute_proposer_index(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds);
+    try std.testing.expectEqual(789, phase0_index);
+
+    // electra
+    const MAX_EFFECTIVE_BALANCE_ELECTRA: u64 = 2048000000000;
+    const electra_index = try compute_proposer_index(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds);
+    try std.testing.expectEqual(161, electra_index);
+}
+
+test "compute_sync_committee_indices" {
+    const allocator = std.testing.allocator;
+    const seed = [_]u8{ 74, 7, 102, 54, 84, 136, 68, 56, 19, 191, 186, 58, 72, 53, 151, 49, 220, 123, 42, 116, 59, 7, 73, 162, 110, 145, 93, 199, 163, 66, 85, 34 };
+    const vc = 1000;
+    // SHUFFLE_ROUND_COUNT is 90 in ethereum mainnet
+    const rounds = 90;
+    var active_indices = [_]u32{0} ** vc;
+    for (0..vc) |i| {
+        active_indices[i] = @intCast(i);
+    }
+    var effective_balance_increments = [_]u16{0} ** vc;
+    for (0..vc) |i| {
+        effective_balance_increments[i] = @intCast(32 + 32 * (i % 64));
+    }
+
+    // only get first 32 indices to make it easier to test
+    var out = [_]u32{0} ** 32;
+
+    // phase0
+    const MAX_EFFECTIVE_BALANCE: u64 = 32000000000;
+    const EFFECTIVE_BALANCE_INCREMENT: u32 = 1000000000;
+    try compute_sync_committee_indices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
+    const expected_phase0 = [_]u32{ 293, 726, 771, 677, 530, 475, 322, 66, 521, 106, 774, 23, 508, 410, 526, 44, 213, 948, 248, 903, 85, 853, 171, 679, 309, 791, 851, 817, 609, 119, 128, 983 };
+    try std.testing.expectEqualSlices(u32, expected_phase0[0..], out[0..]);
+
+    // electra
+    const MAX_EFFECTIVE_BALANCE_ELECTRA: u64 = 2048000000000;
+    try compute_sync_committee_indices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
+    const expected_electra = [_]u32{ 726, 475, 521, 23, 508, 410, 213, 948, 248, 85, 171, 309, 791, 817, 119, 126, 651, 416, 273, 471, 739, 290, 588, 840, 665, 945, 496, 158, 757, 616, 226, 766 };
+    try std.testing.expectEqualSlices(u32, expected_electra[0..], out[0..]);
 }
