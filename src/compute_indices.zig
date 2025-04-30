@@ -168,7 +168,7 @@ pub fn compute_sync_committee_indices(allocator: Allocator, seed: []const u8, ac
     );
 }
 
-const ByteCount = enum(u8) {
+pub const ByteCount = enum(u8) {
     One = 1,
     Two = 2,
 };

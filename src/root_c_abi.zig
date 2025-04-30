@@ -4,6 +4,7 @@ pub const PubkeyIndexMap = @import("pubkey_index_map.zig").PubkeyIndexMap;
 const PUBKEY_INDEX_MAP_KEY_SIZE = @import("pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
 const innerShuffleList = @import("shuffle.zig").innerShuffleList;
 const SEED_SIZE = @import("shuffle.zig").SEED_SIZE;
+const compute_indices = @import("compute_indices.zig");
 const ErrorCode = @import("error.zig").ErrorCode;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -253,6 +254,32 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
         rounds,
         forwards,
     ) catch return ErrorCode.Error;
+    return ErrorCode.Success;
+}
+
+pub fn compute_proposer_index_electra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) u32 {
+    const allocator = gpa.allocator();
+    // TODO: is it better to define a Result struct with code and value
+    const proposer_index = compute_indices.compute_proposer_index_electra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds) catch return NOT_FOUND_INDEX;
+    return proposer_index;
+}
+
+pub fn compute_proposer_index(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
+    const allocator = gpa.allocator();
+    // TODO: is it better to define a Result struct with code and value
+    const proposer_index = compute_indices.compute_proposer_index(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return NOT_FOUND_INDEX;
+    return proposer_index;
+}
+
+pub fn compute_sync_committee_indices_electra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+    const allocator = gpa.allocator();
+    compute_indices.compute_sync_committee_indices_electra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
+    return ErrorCode.Success;
+}
+
+pub fn compute_sync_committee_indices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+    const allocator = gpa.allocator();
+    compute_indices.compute_sync_committee_indices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
 
