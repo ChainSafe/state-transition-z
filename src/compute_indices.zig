@@ -128,20 +128,20 @@ pub const ComputeShuffledIndex = struct {
     }
 };
 
-pub fn compute_proposer_index_electra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) !u32 {
+pub fn computeProposerIndexElectra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) !u32 {
     var out = [_]u32{0};
-    try get_committee_indices(allocator, seed, active_indices, effective_balance_increments, ByteCount.Two, max_effective_balance_electra, effective_balance_increment, rounds, out[0..]);
+    try getCommitteeIndices(allocator, seed, active_indices, effective_balance_increments, ByteCount.Two, max_effective_balance_electra, effective_balance_increment, rounds, out[0..]);
     return out[0];
 }
 
-pub fn compute_proposer_index(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !u32 {
+pub fn computeProposerIndex(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !u32 {
     var out = [_]u32{0};
-    try get_committee_indices(allocator, seed, active_indices, effective_balance_increments, rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..]);
+    try getCommitteeIndices(allocator, seed, active_indices, effective_balance_increments, rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..]);
     return out[0];
 }
 
-pub fn compute_sync_committee_indices_electra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
-    try get_committee_indices(
+pub fn computeSyncCommitteeIndicesElectra(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+    try getCommitteeIndices(
         allocator,
         seed,
         active_indices,
@@ -154,8 +154,8 @@ pub fn compute_sync_committee_indices_electra(allocator: Allocator, seed: []cons
     );
 }
 
-pub fn compute_sync_committee_indices(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
-    try get_committee_indices(
+pub fn computeSyncCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+    try getCommitteeIndices(
         allocator,
         seed,
         active_indices,
@@ -174,7 +174,7 @@ pub const ByteCount = enum(u8) {
 };
 
 /// the same to Rust implementation with "out" param to simplify memory allocation
-fn get_committee_indices(allocator: Allocator, seed: []const u8, active_indices: []const u32, effective_balance_increments: []const u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
+fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: []const u32, effective_balance_increments: []const u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: []u32) !void {
     const max_random_value: usize = if (rand_byte_count == .One) 0xff else 0xffff;
     const max_effective_balance_increment: usize = max_effective_balance / effective_balance_increment;
 
@@ -273,12 +273,12 @@ test "compute_proposer_index" {
     // phase0
     const MAX_EFFECTIVE_BALANCE: u64 = 32000000000;
     const EFFECTIVE_BALANCE_INCREMENT: u32 = 1000000000;
-    const phase0_index = try compute_proposer_index(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds);
+    const phase0_index = try computeProposerIndex(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds);
     try std.testing.expectEqual(789, phase0_index);
 
     // electra
     const MAX_EFFECTIVE_BALANCE_ELECTRA: u64 = 2048000000000;
-    const electra_index = try compute_proposer_index(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds);
+    const electra_index = try computeProposerIndex(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds);
     try std.testing.expectEqual(161, electra_index);
 }
 
@@ -303,13 +303,13 @@ test "compute_sync_committee_indices" {
     // phase0
     const MAX_EFFECTIVE_BALANCE: u64 = 32000000000;
     const EFFECTIVE_BALANCE_INCREMENT: u32 = 1000000000;
-    try compute_sync_committee_indices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
+    try computeSyncCommitteeIndices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.One, MAX_EFFECTIVE_BALANCE, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
     const expected_phase0 = [_]u32{ 293, 726, 771, 677, 530, 475, 322, 66, 521, 106, 774, 23, 508, 410, 526, 44, 213, 948, 248, 903, 85, 853, 171, 679, 309, 791, 851, 817, 609, 119, 128, 983 };
     try std.testing.expectEqualSlices(u32, expected_phase0[0..], out[0..]);
 
     // electra
     const MAX_EFFECTIVE_BALANCE_ELECTRA: u64 = 2048000000000;
-    try compute_sync_committee_indices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
+    try computeSyncCommitteeIndices(allocator, seed[0..], active_indices[0..], effective_balance_increments[0..], ByteCount.Two, MAX_EFFECTIVE_BALANCE_ELECTRA, EFFECTIVE_BALANCE_INCREMENT, rounds, out[0..]);
     const expected_electra = [_]u32{ 726, 475, 521, 23, 508, 410, 213, 948, 248, 85, 171, 309, 791, 817, 119, 126, 651, 416, 273, 471, 739, 290, 588, 840, 665, 945, 496, 158, 757, 616, 226, 766 };
     try std.testing.expectEqualSlices(u32, expected_electra[0..], out[0..]);
 }

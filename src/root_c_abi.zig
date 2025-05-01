@@ -6,10 +6,10 @@ const innerShuffleList = @import("shuffle.zig").innerShuffleList;
 const SEED_SIZE = @import("shuffle.zig").SEED_SIZE;
 const compute_indices = @import("compute_indices.zig");
 const ErrorCode = @import("error.zig").ErrorCode;
+const NOT_FOUND_INDEX = @import("error.zig").NOT_FOUND_INDEX;
+const ERROR_INDEX = @import("error.zig").ERROR_INDEX;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-// this special index 4,294,967,295 is used to mark a not found
-const NOT_FOUND_INDEX: c_uint = 0xffffffff;
 
 /// C-ABI functions for PubkeyIndexMap
 /// create an instance of PubkeyIndexMap
@@ -29,6 +29,10 @@ export fn destroyPubkeyIndexMap(nbr_ptr: u64) void {
 /// synchronize this special index to Bun
 export fn getNotFoundIndex() c_uint {
     return NOT_FOUND_INDEX;
+}
+
+export fn getErrorIndex() c_uint {
+    return ERROR_INDEX;
 }
 
 /// set a value to the specified PubkeyIndexMap instance
@@ -257,29 +261,29 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
     return ErrorCode.Success;
 }
 
-pub fn compute_proposer_index_electra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) u32 {
+export fn computeProposerIndexElectra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
-    const proposer_index = compute_indices.compute_proposer_index_electra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds) catch return NOT_FOUND_INDEX;
+    const proposer_index = compute_indices.computeProposerIndexElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds) catch return ERROR_INDEX;
     return proposer_index;
 }
 
-pub fn compute_proposer_index(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
+export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
-    const proposer_index = compute_indices.compute_proposer_index(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return NOT_FOUND_INDEX;
+    const proposer_index = compute_indices.computeProposerIndex(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return ERROR_INDEX;
     return proposer_index;
 }
 
-pub fn compute_sync_committee_indices_electra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+export fn computeSyncCommitteeIndicesElectra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
-    compute_indices.compute_sync_committee_indices_electra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
+    compute_indices.computeSyncCommitteeIndicesElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
 
-pub fn compute_sync_committee_indices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: compute_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
-    compute_indices.compute_sync_committee_indices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
+    compute_indices.computeSyncCommitteeIndices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
 
