@@ -81,3 +81,5 @@ describe("unshuffleList", () => {
 		// TODO: add negative unit test, do a lot in parallel and it fails
 	}
 });
+
+// TODO: the same tests to @chainsafe/swap-or-not-shuffle
