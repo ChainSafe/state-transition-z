@@ -9,9 +9,12 @@ export function shuffleList(
 	seed: Uint8Array,
 	rounds: number,
 ): Uint32Array {
+	validateShufflingParams(activeIndices, seed, rounds);
+
+	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.shuffleList(
-		activeIndices,
-		activeIndices.length,
+		clonedActiveIndices,
+		clonedActiveIndices.length,
 		seed,
 		seed.length,
 		rounds,
@@ -21,7 +24,7 @@ export function shuffleList(
 		throw new Error(`Shuffle failed with error code: ${result}`);
 	}
 
-	return activeIndices;
+	return clonedActiveIndices;
 }
 
 /**
@@ -33,9 +36,12 @@ export function unshuffleList(
 	seed: Uint8Array,
 	rounds: number,
 ): Uint32Array {
+	validateShufflingParams(activeIndices, seed, rounds);
+
+	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.unshuffleList(
-		activeIndices,
-		activeIndices.length,
+		clonedActiveIndices,
+		clonedActiveIndices.length,
 		seed,
 		seed.length,
 		rounds,
@@ -45,7 +51,7 @@ export function unshuffleList(
 		throw new Error(`Unshuffle failed with error code: ${result}`);
 	}
 
-	return activeIndices;
+	return clonedActiveIndices;
 }
 
 // same value to ErrorCode.Pending at zig side
@@ -82,10 +88,13 @@ export function withPollingParams(
 			rounds: number,
 		) => number,
 	): Promise<Uint32Array> {
+		validateShufflingParams(activeIndices, seed, rounds);
+
 		const start = Date.now();
+		const clonedActiveIndices = activeIndices.slice();
 		const pointerIdx = nativeShuffleFn(
-			activeIndices,
-			activeIndices.length,
+			clonedActiveIndices,
+			clonedActiveIndices.length,
 			seed,
 			seed.length,
 			rounds,
@@ -109,7 +118,7 @@ export function withPollingParams(
 					case POLL_STATUS_SUCCESS:
 						clearInterval(interval);
 						binding.releaseAsyncResult(pointerIdx);
-						resolve(activeIndices);
+						resolve(clonedActiveIndices);
 						return;
 					case POLL_STATUS_PENDING:
 						break;
@@ -140,4 +149,20 @@ export function withPollingParams(
 		): Promise<Uint32Array> =>
 			doShuffleList(activeIndices, seed, rounds, binding.asyncUnshuffleList),
 	};
+}
+
+function validateShufflingParams(
+	activeIndices: Uint32Array,
+	seed: Uint8Array,
+	rounds: number,
+): void {
+	if (activeIndices.length >= 0xffffffff) {
+		throw new Error("ActiveIndices must fit in a u32");
+	}
+	if (seed.length !== 32) {
+		throw new Error("Shuffling seed must be 32 bytes long");
+	}
+	if (rounds < 0 || rounds > 255) {
+		throw new Error("Rounds must be between 0 and 255");
+	}
 }
