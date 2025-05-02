@@ -1,0 +1,10 @@
+#,commit,de0d409da3d9e555ce26b13f6d046fa112ba969c
+id,averageNs,runsDone,totalMs,threshold
+get values - 1000,330,1172633,606,3
+get values - naive - 1000,164,5276253,1830,3
+set values - 1000,350,1883495,1010,3
+set values - naive - 1000,270,1954651,909,3
+get values - 1000000,794,1025761,1010,3
+get values - naive - 1000000,950,801781,909,3
+set values - 1000000,784,539985,505,3
+set values - naive - 1000000,1458,370329,606,3
