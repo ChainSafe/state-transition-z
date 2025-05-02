@@ -43,12 +43,12 @@ jobs:
       - name: Set shared library artifact prefix
         id: set_shared_prefix
         run: |
-          echo "SHARED_LIB_PREFIX=libstate-transition-utils" >> $GITHUB_ENV
+          echo "SHARED_LIB_PREFIX=libstate-transition-utils" >> $GITHUB_ENV ;;
 
       - name: Set static library artifact prefix
         id: set_static_prefix
         run: |
-          echo "STATIC_LIB_PREFIX=libstate-transition" >> $GITHUB_ENV
+          echo "STATIC_LIB_PREFIX=libstate-transition" >> $GITHUB_ENV ;;
 
       - name: Upload static library artifact for ${{ matrix.settings.platform }}
         uses: actions/upload-artifact@v4
