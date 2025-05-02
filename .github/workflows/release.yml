@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        settings:
+          - os: ubuntu-latest
+            platform: x86_64-linux
+          - os: ubuntu-24.04-arm
+            platform: aarch64-linux
+          - os: macos-13
+            platform: x86_64-macos
+          - os: macos-latest
+            platform: aarch64-macos
+
+    runs-on: ${{ matrix.settings.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive # Ensures submodules are cloned
+          fetch-depth: 0        # Fetches the entire history for all branches
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: "0.13.0" # Set the required Zig version
+
+      - name: Test state-transition-z
+        run: |
+          zig build test
+
+      - name: Build state-transition-z on ${{ matrix.settings.platform }}
+        run: |
+          zig build -Doptimize=ReleaseSafe
+
+      - name: Upload static library artifact for ${{ matrix.settings.platform }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: libstate-transition-${{ matrix.settings.platform }}.a
+          path: zig-out/lib/libstate-transition.a
+          compression-level: 0 # No compression
+
+      - name: Set shared library extension
+        id: set_extension
+        run: |
+          case "${{ matrix.settings.platform }}" in
+            x86_64-linux|aarch64-linux) echo "EXT=so" >> $GITHUB_ENV ;;
+            *) echo "EXT=dylib" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Upload shared library artifact for ${{ matrix.settings.platform }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: libstate-transition-utils-${{ matrix.settings.platform }}.${{ env.EXT }}
+          path: zig-out/lib/libstate-transition-utils.${{ env.EXT }}
+          compression-level: 0 # No compression
+
+  create-release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          path: release_tmp
+          pattern: libstate-transition*
+
+      - name: List folders in release_tmp directory
+        run: ls -la ${{ github.workspace }}/release_tmp
+
+      - name: Organize Release Artifacts
+        run: |
+          mkdir -p release
+          mv release_tmp/libstate-transition-x86_64-linux.a/libstate-transition.a release/libstate-transition-x86_64-linux.a
+          mv release_tmp/libstate-transition-aarch64-linux.a/libstate-transition.a release/libstate-transition-aarch64-linux.a
+          mv release_tmp/libstate-transition-x86_64-macos.a/libstate-transition.a release/libstate-transition-x86_64-macos.a
+          mv release_tmp/libstate-transition-aarch64-macos.a/libstate-transition.a release/libstate-transition-aarch64-macos.a
+          mv release_tmp/libstate-transition-utils-x86_64-linux.so/libstate-transition-utils.so release/libstate-transition-utils-x86_64-linux.so
+          mv release_tmp/libstate-transition-utils-aarch64-linux.so/libstate-transition-utils.so release/libstate-transition-utils-aarch64-linux.so
+          mv release_tmp/libstate-transition-utils-x86_64-macos.dylib/libstate-transition-utils.dylib release/libstate-transition-utils-x86_64-macos.dylib
+          mv release_tmp/libstate-transition-utils-pk_aarch64-macos.dylib/libstate-transition-utils.dylib release/libstate-transition-utils-aarch64-macos.dylib
+
+      - name: List files in release directory
+        run: ls -la ${{ github.workspace }}/release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ github.workspace }}/release/*
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
