@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-export const BINDINGS_NAME = "libstate_transition_utils";
+export const BINDINGS_NAME = "libstate-transition-utils";
 
 export const ROOT_DIR = resolve(__dirname, "../../..");
 export const PREBUILD_DIR = resolve(ROOT_DIR, "zig-out/lib");
