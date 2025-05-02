@@ -151,7 +151,7 @@ export function withPollingParams(
 	};
 }
 
-function validateShufflingParams(
+export function validateShufflingParams(
 	activeIndices: Uint32Array,
 	seed: Uint8Array,
 	rounds: number,

@@ -1,4 +1,5 @@
 import { binding } from "./binding.js";
+import { validateShufflingParams } from "./shuffle.js";
 
 // this is to sync the constant from zig to Bun which is 0xffffffff
 const ERROR_INDEX = binding.getErrorIndex();
@@ -18,6 +19,8 @@ export function computeProposerIndex(
 	effectiveBalanceIncrement: number,
 	rounds: number,
 ): number {
+	validateShufflingParams(activeIndices, seed, rounds);
+
 	const result = binding.computeProposerIndex(
 		seed,
 		seed.length,
@@ -44,6 +47,8 @@ export function computeProposerIndexElectra(
 	effectiveBalanceIncrement: number,
 	rounds: number,
 ): number {
+	validateShufflingParams(activeIndices, seed, rounds);
+
 	const result = binding.computeProposerIndexElectra(
 		seed,
 		seed.length,
@@ -71,6 +76,8 @@ export function computeSyncCommitteeIndices(
 	effectiveBalanceIncrement: number,
 	rounds: number,
 ): Uint32Array {
+	validateShufflingParams(activeIndices, seed, rounds);
+
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndices(
 		seed,
@@ -103,6 +110,8 @@ export function computeSyncCommitteeIndicesElectra(
 	effectiveBalanceIncrement: number,
 	rounds: number,
 ): Uint32Array {
+	validateShufflingParams(activeIndices, seed, rounds);
+
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndicesElectra(
 		seed,
