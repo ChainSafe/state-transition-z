@@ -27,24 +27,36 @@ pub const PubkeyIndexMap = struct {
     }
 
     pub fn set(self: *PubkeyIndexMap, key: []const u8, value: Val) !void {
+        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+            return error.InvalidKeyLen;
+        }
         var fixed_key: Key = undefined;
         @memcpy(&fixed_key, key);
         try self.map.put(fixed_key, value);
     }
 
     pub fn get(self: *const PubkeyIndexMap, key: []const u8) ?Val {
+        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+            return null;
+        }
         var fixed_key: Key = undefined;
         @memcpy(&fixed_key, key);
         return self.map.get(fixed_key);
     }
 
     pub fn has(self: *const PubkeyIndexMap, key: []const u8) bool {
+        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+            return false;
+        }
         var fixed_key: Key = undefined;
         @memcpy(&fixed_key, key);
         return self.map.getKey(fixed_key) != null;
     }
 
     pub fn delete(self: *PubkeyIndexMap, key: []const u8) bool {
+        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+            return false;
+        }
         var fixed_key: Key = undefined;
         @memcpy(&fixed_key, key);
         return self.map.remove(fixed_key);

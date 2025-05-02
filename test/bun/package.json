@@ -7,6 +7,10 @@
 		"@types/js-yaml": "^4.0.9",
 		"@biomejs/biome": "^1.9.3",
 		"@chainsafe/benchmark": "^1.2.3",
+		"@chainsafe/as-sha256": "^0.5.0",
+		"@lodestar/params": "^1.27.0",
+		"@lodestar/state-transition": "^1.27.0",
+		"@lodestar/utils": "^1.27.0",
 		"tar": "^7.4.0",
 		"js-yaml": "^4.1.0"
 	},

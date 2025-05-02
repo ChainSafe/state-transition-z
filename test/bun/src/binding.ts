@@ -1,4 +1,4 @@
-import { dlopen, ptr } from "bun:ffi";
+import { dlopen } from "bun:ffi";
 import { getBinaryName, getPrebuiltBinaryPath } from "../utils/index.js";
 
 const binaryName = getBinaryName();
@@ -15,6 +15,10 @@ const lib = dlopen(binaryPath, {
 		returns: "void",
 	},
 	getNotFoundIndex: {
+		args: [],
+		returns: "u32",
+	},
+	getErrorIndex: {
 		args: [],
 		returns: "u32",
 	},
@@ -70,6 +74,47 @@ const lib = dlopen(binaryPath, {
 	releaseAsyncResult: {
 		args: ["u32"],
 		returns: "void",
+	},
+	computeProposerIndexElectra: {
+		args: ["ptr", "u32", "ptr", "u32", "ptr", "u32", "u64", "u32", "u32"],
+		returns: "u32",
+	},
+	computeProposerIndex: {
+		args: ["ptr", "u32", "ptr", "u32", "ptr", "u32", "u8", "u64", "u32", "u32"],
+		returns: "u32",
+	},
+	computeSyncCommitteeIndicesElectra: {
+		args: [
+			"ptr",
+			"u32",
+			"ptr",
+			"u32",
+			"ptr",
+			"u32",
+			"u64",
+			"u32",
+			"u32",
+			"ptr",
+			"u32",
+		],
+		returns: "u32",
+	},
+	computeSyncCommitteeIndices: {
+		arts: [
+			"ptr",
+			"u32",
+			"ptr",
+			"u32",
+			"ptr",
+			"u32",
+			"u8",
+			"u64",
+			"u32",
+			"u32",
+			"ptr",
+			"u32",
+		],
+		returns: "u32",
 	},
 });
 
