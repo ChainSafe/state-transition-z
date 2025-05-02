@@ -40,11 +40,21 @@ jobs:
         run: |
           zig build -Doptimize=ReleaseSafe
 
+      - name: Set shared library artifact prefix
+        id: set_shared_prefix
+        run: |
+          echo "SHARED_LIB_PREFIX=libstate-transition-utils" >> $GITHUB_ENV
+
+      - name: Set static library artifact prefix
+        id: set_static_prefix
+        run: |
+          echo "STATIC_LIB_PREFIX=libstate-transition" >> $GITHUB_ENV
+
       - name: Upload static library artifact for ${{ matrix.settings.platform }}
         uses: actions/upload-artifact@v4
         with:
-          name: libstate-transition-${{ matrix.settings.platform }}.a
-          path: zig-out/lib/libstate-transition.a
+          name: ${{ env.STATIC_LIB_PREFIX }}-${{ matrix.settings.platform }}.a
+          path: zig-out/lib/${{ env.STATIC_LIB_PREFIX }}.a
           compression-level: 0 # No compression
 
       - name: Set shared library extension
@@ -58,8 +68,8 @@ jobs:
       - name: Upload shared library artifact for ${{ matrix.settings.platform }}
         uses: actions/upload-artifact@v4
         with:
-          name: libstate-transition-utils-${{ matrix.settings.platform }}.${{ env.EXT }}
-          path: zig-out/lib/libstate-transition-utils.${{ env.EXT }}
+          name: ${{ env.SHARED_LIB_PREFIX }}-${{ matrix.settings.platform }}.${{ env.EXT }}
+          path: zig-out/lib/${{ env.SHARED_LIB_PREFIX }}.${{ env.EXT }}
           compression-level: 0 # No compression
 
   create-release:
@@ -82,14 +92,14 @@ jobs:
       - name: Organize Release Artifacts
         run: |
           mkdir -p release
-          mv release_tmp/libstate-transition-x86_64-linux.a/libstate-transition.a release/libstate-transition-x86_64-linux.a
-          mv release_tmp/libstate-transition-aarch64-linux.a/libstate-transition.a release/libstate-transition-aarch64-linux.a
-          mv release_tmp/libstate-transition-x86_64-macos.a/libstate-transition.a release/libstate-transition-x86_64-macos.a
-          mv release_tmp/libstate-transition-aarch64-macos.a/libstate-transition.a release/libstate-transition-aarch64-macos.a
-          mv release_tmp/libstate-transition-utils-x86_64-linux.so/libstate-transition-utils.so release/libstate-transition-utils-x86_64-linux.so
-          mv release_tmp/libstate-transition-utils-aarch64-linux.so/libstate-transition-utils.so release/libstate-transition-utils-aarch64-linux.so
-          mv release_tmp/libstate-transition-utils-x86_64-macos.dylib/libstate-transition-utils.dylib release/libstate-transition-utils-x86_64-macos.dylib
-          mv release_tmp/libstate-transition-utils-pk_aarch64-macos.dylib/libstate-transition-utils.dylib release/libstate-transition-utils-aarch64-macos.dylib
+          mv release_tmp/${{ env.STATIC_LIB_PREFIX }}-x86_64-linux.a/${{ env.STATIC_LIB_PREFIX }}.a release/${{ env.STATIC_LIB_PREFIX }}-x86_64-linux.a
+          mv release_tmp/${{ env.STATIC_LIB_PREFIX }}-aarch64-linux.a/${{ env.STATIC_LIB_PREFIX }}.a release/${{ env.STATIC_LIB_PREFIX }}-aarch64-linux.a
+          mv release_tmp/${{ env.STATIC_LIB_PREFIX }}-x86_64-macos.a/${{ env.STATIC_LIB_PREFIX }}.a release/${{ env.STATIC_LIB_PREFIX }}-x86_64-macos.a
+          mv release_tmp/${{ env.STATIC_LIB_PREFIX }}-aarch64-macos.a/${{ env.STATIC_LIB_PREFIX }}.a release/${{ env.STATIC_LIB_PREFIX }}-aarch64-macos.a
+          mv release_tmp/${{ env.SHARED_LIB_PREFIX }}-x86_64-linux.so/${{ env.SHARED_LIB_PREFIX }}.so release/${{ env.SHARED_LIB_PREFIX }}-x86_64-linux.so
+          mv release_tmp/${{ env.SHARED_LIB_PREFIX }}-aarch64-linux.so/${{ env.SHARED_LIB_PREFIX }}.so release/${{ env.SHARED_LIB_PREFIX }}-aarch64-linux.so
+          mv release_tmp/${{ env.SHARED_LIB_PREFIX }}-x86_64-macos.dylib/${{ env.SHARED_LIB_PREFIX }}.dylib release/${{ env.SHARED_LIB_PREFIX }}-x86_64-macos.dylib
+          mv release_tmp/${{ env.SHARED_LIB_PREFIX }}-aarch64-macos.dylib/${{ env.SHARED_LIB_PREFIX }}.dylib release/${{ env.SHARED_LIB_PREFIX }}-aarch64-macos.dylib
 
       - name: List files in release directory
         run: ls -la ${{ github.workspace }}/release
