@@ -5,6 +5,10 @@ on:
     tags:
       - v*
 
+env:
+  STATIC_LIB_PREFIX: libstate-transition
+  SHARED_LIB_PREFIX: libstate-transition-utils
+
 jobs:
   build-and-test:
     strategy:
@@ -39,16 +43,6 @@ jobs:
       - name: Build state-transition-z on ${{ matrix.settings.platform }}
         run: |
           zig build -Doptimize=ReleaseSafe
-
-      - name: Set shared library artifact prefix
-        id: set_shared_prefix
-        run: |
-          echo "SHARED_LIB_PREFIX=libstate-transition-utils" >> $GITHUB_ENV ;;
-
-      - name: Set static library artifact prefix
-        id: set_static_prefix
-        run: |
-          echo "STATIC_LIB_PREFIX=libstate-transition" >> $GITHUB_ENV ;;
 
       - name: Upload static library artifact for ${{ matrix.settings.platform }}
         uses: actions/upload-artifact@v4
@@ -89,7 +83,7 @@ jobs:
       - name: List folders in release_tmp directory
         run: ls -la ${{ github.workspace }}/release_tmp
 
-      - name: Organize Release Artifacts
+      - name: Organize Release Artifacts # TODO: make a for loop?
         run: |
           mkdir -p release
           mv release_tmp/${{ env.STATIC_LIB_PREFIX }}-x86_64-linux.a/${{ env.STATIC_LIB_PREFIX }}.a release/${{ env.STATIC_LIB_PREFIX }}-x86_64-linux.a
