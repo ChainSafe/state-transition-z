@@ -41,7 +41,8 @@ pub const ComputeShuffledIndex = struct {
         const arena = std.heap.ArenaAllocator.init(parent_allocator);
 
         const pivot_by_index = U32U32HashMap.init(parent_allocator);
-        const source_by_position_by_index = U8SliceByU8ByU32.init(parent_allocator);
+        var source_by_position_by_index = U8SliceByU8ByU32.init(parent_allocator);
+        try source_by_position_by_index.ensureTotalCapacity(@intCast(rounds));
 
         var pivot_buffer: [33]u8 = [_]u8{0} ** 33;
         var source_buffer: [37]u8 = [_]u8{0} ** 37;
@@ -101,6 +102,7 @@ pub const ComputeShuffledIndex = struct {
             if (source_by_position == null) {
                 const _source_by_position = try allocator.create(U8SliceByU32);
                 _source_by_position.* = U8SliceByU32.init(allocator);
+                try _source_by_position.*.ensureTotalCapacity(256);
                 try self.source_by_position_by_index.put(@intCast(i), _source_by_position);
                 source_by_position = _source_by_position;
             }
@@ -181,6 +183,7 @@ fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: [
     var compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, @intCast(active_indices.len), rounds);
     defer compute_shuffled_index.deinit();
     var shuffled_result = U32U32HashMap.init(allocator);
+    try shuffled_result.ensureTotalCapacity(@intCast(active_indices.len));
     defer shuffled_result.deinit();
 
     var i: u32 = 0;
