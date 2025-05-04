@@ -6,7 +6,7 @@ const Allocator = std.mem.Allocator;
 
 pub const SEED_SIZE = 32;
 const U32U32HashMap = std.AutoHashMap(u32, u32);
-const U8SliceByU32 = std.AutoHashMap(u32, []const u8);
+const U8SliceByU32 = std.AutoHashMap(u32, [32]u8);
 // note that AutoHashMap always copy data in put() api
 // so value should be a pointer instead of U8SliceByU32 so that it can be freed
 const U8SliceByU8ByU32 = std.AutoHashMap(u32, *U8SliceByU32);
@@ -113,10 +113,8 @@ pub const ComputeShuffledIndex = struct {
                 const u32Slice = std.mem.bytesAsSlice(u32, self.source_buffer[SEED_SIZE + 1 ..]);
                 u32Slice[0] = if (native_endian == .big) @byteSwap(position_div) else position_div;
 
-                const _source = try allocator.alloc(u8, 32);
-                var hash = [_]u8{0} ** 32;
-                Sha256.hash(self.source_buffer[0..], &hash, .{});
-                @memcpy(_source, hash[0..]);
+                var _source: [32]u8 = undefined;
+                Sha256.hash(self.source_buffer[0..], &_source, .{});
                 try source_by_position.?.put(position_div, _source);
                 source = _source;
             }
