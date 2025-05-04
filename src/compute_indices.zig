@@ -91,7 +91,9 @@ pub const ComputeShuffledIndex = struct {
                 const u64Slice = std.mem.bytesAsSlice(u64, digest[0..8]);
                 const u64_value = u64Slice[0];
                 const le_value = if (native_endian == .big) @byteSwap(u64_value) else u64_value;
-                pivot = @intCast(le_value % self.index_count);
+                const _pivot: u32 = @intCast(le_value % self.index_count);
+                try self.pivot_by_index.put(@intCast(i), _pivot);
+                pivot = _pivot;
             }
 
             const flip = (pivot.? + self.index_count - permuted) % self.index_count;
