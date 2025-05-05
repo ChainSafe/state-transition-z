@@ -11,11 +11,13 @@ import { naiveComputeSyncCommitteeIndicesElectra } from "../referenceImplementat
 
 describe("computeIndices", () => {
 	for (const listSize of [
-		// 16384, 250_000,
+		16384, 250_000,
 		1_000_000,
 		// Don't run 4_000_000 since it's very slow and not testnet has gotten there yet
 		// 4e6,
 	]) {
+    // don't want to generate random seed to investigate performance
+    // each seed may lead to different cached items hence different performance
 		const seed = new Uint8Array(32).fill(1);
 		const vc = listSize;
 		const activeIndices = new Uint32Array(
