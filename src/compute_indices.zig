@@ -5,7 +5,6 @@ const native_endian = builtin.target.cpu.arch.endian();
 const Allocator = std.mem.Allocator;
 
 pub const SEED_SIZE = 32;
-const U32U32HashMap = std.AutoHashMap(u32, u32);
 const U8SliceByU32 = std.AutoHashMap(u32, [32]u8);
 // note that AutoHashMap always copy data in put() api
 // so value should be a pointer instead of U8SliceByU32 so that it can be freed
@@ -16,7 +15,7 @@ pub const ComputeShuffledIndex = struct {
     // this ComputeShuffledIndex is always init() and deinit() inside consumer's function so use arena allocator here
     // to improve performance and implify deinit()
     arena: std.heap.ArenaAllocator,
-    pivot_by_index: U32U32HashMap,
+    pivot_by_index: []?u32,
     source_by_position_by_index: U8SliceByU8ByU32,
     // 32 bytes seed + 1 byte i
     pivot_buffer: [33]u8,
@@ -38,9 +37,12 @@ pub const ComputeShuffledIndex = struct {
             return error.InvalidRounds;
         }
 
-        const arena = std.heap.ArenaAllocator.init(parent_allocator);
+        var arena = std.heap.ArenaAllocator.init(parent_allocator);
 
-        const pivot_by_index = U32U32HashMap.init(parent_allocator);
+        const pivot_by_index = try arena.allocator().alloc(?u32, @intCast(rounds));
+        for (0..rounds) |i| {
+            pivot_by_index[i] = null;
+        }
         var source_by_position_by_index = U8SliceByU8ByU32.init(parent_allocator);
         try source_by_position_by_index.ensureTotalCapacity(@intCast(rounds));
 
@@ -61,7 +63,7 @@ pub const ComputeShuffledIndex = struct {
     }
 
     pub fn deinit(self: *ComputeShuffledIndex) void {
-        self.pivot_by_index.deinit();
+        // pivot_by_index is deinit() by arena allocator
 
         var it = self.source_by_position_by_index.iterator();
         while (it.next()) |entry| {
@@ -83,7 +85,7 @@ pub const ComputeShuffledIndex = struct {
         const allocator = self.arena.allocator();
 
         for (0..self.rounds) |i| {
-            var pivot = self.pivot_by_index.get(@intCast(i));
+            var pivot = self.pivot_by_index[@intCast(i)];
             if (pivot == null) {
                 self.pivot_buffer[SEED_SIZE] = @intCast(i % 256);
                 var digest = [_]u8{0} ** 32;
@@ -92,7 +94,8 @@ pub const ComputeShuffledIndex = struct {
                 const u64_value = u64Slice[0];
                 const le_value = if (native_endian == .big) @byteSwap(u64_value) else u64_value;
                 const _pivot: u32 = @intCast(le_value % self.index_count);
-                try self.pivot_by_index.put(@intCast(i), _pivot);
+                // try self.pivot_by_index.put(@intCast(i), _pivot);
+                self.pivot_by_index[@intCast(i)] = _pivot;
                 pivot = _pivot;
             }
 
@@ -182,9 +185,11 @@ fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: [
 
     var compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, @intCast(active_indices.len), rounds);
     defer compute_shuffled_index.deinit();
-    var shuffled_result = U32U32HashMap.init(allocator);
-    try shuffled_result.ensureTotalCapacity(@intCast(active_indices.len));
-    defer shuffled_result.deinit();
+    var shuffled_result = try allocator.alloc(?u32, @intCast(active_indices.len));
+    defer allocator.free(shuffled_result);
+    for (0..active_indices.len) |i| {
+        shuffled_result[i] = null;
+    }
 
     var i: u32 = 0;
     var cached_hash_input = [_]u8{0} ** (32 + 8);
@@ -195,10 +200,10 @@ fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: [
 
     while (next_committee_index < out.len) {
         const index: u32 = @intCast(i % active_indices.len);
-        var shuffled_index = shuffled_result.get(index);
+        var shuffled_index = shuffled_result[index];
         if (shuffled_index == null) {
             const _shuffled_index = try compute_shuffled_index.get(index);
-            try shuffled_result.put(index, _shuffled_index);
+            shuffled_result[index] = _shuffled_index;
             shuffled_index = _shuffled_index;
         }
         const candidate_index = active_indices[@intCast(shuffled_index.?)];
