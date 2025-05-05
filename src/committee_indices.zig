@@ -5,19 +5,16 @@ const native_endian = builtin.target.cpu.arch.endian();
 const Allocator = std.mem.Allocator;
 
 pub const SEED_SIZE = 32;
-const U32U32HashMap = std.AutoHashMap(u32, u32);
-const U8SliceByU32 = std.AutoHashMap(u32, []const u8);
-// note that AutoHashMap always copy data in put() api
-// so value should be a pointer instead of U8SliceByU32 so that it can be freed
-const U8SliceByU8ByU32 = std.AutoHashMap(u32, *U8SliceByU32);
+// model this as []?[32]u8 does not show better performance
+const U8ArrayByU32 = std.AutoHashMap(u32, [32]u8);
 
 /// a Zig implementation of https://github.com/ChainSafe/swap-or-not-shuffle/pull/5
 pub const ComputeShuffledIndex = struct {
     // this ComputeShuffledIndex is always init() and deinit() inside consumer's function so use arena allocator here
     // to improve performance and implify deinit()
     arena: std.heap.ArenaAllocator,
-    pivot_by_index: U32U32HashMap,
-    source_by_position_by_index: U8SliceByU8ByU32,
+    pivot_by_index: []?u32,
+    source_by_position_by_index: []?*U8ArrayByU32,
     // 32 bytes seed + 1 byte i
     pivot_buffer: [33]u8,
     // 32 bytes seed + 1 byte i + 4 bytes positionDiv
@@ -38,10 +35,12 @@ pub const ComputeShuffledIndex = struct {
             return error.InvalidRounds;
         }
 
-        const arena = std.heap.ArenaAllocator.init(parent_allocator);
+        var arena = std.heap.ArenaAllocator.init(parent_allocator);
 
-        const pivot_by_index = U32U32HashMap.init(parent_allocator);
-        const source_by_position_by_index = U8SliceByU8ByU32.init(parent_allocator);
+        const pivot_by_index = try arena.allocator().alloc(?u32, @intCast(rounds));
+        @memset(pivot_by_index, null);
+        const source_by_position_by_index = try arena.allocator().alloc(?*U8ArrayByU32, @intCast(rounds));
+        @memset(source_by_position_by_index, null);
 
         var pivot_buffer: [33]u8 = [_]u8{0} ** 33;
         var source_buffer: [37]u8 = [_]u8{0} ** 37;
@@ -60,18 +59,16 @@ pub const ComputeShuffledIndex = struct {
     }
 
     pub fn deinit(self: *ComputeShuffledIndex) void {
-        self.pivot_by_index.deinit();
+        // pivot_by_index is deinit() by arena allocator
 
-        var it = self.source_by_position_by_index.iterator();
-        while (it.next()) |entry| {
-            var source_by_position = entry.value_ptr.*;
-            // no need to loop through values and free the sources inside source_by_position thanks to arena
-            source_by_position.deinit();
-            // we create() source_by_position in the below get() api
-            // but no need to destroy() it thanks to arena
+        for (0..self.rounds) |i| {
+            const source_by_position = self.source_by_position_by_index[@intCast(i)];
+            if (source_by_position) |item| {
+                item.deinit();
+            }
         }
 
-        self.source_by_position_by_index.deinit();
+        // source_by_position_by_index is deinit() by arena allocator
 
         // this needs to be the last step
         self.arena.deinit();
@@ -82,7 +79,7 @@ pub const ComputeShuffledIndex = struct {
         const allocator = self.arena.allocator();
 
         for (0..self.rounds) |i| {
-            var pivot = self.pivot_by_index.get(@intCast(i));
+            var pivot = self.pivot_by_index[@intCast(i)];
             if (pivot == null) {
                 self.pivot_buffer[SEED_SIZE] = @intCast(i % 256);
                 var digest = [_]u8{0} ** 32;
@@ -90,18 +87,21 @@ pub const ComputeShuffledIndex = struct {
                 const u64Slice = std.mem.bytesAsSlice(u64, digest[0..8]);
                 const u64_value = u64Slice[0];
                 const le_value = if (native_endian == .big) @byteSwap(u64_value) else u64_value;
-                pivot = @intCast(le_value % self.index_count);
+                const _pivot: u32 = @intCast(le_value % self.index_count);
+                self.pivot_by_index[@intCast(i)] = _pivot;
+                pivot = _pivot;
             }
 
             const flip = (pivot.? + self.index_count - permuted) % self.index_count;
             const position = @max(permuted, flip);
             const position_div: u32 = position / 256;
 
-            var source_by_position = self.source_by_position_by_index.get(@intCast(i));
+            var source_by_position = self.source_by_position_by_index[@intCast(i)];
             if (source_by_position == null) {
-                const _source_by_position = try allocator.create(U8SliceByU32);
-                _source_by_position.* = U8SliceByU32.init(allocator);
-                try self.source_by_position_by_index.put(@intCast(i), _source_by_position);
+                const _source_by_position = try allocator.create(U8ArrayByU32);
+                _source_by_position.* = U8ArrayByU32.init(allocator);
+                try _source_by_position.*.ensureTotalCapacity(256);
+                self.source_by_position_by_index[@intCast(i)] = _source_by_position;
                 source_by_position = _source_by_position;
             }
 
@@ -111,10 +111,8 @@ pub const ComputeShuffledIndex = struct {
                 const u32Slice = std.mem.bytesAsSlice(u32, self.source_buffer[SEED_SIZE + 1 ..]);
                 u32Slice[0] = if (native_endian == .big) @byteSwap(position_div) else position_div;
 
-                const _source = try allocator.alloc(u8, 32);
-                var hash = [_]u8{0} ** 32;
-                Sha256.hash(self.source_buffer[0..], &hash, .{});
-                @memcpy(_source, hash[0..]);
+                var _source: [32]u8 = undefined;
+                Sha256.hash(self.source_buffer[0..], &_source, .{});
                 try source_by_position.?.put(position_div, _source);
                 source = _source;
             }
@@ -180,8 +178,9 @@ fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: [
 
     var compute_shuffled_index = try ComputeShuffledIndex.init(allocator, seed, @intCast(active_indices.len), rounds);
     defer compute_shuffled_index.deinit();
-    var shuffled_result = U32U32HashMap.init(allocator);
-    defer shuffled_result.deinit();
+    var shuffled_result = try allocator.alloc(?u32, @intCast(active_indices.len));
+    defer allocator.free(shuffled_result);
+    @memset(shuffled_result, null);
 
     var i: u32 = 0;
     var cached_hash_input = [_]u8{0} ** (32 + 8);
@@ -192,10 +191,10 @@ fn getCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: [
 
     while (next_committee_index < out.len) {
         const index: u32 = @intCast(i % active_indices.len);
-        var shuffled_index = shuffled_result.get(index);
+        var shuffled_index = shuffled_result[index];
         if (shuffled_index == null) {
             const _shuffled_index = try compute_shuffled_index.get(index);
-            try shuffled_result.put(index, _shuffled_index);
+            shuffled_result[index] = _shuffled_index;
             shuffled_index = _shuffled_index;
         }
         const candidate_index = active_indices[@intCast(shuffled_index.?)];
