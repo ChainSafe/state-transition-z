@@ -88,7 +88,6 @@ pub const ComputeShuffledIndex = struct {
                 const u64_value = u64Slice[0];
                 const le_value = if (native_endian == .big) @byteSwap(u64_value) else u64_value;
                 const _pivot: u32 = @intCast(le_value % self.index_count);
-                // try self.pivot_by_index.put(@intCast(i), _pivot);
                 self.pivot_by_index[@intCast(i)] = _pivot;
                 pivot = _pivot;
             }
