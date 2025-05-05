@@ -3,3 +3,4 @@
 zig-out/
 
 test/bun/node_modules/
+test/bun/benchmark_data/
