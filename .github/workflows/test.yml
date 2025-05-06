@@ -39,7 +39,7 @@ jobs:
       - name: Install Zig
         uses: mlugg/setup-zig@v1
         with:
-          version: "0.13.0" # Set the required Zig version
+          version: "0.14.0" # Set the required Zig version
 
       - name: Build and Test
         run: |
