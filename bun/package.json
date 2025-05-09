@@ -1,5 +1,5 @@
 {
-	"name": "state-transition-bun",
+	"name": "state-transition-z",
 	"module": "src/index.ts",
 	"type": "module",
   "dependencies": {
@@ -38,6 +38,7 @@
       "darwin-x64",
       "darwin-arm64"
     ],
+    "optimize": "ReleaseSafe",
     "zigCwd": "zig"
   }
 }
