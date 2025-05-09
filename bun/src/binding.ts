@@ -124,7 +124,7 @@ const fns = {
   },
 };
 
-let binding : ConvertFns<typeof fns> = null;
+let binding : ConvertFns<typeof fns> | null = null;
 
 // Load the compiled Zig shared library
 const libPromise = await openLibrary(import.meta.dirname, fns);

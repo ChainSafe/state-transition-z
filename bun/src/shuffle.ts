@@ -1,6 +1,5 @@
 import { getBinding } from "./binding.js";
 
-const binding = getBinding();
 /**
  * shuffle a list of indices in place
  * activeIndices is modified, we return it for convenience and make it the same to @chainsafe/swap-or-not-shuffle
@@ -12,6 +11,7 @@ export function shuffleList(
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
 
+  const binding = getBinding();
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.shuffleList(
 		clonedActiveIndices,
@@ -38,6 +38,7 @@ export function unshuffleList(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
+  const binding = getBinding();
 
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.unshuffleList(
@@ -76,6 +77,7 @@ export function withPollingParams(
 	if (timeToWaitMs < 0 || pollEveryMs <= 0 || timeoutMs <= 0) {
 		throw new Error("Invalid parameter");
 	}
+  const binding = getBinding();
 
 	async function doShuffleList(
 		activeIndices: Uint32Array,

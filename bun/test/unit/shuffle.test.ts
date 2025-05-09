@@ -1,12 +1,12 @@
-import { describe, expect, it, before } from "bun:test";
+import { describe, expect, it, beforeAll } from "bun:test";
 import { randomBytes } from "node:crypto";
 import {
 	shuffleList,
 	unshuffleList,
 	withPollingParams,
-} from "../../src/shuffle.js";
+  initBinding,
+} from "../../src/index.js";
 import * as referenceImplementation from "../referenceImplementation.js";
-import { initBinding } from "../../src/binding.js";
 
 // start polling right after the call for every 1ms, throw error if after 100ms
 const { asyncShuffleList, asyncUnshuffleList } = withPollingParams(0, 1, 100);
@@ -28,7 +28,7 @@ describe("unshuffleList", () => {
 		},
 	];
 
-  before(async () => {
+  beforeAll(async () => {
     await initBinding();
   });
 
