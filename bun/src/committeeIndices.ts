@@ -1,8 +1,8 @@
-import { binding } from "./binding.js";
+import { getBinding } from "./binding.js";
 import { validateShufflingParams } from "./shuffle.js";
 
 // this is to sync the constant from zig to Bun which is 0xffffffff
-const ERROR_INDEX = binding.getErrorIndex();
+const ERROR_INDEX = 0xffffffff;
 
 /** Pre-electra, byte count for random value is 1, post-electra, byte count for random value is 2 */
 export declare enum ByteCount {
@@ -20,6 +20,7 @@ export function computeProposerIndex(
 	rounds: number,
 ): number {
 	validateShufflingParams(activeIndices, seed, rounds);
+  const binding = getBinding();
 
 	const result = binding.computeProposerIndex(
 		seed,
@@ -48,6 +49,7 @@ export function computeProposerIndexElectra(
 	rounds: number,
 ): number {
 	validateShufflingParams(activeIndices, seed, rounds);
+  const binding = getBinding();
 
 	const result = binding.computeProposerIndexElectra(
 		seed,
@@ -77,6 +79,7 @@ export function computeSyncCommitteeIndices(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
+  const binding = getBinding();
 
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndices(
@@ -111,6 +114,7 @@ export function computeSyncCommitteeIndicesElectra(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
+  const binding = getBinding();
 
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndicesElectra(
