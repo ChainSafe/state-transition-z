@@ -1,15 +1,6 @@
-import {type ConvertFns, type Library} from "bun:ffi";
-import {openLibrary, FFIFunction} from "@chainsafe/bun-ffi-z";
-
-// import { dlopen } from "bun:ffi";
-// import { getBinaryName, getPrebuiltBinaryPath } from "../utils/index.js";
-
-// const binaryName = getBinaryName();
-// const binaryPath = getPrebuiltBinaryPath(binaryName);
-
-// export const binding = lib.symbols;
-
-// export async function init(): Promise<Record<string, FFIFunction>> {
+import {type ConvertFns} from "bun:ffi";
+import {openLibrary} from "@chainsafe/bun-ffi-z";
+import path from "node:path";
 
 const fns = {
   createPubkeyIndexMap: {
@@ -127,7 +118,7 @@ const fns = {
 let binding : ConvertFns<typeof fns> | null = null;
 
 // Load the compiled Zig shared library
-const libPromise = await openLibrary(import.meta.dirname, fns);
+const libPromise = await openLibrary(path.resolve("../bun"), fns);
 
 export async function initBinding(): Promise<void> {
   const lib = await libPromise;
