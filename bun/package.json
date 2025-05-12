@@ -1,5 +1,5 @@
 {
-	"name": "state-transition-z",
+	"name": "@chainsafe/state-transition-bun",
 	"module": "src/index.ts",
 	"type": "module",
   "dependencies": {
@@ -29,7 +29,7 @@
 		"lint:fix": "yarn lint --write"
 	},
   "bun-ffi-z": {
-    "name": "state-transition-z",
+    "name": "state-transition-utils",
     "targets": [
       "linux-x64-gnu",
       "linux-arm64-gnu",
@@ -39,6 +39,6 @@
       "darwin-arm64"
     ],
     "optimize": "ReleaseSafe",
-    "zigCwd": "zig"
+    "zigCwd": ".."
   }
 }
