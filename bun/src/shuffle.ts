@@ -77,7 +77,6 @@ export function withPollingParams(
 	if (timeToWaitMs < 0 || pollEveryMs <= 0 || timeoutMs <= 0) {
 		throw new Error("Invalid parameter");
 	}
-  const binding = getBinding();
 
 	async function doShuffleList(
 		activeIndices: Uint32Array,
@@ -108,7 +107,8 @@ export function withPollingParams(
 		}
 
 		return new Promise((resolve, reject) => {
-			const interval = setInterval(() => {
+      const binding = getBinding();
+      const interval = setInterval(() => {
 				if (Date.now() - start > timeoutMs) {
 					clearInterval(interval);
 					binding.releaseAsyncResult(pointerIdx);
@@ -143,14 +143,18 @@ export function withPollingParams(
 			activeIndices: Uint32Array,
 			seed: Uint8Array,
 			rounds: number,
-		): Promise<Uint32Array> =>
-			doShuffleList(activeIndices, seed, rounds, binding.asyncShuffleList),
+		): Promise<Uint32Array> => {
+      const binding = getBinding();
+      return doShuffleList(activeIndices, seed, rounds, binding.asyncShuffleList);
+    },
 		asyncUnshuffleList: (
 			activeIndices: Uint32Array,
 			seed: Uint8Array,
 			rounds: number,
-		): Promise<Uint32Array> =>
-			doShuffleList(activeIndices, seed, rounds, binding.asyncUnshuffleList),
+		): Promise<Uint32Array> => {
+      const binding = getBinding();
+			return doShuffleList(activeIndices, seed, rounds, binding.asyncUnshuffleList);
+    },
 	};
 }
 
