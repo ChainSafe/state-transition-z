@@ -120,11 +120,17 @@ let binding: ConvertFns<typeof fns> | null = null;
 // Load the compiled Zig shared library
 const libPromise = await openLibrary(path.resolve("../bun"), fns);
 
+/**
+ * Call this api to initialize the binding.
+ */
 export async function initBinding(): Promise<void> {
 	const lib = await libPromise;
 	binding = lib.symbols;
 }
 
+/**
+ * Get the binding.
+ */
 export function getBinding(): ConvertFns<typeof fns> {
 	if (binding == null) {
 		throw new Error("Binding not initialized. Call init() first.");
@@ -132,7 +138,11 @@ export function getBinding(): ConvertFns<typeof fns> {
 	return binding;
 }
 
+/**
+ * Call this api to close the binding.
+ */
 export async function closeBinding(): Promise<void> {
 	const lib = await libPromise;
 	lib.close();
+	binding = null;
 }
