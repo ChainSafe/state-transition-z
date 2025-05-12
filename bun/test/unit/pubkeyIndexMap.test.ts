@@ -1,10 +1,10 @@
-import { describe, expect, it, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { PubkeyIndexMap, initBinding } from "../../src/index.js";
 
 describe("PubkeyIndexMap", () => {
-  beforeAll(async () => {
-    await initBinding();
-  });
+	beforeAll(async () => {
+		await initBinding();
+	});
 
 	it("should init/populate/get/set/remove/clear", () => {
 		const map = new PubkeyIndexMap();

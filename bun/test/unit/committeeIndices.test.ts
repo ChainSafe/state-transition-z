@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { randomBytes } from "node:crypto";
 import {
 	EFFECTIVE_BALANCE_INCREMENT,
@@ -12,14 +12,14 @@ import { computeProposerIndex } from "@lodestar/state-transition";
 import {
 	computeProposerIndexElectra,
 	computeSyncCommitteeIndicesElectra,
-  initBinding,
+	initBinding,
 } from "../../src/index.js";
 import { naiveComputeSyncCommitteeIndicesElectra } from "../referenceImplementation.js";
 
 describe("computeProposerIndex", () => {
-  beforeAll(async () => {
-    await initBinding();
-  });
+	beforeAll(async () => {
+		await initBinding();
+	});
 
 	it("should compute the same index as reference implementation", async () => {
 		const seed = randomBytes(32);

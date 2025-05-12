@@ -1,10 +1,10 @@
-import { describe, expect, it, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { randomBytes } from "node:crypto";
 import {
+	initBinding,
 	shuffleList,
 	unshuffleList,
 	withPollingParams,
-  initBinding,
 } from "../../src/index.js";
 import * as referenceImplementation from "../referenceImplementation.js";
 
@@ -28,9 +28,9 @@ describe("unshuffleList", () => {
 		},
 	];
 
-  beforeAll(async () => {
-    await initBinding();
-  });
+	beforeAll(async () => {
+		await initBinding();
+	});
 
 	const seed = new Uint8Array(32).fill(0);
 	const rounds = 32;

@@ -61,22 +61,21 @@ jobs:
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           bun --version
 
-      # # TODOs
-      # - name: Bun - Install Dependencies
-      #   run: bun install
-      #   working-directory: ./test/bun
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
 
-      # - name: Bun - Lint Code
-      #   run: bun lint
-      #   working-directory: ./test/bun
+      - name: Bun - Lint Code
+        run: bun lint
+        working-directory: ./bun
 
-      # - name: Bun - Unit Tests
-      #   run: bun test:unit
-      #   working-directory: ./test/bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
 
-      # - name: Benchmark
-      #   run: bun benchmark
-      #   working-directory: ./test/bun
-      #   env:
-      #     # To write to PRs and commits
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Benchmark
+        run: bun benchmark
+        working-directory: ./bun
+        env:
+          # To write to PRs and commits
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,7 +20,7 @@ export function computeProposerIndex(
 	rounds: number,
 ): number {
 	validateShufflingParams(activeIndices, seed, rounds);
-  const binding = getBinding();
+	const binding = getBinding();
 
 	const result = binding.computeProposerIndex(
 		seed,
@@ -49,7 +49,7 @@ export function computeProposerIndexElectra(
 	rounds: number,
 ): number {
 	validateShufflingParams(activeIndices, seed, rounds);
-  const binding = getBinding();
+	const binding = getBinding();
 
 	const result = binding.computeProposerIndexElectra(
 		seed,
@@ -79,7 +79,7 @@ export function computeSyncCommitteeIndices(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
-  const binding = getBinding();
+	const binding = getBinding();
 
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndices(
@@ -114,7 +114,7 @@ export function computeSyncCommitteeIndicesElectra(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
-  const binding = getBinding();
+	const binding = getBinding();
 
 	const out = new Uint32Array(syncCommitteeSize);
 	const result = binding.computeSyncCommitteeIndicesElectra(

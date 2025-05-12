@@ -11,7 +11,7 @@ export function shuffleList(
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
 
-  const binding = getBinding();
+	const binding = getBinding();
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.shuffleList(
 		clonedActiveIndices,
@@ -38,7 +38,7 @@ export function unshuffleList(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
-  const binding = getBinding();
+	const binding = getBinding();
 
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.unshuffleList(
@@ -107,8 +107,8 @@ export function withPollingParams(
 		}
 
 		return new Promise((resolve, reject) => {
-      const binding = getBinding();
-      const interval = setInterval(() => {
+			const binding = getBinding();
+			const interval = setInterval(() => {
 				if (Date.now() - start > timeoutMs) {
 					clearInterval(interval);
 					binding.releaseAsyncResult(pointerIdx);
@@ -144,17 +144,27 @@ export function withPollingParams(
 			seed: Uint8Array,
 			rounds: number,
 		): Promise<Uint32Array> => {
-      const binding = getBinding();
-      return doShuffleList(activeIndices, seed, rounds, binding.asyncShuffleList);
-    },
+			const binding = getBinding();
+			return doShuffleList(
+				activeIndices,
+				seed,
+				rounds,
+				binding.asyncShuffleList,
+			);
+		},
 		asyncUnshuffleList: (
 			activeIndices: Uint32Array,
 			seed: Uint8Array,
 			rounds: number,
 		): Promise<Uint32Array> => {
-      const binding = getBinding();
-			return doShuffleList(activeIndices, seed, rounds, binding.asyncUnshuffleList);
-    },
+			const binding = getBinding();
+			return doShuffleList(
+				activeIndices,
+				seed,
+				rounds,
+				binding.asyncUnshuffleList,
+			);
+		},
 	};
 }
 
