@@ -73,6 +73,7 @@ jobs:
         working-directory: ./bun
 
       - name: Benchmark
+        if: matrix.settings.os == 'ubuntu-latest' and matrix.settings.arch == 'x86_64'
         run: bun benchmark
         working-directory: ./bun
         env:
@@ -96,7 +97,7 @@ jobs:
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
           name: bindings-ubuntu-latest-x86_64
-          path: zig-out/lib
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Install Bun
         run: |
           curl -fsSL https://bun.sh/install | bash
