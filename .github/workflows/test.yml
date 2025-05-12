@@ -79,3 +79,10 @@ jobs:
         env:
           # To write to PRs and commits
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Zig Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.os }}-${{ matrix.settings.arch }}
+          path: 'zig-out/lib/libstate-transition-utils.*'
+          if-no-files-found: error
