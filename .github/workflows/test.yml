@@ -190,7 +190,7 @@ jobs:
             bun test test/unit/pubkeyIndexMap.test.ts
 
   bun-macos:
-    name: Test bindings on macos x86_64 and arm64
+    name: Test bindings on macos and windows
     needs: zig-build-upload
     strategy:
       matrix:
@@ -199,6 +199,8 @@ jobs:
             target: x86_64-macos-none
           - os: macos-latest
             target: aarch64-macos-none
+          - os: windows-latest
+            target: x86_64-windows-msvc
     runs-on: ${{ matrix.settings.os }}
     steps:
       - name: Checkout Repository
