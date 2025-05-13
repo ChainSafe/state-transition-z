@@ -114,3 +114,29 @@ jobs:
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
+
+  test-linux-arm64-gnu-downloaded-artifacts:
+    name: Test bindings on linux-arm64-gnu
+    needs: zig-build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: bindings-ubuntu-latest-aarch64
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Setup and run tests using Bun
+        uses: addnab/docker-run-action@v3
+        with:
+          image: oven/bun:1.2.13
+          options: '--platform linux/arm64 -v ${{ github.workspace }}:/project -w /project/bun'
+          run: |
+            bun install
+            bun test:unit
