@@ -15,10 +15,10 @@ jobs:
         settings:
           - os: ubuntu-latest
             target: x86_64-linux-gnu
-          - os: ubuntu-latest
-            target: x86_64-linux-musl
           - os: ubuntu-24.04-arm
             target: aarch64-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-linux-musl
           - os: ubuntu-24.04-arm
             target: aarch64-linux-musl
           - os: macos-13
