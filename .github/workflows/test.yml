@@ -72,19 +72,46 @@ jobs:
         run: bun test:unit
         working-directory: ./bun
 
-      - name: Benchmark
-        run: bun benchmark
-        working-directory: ./bun
-        env:
-          # To write to PRs and commits
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.os }}-${{ matrix.settings.arch }}
           path: 'zig-out/lib/libstate-transition-utils.*'
           if-no-files-found: error
+  benchmark:
+    name: run benchmark on ubuntu-latest x86_64
+    needs: zig-build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: bindings-ubuntu-latest-x86_64
+          path: zig-out/lib
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          # Append Bun's bin folder to the GitHub Actions PATH.
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bun --version
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Bun - Lint Code
+        run: bun lint
+        working-directory: ./bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
+      - name: Benchmark
+        run: bun benchmark
+        working-directory: ./bun
+        env:
+          # To write to PRs and commits
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   test-linux-x64-gnu-downloaded-artifacts:
     name: Test bindings on linux-x64-gnu
     needs: zig-build-test
