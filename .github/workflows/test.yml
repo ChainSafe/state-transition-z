@@ -14,13 +14,17 @@ jobs:
       matrix:
         settings:
           - os: ubuntu-latest
-            arch: x86_64
+            target: x86_64-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-linux-musl
           - os: ubuntu-24.04-arm
-            arch: aarch64
+            target: aarch64-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-linux-musl
           - os: macos-13
-            arch: x86_64
+            target: x86_64-macos-none
           - os: macos-latest
-            arch: aarch64
+            target: aarch64-macos-none
 
     runs-on: ${{ matrix.settings.os }}
 
@@ -30,28 +34,18 @@ jobs:
         with:
           submodules: recursive # Ensures submodules are cloned
           fetch-depth: 0        # Fetches the entire history for all branches
-
-      - name: Print OS ${{ matrix.settings.os }}
-        run: uname -a
-      - name: Print Architecture ${{ matrix.settings.arch }}
-        run: uname -m
-
       - name: Install Zig
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
-
       - name: Build and Test
         run: |
           zig build test
-
       - name: Build binary
-        run: zig build -Doptimize=ReleaseSafe
-
+        run: zig build -Dtarget=${{ matrix.settings.target }} -Doptimize=ReleaseSafe
       - name: Check binary
         run: |
           ls -la zig-out/lib
-
       - name: Install Bun
         run: |
           curl -fsSL https://bun.sh/install | bash
@@ -59,25 +53,22 @@ jobs:
           # Append Bun's bin folder to the GitHub Actions PATH.
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           bun --version
-
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
-
       - name: Bun - Lint Code
         run: bun lint
         working-directory: ./bun
-
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
-
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bindings-${{ matrix.settings.os }}-${{ matrix.settings.arch }}
+          name: bindings-${{ matrix.settings.target }}
           path: 'zig-out/lib/libstate-transition-utils.*'
           if-no-files-found: error
+
   benchmark:
     name: run benchmark on ubuntu-latest x86_64
     needs: zig-build-test
@@ -88,7 +79,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-ubuntu-latest-x86_64
+          name: bindings-x86_64-linux-gnu
           path: zig-out/lib
       - name: Install Bun
         run: |
@@ -112,6 +103,7 @@ jobs:
         env:
           # To write to PRs and commits
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test-linux-x64-gnu-downloaded-artifacts:
     name: Test bindings on linux-x64-gnu
     needs: zig-build-test
@@ -122,7 +114,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-ubuntu-latest-x86_64
+          name: bindings-x86_64-linux-gnu
           path: zig-out/lib
       - name: Install Bun
         run: |
@@ -140,6 +132,7 @@ jobs:
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
+
   test-linux-arm64-gnu-downloaded-artifacts:
     name: Test bindings on linux-arm64-gnu
     needs: zig-build-test
@@ -150,7 +143,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-ubuntu-24.04-arm-aarch64
+          name: bindings-aarch64-linux-gnu
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
