@@ -49,7 +49,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bindings-${{ matrix.settings.target }}
-          path: 'zig-out/lib/libstate-transition-utils.*'
+          path: 'zig-out/lib/*state-transition-utils.*'
           if-no-files-found: error
 
   bun-benchmark:
