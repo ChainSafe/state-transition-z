@@ -189,3 +189,39 @@ jobs:
           run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
             bun install
             bun test test/unit/pubkeyIndexMap.test.ts
+
+  bun-macos:
+    name: Test bindings on macos x86_64 and arm64
+    needs: zig-build-upload
+    strategy:
+      matrix:
+        settings:
+          - os: macos-13
+            target: x86_64-macos-none
+          - os: macos-latest
+            target: aarch64-macos-none
+    runs-on: ${{ matrix.settings.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export PATH="$HOME/.bun/bin:$PATH"
+          # Append Bun's bin folder to the GitHub Actions PATH.
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          bun --version
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Bun - Lint Code
+        run: bun lint
+        working-directory: ./bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
