@@ -160,7 +160,6 @@ jobs:
         with:
           image: oven/bun:1.2.13-alpine
           options: '-v ${{ github.workspace }}:/project -w /project/bun'
-          run: | # cannot run committeeIndices.test.ts due to musl is not available there
+          run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
             bun install
             bun test test/unit/pubkeyIndexMap.test.ts
-            bun test test/unit/shuffle.test.ts
