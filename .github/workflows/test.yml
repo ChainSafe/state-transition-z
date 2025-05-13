@@ -163,3 +163,29 @@ jobs:
           run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
             bun install
             bun test test/unit/pubkeyIndexMap.test.ts
+
+  bun-linux-arm64-musl:
+    name: Test bindings on linux-arm64-musl
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: bindings-aarch64-linux-musl
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Setup and run tests using Bun
+        uses: addnab/docker-run-action@v3
+        with:
+          image: oven/bun:1.2.13-alpine
+          options: '--platform linux/arm64 -v ${{ github.workspace }}:/project -w /project/bun'
+          run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
+            bun install
+            bun test test/unit/pubkeyIndexMap.test.ts
