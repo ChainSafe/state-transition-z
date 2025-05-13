@@ -114,7 +114,6 @@ jobs:
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
-
   test-linux-arm64-gnu-downloaded-artifacts:
     name: Test bindings on linux-arm64-gnu
     needs: zig-build-test
