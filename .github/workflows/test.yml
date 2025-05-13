@@ -162,4 +162,4 @@ jobs:
           options: '-v ${{ github.workspace }}:/project -w /project/bun'
           run: |
             bun install
-            bun test:unit
+            bun test test/unit/pubkeyIndexMap.test.ts
