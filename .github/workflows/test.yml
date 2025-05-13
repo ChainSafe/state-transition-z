@@ -45,9 +45,6 @@ jobs:
           zig build test
       - name: Build binary
         run: zig build -Dtarget=${{ matrix.settings.target }} -Doptimize=ReleaseSafe
-      - name: Check binary
-        run: |
-          ls -la zig-out/lib
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
