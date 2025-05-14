@@ -1,4 +1,4 @@
-import { getBinding } from "./binding.js";
+import { binding } from "./binding.js";
 
 /**
  * shuffle a list of indices in place
@@ -11,7 +11,6 @@ export function shuffleList(
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
 
-	const binding = getBinding();
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.shuffleList(
 		clonedActiveIndices,
@@ -38,7 +37,6 @@ export function unshuffleList(
 	rounds: number,
 ): Uint32Array {
 	validateShufflingParams(activeIndices, seed, rounds);
-	const binding = getBinding();
 
 	const clonedActiveIndices = activeIndices.slice();
 	const result = binding.unshuffleList(
@@ -107,7 +105,6 @@ export function withPollingParams(
 		}
 
 		return new Promise((resolve, reject) => {
-			const binding = getBinding();
 			const interval = setInterval(() => {
 				if (Date.now() - start > timeoutMs) {
 					clearInterval(interval);
@@ -143,28 +140,14 @@ export function withPollingParams(
 			activeIndices: Uint32Array,
 			seed: Uint8Array,
 			rounds: number,
-		): Promise<Uint32Array> => {
-			const binding = getBinding();
-			return doShuffleList(
-				activeIndices,
-				seed,
-				rounds,
-				binding.asyncShuffleList,
-			);
-		},
+		): Promise<Uint32Array> =>
+			doShuffleList(activeIndices, seed, rounds, binding.asyncShuffleList),
 		asyncUnshuffleList: (
 			activeIndices: Uint32Array,
 			seed: Uint8Array,
 			rounds: number,
-		): Promise<Uint32Array> => {
-			const binding = getBinding();
-			return doShuffleList(
-				activeIndices,
-				seed,
-				rounds,
-				binding.asyncUnshuffleList,
-			);
-		},
+		): Promise<Uint32Array> =>
+			doShuffleList(activeIndices, seed, rounds, binding.asyncUnshuffleList),
 	};
 }
 
