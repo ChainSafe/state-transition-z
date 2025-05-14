@@ -3,7 +3,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"dependencies": {
-		"@chainsafe/bun-ffi-z": "https://github.com/twoeths/bun-ffi-z.git#te/fix_open_library"
+		"@chainsafe/bun-ffi-z": "https://github.com/twoeths/bun-ffi-z.git#te/debug_open_library"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
