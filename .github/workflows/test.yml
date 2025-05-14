@@ -65,12 +65,9 @@ jobs:
           name: bindings-x86_64-linux-gnu
           path: zig-out/lib
       - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          export PATH="$HOME/.bun/bin:$PATH"
-          # Append Bun's bin folder to the GitHub Actions PATH.
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          bun --version
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
@@ -100,12 +97,9 @@ jobs:
           name: bindings-x86_64-linux-gnu
           path: zig-out/lib
       - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          export PATH="$HOME/.bun/bin:$PATH"
-          # Append Bun's bin folder to the GitHub Actions PATH.
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          bun --version
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
@@ -211,12 +205,9 @@ jobs:
           name: bindings-${{ matrix.settings.target }}
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          export PATH="$HOME/.bun/bin:$PATH"
-          # Append Bun's bin folder to the GitHub Actions PATH.
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-          bun --version
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
