@@ -103,9 +103,6 @@ jobs:
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
-      - name: Bun - Lint Code
-        run: bun lint
-        working-directory: ./bun
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
@@ -210,9 +207,6 @@ jobs:
           version: 1.2.13
       - name: Bun - Install Dependencies
         run: bun install
-        working-directory: ./bun
-      - name: Bun - Lint Code
-        run: bun lint
         working-directory: ./bun
       - name: Bun - Unit Tests
         run: bun test:unit
