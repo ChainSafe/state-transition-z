@@ -32,12 +32,12 @@
 	"bun-ffi-z": {
 		"name": "state-transition-utils",
 		"targets": [
-			"linux-x64-gnu",
-			"linux-arm64-gnu",
-			"linux-x64-musl",
-			"linux-arm64-musl",
-			"darwin-x64",
-			"darwin-arm64"
+			"x86_64-linux-gnu",
+			"aarch64-linux-gnu",
+			"x86_64-linux-musl",
+			"aarch64-linux-musl",
+			"x86_64-macos-none",
+			"aarch64-macos-none"
 		],
 		"optimize": "ReleaseSafe",
 		"zigCwd": ".."
