@@ -236,9 +236,9 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: bun/artifacts
       - name: List artifacts
-        run: ls -R ./artifacts
+        run: ls -R ./bun/artifacts
         shell: bash
       - name: Prepare target packages
         run: bun prepublishOnly
