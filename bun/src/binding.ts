@@ -1,4 +1,3 @@
-import type { ConvertFns } from "bun:ffi";
 import path from "node:path";
 import { openLibrary } from "@chainsafe/bun-ffi-z";
 
