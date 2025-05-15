@@ -22,7 +22,7 @@
 	},
 	"scripts": {
 		"build": "bun ./node_modules/.bin/bun-ffi-z build",
-    "prepublishOnly": "bun ./node_modules/.bin/bun-ffi-z prepublish --artifacts artifacts",
+		"prepublishOnly": "bun ./node_modules/.bin/bun-ffi-z prepublish --artifacts artifacts",
 		"test:unit": "bun test test/unit",
 		"lint": "biome check",
 		"benchmark": "bun benchmark:files 'test/perf/*.test.ts'",
