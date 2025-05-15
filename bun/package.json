@@ -21,7 +21,7 @@
 		"typescript": "^5.0.0"
 	},
 	"scripts": {
-		"build": "bun ./node_modules/.bin/bun-ffi-z build --zig-cwd '..'",
+		"build": "bun ./node_modules/.bin/bun-ffi-z build",
 		"test:unit": "bun test test/unit",
 		"lint": "biome check",
 		"benchmark": "bun benchmark:files 'test/perf/*.test.ts'",
