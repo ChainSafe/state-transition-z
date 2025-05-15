@@ -117,11 +117,9 @@ const fns = {
 
 // Load the compiled Zig shared library
 const lib = await openLibrary(path.resolve("../bun"), fns);
-export const binding: ConvertFns<typeof fns> = lib.symbols;
+export const binding = lib.symbols;
 
 /**
  * Call this api to close the binding.
  */
-export async function closeBinding(): Promise<void> {
-	lib.close();
-}
+export const close = lib.close;
