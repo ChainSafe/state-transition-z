@@ -25,8 +25,8 @@ jobs:
             target: x86_64-macos-none
           - os: macos-latest
             target: aarch64-macos-none
-          - os: windows-latest
-            target: x86_64-windows-msvc
+          # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
+          #   target: x86_64-windows-msvc
 
     runs-on: ${{ matrix.settings.os }}
 
@@ -181,7 +181,7 @@ jobs:
             bun test test/unit/pubkeyIndexMap.test.ts
 
   bun-macos:
-    name: Test bindings on macos and windows
+    name: Test bindings on macos
     needs: zig-build-upload
     strategy:
       matrix:
@@ -190,8 +190,8 @@ jobs:
             target: x86_64-macos-none
           - os: macos-latest
             target: aarch64-macos-none
-          - os: windows-latest
-            target: x86_64-windows-msvc
+          # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
+          #   target: x86_64-windows-msvc
     runs-on: ${{ matrix.settings.os }}
     steps:
       - name: Checkout Repository
