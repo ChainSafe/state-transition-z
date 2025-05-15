@@ -3,7 +3,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"dependencies": {
-		"@chainsafe/bun-ffi-z": "../../bun-ffi-z"
+		"@chainsafe/bun-ffi-z": "https://github.com/twoeths/bun-ffi-z.git#te/prebuilt_binaries_for_prepublish"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -22,6 +22,7 @@
 	},
 	"scripts": {
 		"build": "bun ./node_modules/.bin/bun-ffi-z build",
+    "prepublishOnly": "bun ./node_modules/.bin/bun-ffi-z prepublish --artifacts artifacts",
 		"test:unit": "bun test test/unit",
 		"lint": "biome check",
 		"benchmark": "bun benchmark:files 'test/perf/*.test.ts'",
