@@ -244,5 +244,5 @@ jobs:
         run: bun prepublishOnly
         working-directory: ./bun
       - name: List target packages
-        run: ls -R ./targetPackages
+        run: ls -R ./bun/targetPackages
         shell: bash
