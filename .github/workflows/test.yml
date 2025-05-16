@@ -71,7 +71,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: x86_64-linux-gnu
+          name: linux-x64-gnu
           path: zig-out/lib
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -103,7 +103,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: x86_64-linux-gnu
+          name: linux-x64-gnu
           path: zig-out/lib
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -126,7 +126,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: aarch64-linux-gnu
+          name: linux-arm64-gnu
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -152,7 +152,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: x86_64-linux-musl
+          name: linux-x64-musl
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Setup and run tests using Bun
         uses: addnab/docker-run-action@v3
@@ -173,7 +173,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: aarch64-linux-musl
+          name: linux-arm64-musl
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
