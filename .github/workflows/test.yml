@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - te/consume_bun-ffi-z_test_publish
   pull_request:
     branches:
       - main
@@ -14,19 +15,19 @@ jobs:
       matrix:
         settings:
           - os: ubuntu-latest
-            target: x86_64-linux-gnu
+            bun-target: linux-x64-gnu
           - os: ubuntu-24.04-arm
-            target: aarch64-linux-gnu
+            bun-target: linux-arm64-gnu
           - os: ubuntu-latest
-            target: x86_64-linux-musl
+            bun-target: linux-x64-musl
           - os: ubuntu-24.04-arm
-            target: aarch64-linux-musl
+            bun-target: linux-arm64-musl
           - os: macos-13
-            target: x86_64-macos-none
+            bun-target: darwin-x64
           - os: macos-latest
-            target: aarch64-macos-none
+            bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
-          #   target: x86_64-windows-msvc
+          #   bun-target: win32-x64-msvc
 
     runs-on: ${{ matrix.settings.os }}
 
@@ -43,12 +44,20 @@ jobs:
       - name: Build and Test
         run: |
           zig build test
-      - name: Build binary
-        run: zig build -Dtarget=${{ matrix.settings.target }} -Doptimize=ReleaseSafe
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Build binary using bun-ffi-z
+        run: bun ./node_modules/.bin/bun-ffi-z build --target ${{ matrix.settings.bun-target }} --optimize ReleaseSafe
+        working-directory: ./bun
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bindings-${{ matrix.settings.target }}
+          name: ${{ matrix.settings.bun-target }}
           path: 'zig-out/lib/*state-transition-utils.*'
           if-no-files-found: error
 
@@ -62,7 +71,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-x86_64-linux-gnu
+          name: linux-x64-gnu
           path: zig-out/lib
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -94,7 +103,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-x86_64-linux-gnu
+          name: linux-x64-gnu
           path: zig-out/lib
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -117,7 +126,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-aarch64-linux-gnu
+          name: linux-arm64-gnu
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -143,7 +152,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-x86_64-linux-musl
+          name: linux-x64-musl
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Setup and run tests using Bun
         uses: addnab/docker-run-action@v3
@@ -164,7 +173,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-aarch64-linux-musl
+          name: linux-arm64-musl
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -180,18 +189,18 @@ jobs:
             bun install
             bun test test/unit/pubkeyIndexMap.test.ts
 
-  bun-macos:
+  bun-darwin:
     name: Test bindings on macos
     needs: zig-build-upload
     strategy:
       matrix:
         settings:
           - os: macos-13
-            target: x86_64-macos-none
+            bun-target: darwin-x64
           - os: macos-latest
-            target: aarch64-macos-none
+            bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
-          #   target: x86_64-windows-msvc
+          #   bun-target: win32-x64-msvc
     runs-on: ${{ matrix.settings.os }}
     steps:
       - name: Checkout Repository
@@ -199,7 +208,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: bindings-${{ matrix.settings.target }}
+          name: ${{ matrix.settings.bun-target }}
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -211,3 +220,37 @@ jobs:
       - name: Bun - Unit Tests
         run: bun test:unit
         working-directory: ./bun
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs:
+      - bun-benchmark
+      - bun-linux-x64-gnu
+      - bun-linux-arm64-gnu
+      - bun-linux-x64-musl
+      - bun-linux-arm64-musl
+      - bun-darwin
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bun/artifacts
+      - name: List artifacts
+        run: ls -R ./bun/artifacts
+        shell: bash
+      - name: Prepare target packages
+        run: bun prepublishOnly
+        working-directory: ./bun
+      - name: List target packages
+        run: ls -R ./bun/targetPackages
+        shell: bash
