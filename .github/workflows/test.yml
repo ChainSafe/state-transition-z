@@ -15,19 +15,19 @@ jobs:
       matrix:
         settings:
           - os: ubuntu-latest
-            target: x86_64-linux-gnu
+            bun-target: linux-x64-gnu
           - os: ubuntu-24.04-arm
-            target: aarch64-linux-gnu
+            bun-target: linux-arm64-gnu
           - os: ubuntu-latest
-            target: x86_64-linux-musl
+            bun-target: linux-x64-musl
           - os: ubuntu-24.04-arm
-            target: aarch64-linux-musl
+            bun-target: linux-arm64-musl
           - os: macos-13
-            target: x86_64-macos-none
+            bun-target: darwin-x64
           - os: macos-latest
-            target: aarch64-macos-none
+            bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
-          #   target: x86_64-windows-msvc
+          #   bun-target: win32-x64-msvc
 
     runs-on: ${{ matrix.settings.os }}
 
@@ -44,12 +44,19 @@ jobs:
       - name: Build and Test
         run: |
           zig build test
-      - name: Build binary
-        run: zig build -Dtarget=${{ matrix.settings.target }} -Doptimize=ReleaseSafe
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Build binary using bun-ffi-z
+        run: bun ./node_modules/.bin/bun-ffi-z build --target ${{ matrix.settings.bun-target }} --optimize ReleaseSafe
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.settings.target }}
+          name: ${{ matrix.settings.bun-target }}
           path: 'zig-out/lib/*state-transition-utils.*'
           if-no-files-found: error
 
@@ -181,18 +188,18 @@ jobs:
             bun install
             bun test test/unit/pubkeyIndexMap.test.ts
 
-  bun-macos:
+  bun-darwin:
     name: Test bindings on macos
     needs: zig-build-upload
     strategy:
       matrix:
         settings:
           - os: macos-13
-            target: x86_64-macos-none
+            bun-target: darwin-x64
           - os: macos-latest
-            target: aarch64-macos-none
+            bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
-          #   target: x86_64-windows-msvc
+          #   bun-target: win32-x64-msvc
     runs-on: ${{ matrix.settings.os }}
     steps:
       - name: Checkout Repository
@@ -200,7 +207,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
         with:
-          name: ${{ matrix.settings.target }}
+          name: ${{ matrix.settings.bun-target }}
           path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -222,7 +229,7 @@ jobs:
       - bun-linux-arm64-gnu
       - bun-linux-x64-musl
       - bun-linux-arm64-musl
-      - bun-macos
+      - bun-darwin
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
