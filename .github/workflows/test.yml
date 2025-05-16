@@ -53,6 +53,7 @@ jobs:
         working-directory: ./bun
       - name: Build binary using bun-ffi-z
         run: bun ./node_modules/.bin/bun-ffi-z build --target ${{ matrix.settings.bun-target }} --optimize ReleaseSafe
+        working-directory: ./bun
       - name: Upload Zig Artifacts
         uses: actions/upload-artifact@v4
         with:
