@@ -3,7 +3,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"dependencies": {
-		"@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git#te/prebuilt_binaries_for_prepublish"
+		"@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
