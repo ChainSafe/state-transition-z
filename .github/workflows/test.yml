@@ -59,6 +59,8 @@ jobs:
         id: release
         with:
           config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          target-branch: te/consume_bun-ffi-z_release-please
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Install Bun
