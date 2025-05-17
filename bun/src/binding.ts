@@ -115,7 +115,7 @@ const fns = {
 };
 
 // Load the compiled Zig shared library
-const lib = await openLibrary(path.resolve("../bun"), fns);
+const lib = await openLibrary(path.resolve("."), fns);
 export const binding = lib.symbols;
 
 /**
