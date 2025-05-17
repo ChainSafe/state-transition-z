@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { PubkeyIndexMap } from "../../src/pubkeyIndexMap.js";
+import { PubkeyIndexMap } from "../../src/index.js";
 
 describe("PubkeyIndexMap", () => {
 	it("should init/populate/get/set/remove/clear", () => {
