@@ -231,13 +231,6 @@ jobs:
       - bun-linux-arm64-musl
       - bun-darwin
     steps:
-      - name: Opening Release PR
-        if: github.ref == 'refs/heads/main'
-        uses: googleapis/release-please-action@v4
-        id: release
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Install Bun
@@ -245,15 +238,24 @@ jobs:
         with:
           version: 1.2.13
       - name: Bun - Install Dependencies
-        if: ${{ steps.release.outputs.release_created }}
         run: bun install
         working-directory: ./bun
       - name: Download all artifacts
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/download-artifact@v4
         with:
           path: bun/artifacts
       - name: List artifacts
-        if: ${{ steps.release.outputs.release_created }}
         run: ls -R ./bun/artifacts
         shell: bash
+      - name: Publish
+        run: bun run publish
+        working-directory: ./bun
+      - name: Upload targetPackages
+        run: |
+          zip -r targetPackages.zip targetPackages
+        working-directory: ./bun
+      - name: Upload targetPackages.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: targetPackages
+          path: ./bun/targetPackages.zip

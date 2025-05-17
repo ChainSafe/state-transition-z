@@ -28,6 +28,7 @@
 		"lint": "biome check",
 		"benchmark": "bun benchmark:files 'test/perf/*.test.ts'",
 		"benchmark:files": "bun ./node_modules/.bin/benchmark --config .benchrc.yaml --defaultBranch main",
+		"publish": "bun ./node_modules/.bin/bun-ffi-z publish --dry-run",
 		"lint:fix": "yarn lint --write"
 	},
 	"bun-ffi-z": {
