@@ -115,7 +115,10 @@ const fns = {
 };
 
 // Load the compiled Zig shared library
-const lib = await openLibrary(path.resolve("../bun"), fns);
+// the first param is bun's cwd
+//   - on dev env it's the cwd which is `./bun`
+//   - on prod env it does not matter because bun-ffi-z will load platfrom-specific package like @chainsafe/state-transition-bun-linux-x64-gnu/libstate-transition-utils.so instead
+const lib = await openLibrary(path.resolve("."), fns);
 export const binding = lib.symbols;
 
 /**
