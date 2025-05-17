@@ -230,10 +230,13 @@ jobs:
       - bun-linux-arm64-musl
       - bun-darwin
     steps:
-      - uses: googleapis/release-please-action@v4
+      - name: Opening Release PR
+        if: github.ref == 'refs/heads/main'
+        uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
       - name: Checkout Repository
         uses: actions/checkout@v4
       - name: Install Bun
