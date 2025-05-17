@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - te/consume_bun-ffi-z_publish
   pull_request:
     branches:
       - main
