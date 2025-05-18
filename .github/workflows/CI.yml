@@ -256,3 +256,15 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: ls -R ./bun/artifacts
         shell: bash
+      - name: Create targetPackages
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun run prepublishOnly
+        working-directory: ./bun
+      - name: List targetPackages
+        if: ${{ steps.release.outputs.release_created }}
+        run: ls -R ./bun/targetPackages
+        shell: bash
+      - name: Publish
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun run publish
+        working-directory: ./bun
