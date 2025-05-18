@@ -240,14 +240,18 @@ jobs:
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
-      - name: Bun - show installed path
-        run: which bun
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: bun/artifacts
       - name: List artifacts
         run: ls -R ./bun/artifacts
+        shell: bash
+      - name: Create targetPackages
+        run: bun run prepublishOnly
+        working-directory: ./bun
+      - name: List targetPackages
+        run: ls -R ./bun/targetPackages
         shell: bash
       - name: Publish
         run: bun run publish
