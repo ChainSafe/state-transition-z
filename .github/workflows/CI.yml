@@ -240,6 +240,8 @@ jobs:
       - name: Bun - Install Dependencies
         run: bun install
         working-directory: ./bun
+      - name: Bun - show installed path
+        run: which bun
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
