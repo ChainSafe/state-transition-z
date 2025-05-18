@@ -4,7 +4,7 @@
 	"module": "src/index.ts",
 	"type": "module",
 	"dependencies": {
-		"@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git#te/fix_publish"
+		"@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
