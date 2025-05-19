@@ -1,7 +1,11 @@
 {
-	"name": "state-transition-bun",
+	"name": "@chainsafe/state-transition-bun",
+	"version": "0.0.0",
 	"module": "src/index.ts",
 	"type": "module",
+	"dependencies": {
+		"@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git"
+	},
 	"devDependencies": {
 		"@types/bun": "latest",
 		"@types/js-yaml": "^4.0.9",
@@ -18,10 +22,26 @@
 		"typescript": "^5.0.0"
 	},
 	"scripts": {
+		"build": "bun ./node_modules/.bin/bun-ffi-z build",
+		"prepublishOnly": "bun ./node_modules/.bin/bun-ffi-z prepublish --artifacts artifacts",
+		"publish": "bun ./node_modules/.bin/bun-ffi-z publish",
 		"test:unit": "bun test test/unit",
 		"lint": "biome check",
 		"benchmark": "bun benchmark:files 'test/perf/*.test.ts'",
 		"benchmark:files": "bun ./node_modules/.bin/benchmark --config .benchrc.yaml --defaultBranch main",
 		"lint:fix": "yarn lint --write"
+	},
+	"bun-ffi-z": {
+		"name": "state-transition-utils",
+		"targets": [
+			"linux-x64-gnu",
+			"linux-arm64-gnu",
+			"linux-x64-musl",
+			"linux-arm64-musl",
+			"darwin-x64",
+			"darwin-arm64"
+		],
+		"optimize": "ReleaseSafe",
+		"zigCwd": ".."
 	}
 }

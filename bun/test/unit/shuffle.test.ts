@@ -4,7 +4,7 @@ import {
 	shuffleList,
 	unshuffleList,
 	withPollingParams,
-} from "../../src/shuffle.js";
+} from "../../src/index.js";
 import * as referenceImplementation from "../referenceImplementation.js";
 
 // start polling right after the call for every 1ms, throw error if after 100ms

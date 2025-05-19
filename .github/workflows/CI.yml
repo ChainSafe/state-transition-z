@@ -1,0 +1,270 @@
+name: Build and Test Zig and Bun
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  zig-build-upload:
+    strategy:
+      matrix:
+        settings:
+          - os: ubuntu-latest
+            bun-target: linux-x64-gnu
+          - os: ubuntu-24.04-arm
+            bun-target: linux-arm64-gnu
+          - os: ubuntu-latest
+            bun-target: linux-x64-musl
+          - os: ubuntu-24.04-arm
+            bun-target: linux-arm64-musl
+          - os: macos-13
+            bun-target: darwin-x64
+          - os: macos-latest
+            bun-target: darwin-arm64
+          # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
+          #   bun-target: win32-x64-msvc
+
+    runs-on: ${{ matrix.settings.os }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # Ensures submodules are cloned
+          fetch-depth: 0        # Fetches the entire history for all branches
+      - name: Install Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: "0.14.0" # Set the required Zig version
+      - name: Build and Test
+        run: |
+          zig build test
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Build binary using bun-ffi-z
+        run: bun ./node_modules/.bin/bun-ffi-z build --target ${{ matrix.settings.bun-target }} --optimize ReleaseSafe
+        working-directory: ./bun
+      - name: Upload Zig Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.settings.bun-target }}
+          path: 'zig-out/lib/*state-transition-utils.*'
+          if-no-files-found: error
+
+  bun-benchmark:
+    name: run benchmark on ubuntu-latest x86_64
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: linux-x64-gnu
+          path: zig-out/lib
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Bun - Lint Code
+        run: bun lint
+        working-directory: ./bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
+      - name: Benchmark
+        run: bun benchmark
+        working-directory: ./bun
+        env:
+          # To write to PRs and commits
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bun-linux-x64-gnu:
+    name: Test bindings on linux-x64-gnu
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: linux-x64-gnu
+          path: zig-out/lib
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
+
+  bun-linux-arm64-gnu:
+    name: Test bindings on linux-arm64-gnu
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: linux-arm64-gnu
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Setup and run tests using Bun
+        uses: addnab/docker-run-action@v3
+        with:
+          image: oven/bun:1.2.13
+          options: '--platform linux/arm64 -v ${{ github.workspace }}:/project -w /project/bun'
+          run: |
+            bun install
+            bun test:unit
+
+  bun-linux-x64-musl:
+    name: Test bindings on linux-x64-musl
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: linux-x64-musl
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Setup and run tests using Bun
+        uses: addnab/docker-run-action@v3
+        with:
+          image: oven/bun:1.2.13-alpine
+          options: '-v ${{ github.workspace }}:/project -w /project/bun'
+          run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
+            bun install
+            bun test test/unit/pubkeyIndexMap.test.ts
+
+  bun-linux-arm64-musl:
+    name: Test bindings on linux-arm64-musl
+    needs: zig-build-upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: linux-arm64-musl
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - name: Setup and run tests using Bun
+        uses: addnab/docker-run-action@v3
+        with:
+          image: oven/bun:1.2.13-alpine
+          options: '--platform linux/arm64 -v ${{ github.workspace }}:/project -w /project/bun'
+          run: | # cannot run committeeIndices.test.ts and shuffle.test.ts due to musl is not available: @chainsafe/pubkey-index-map-linux-x64-musl
+            bun install
+            bun test test/unit/pubkeyIndexMap.test.ts
+
+  bun-darwin:
+    name: Test bindings on macos
+    needs: zig-build-upload
+    strategy:
+      matrix:
+        settings:
+          - os: macos-13
+            bun-target: darwin-x64
+          - os: macos-latest
+            bun-target: darwin-arm64
+          # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
+          #   bun-target: win32-x64-msvc
+    runs-on: ${{ matrix.settings.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4 # no need zig installation, download artifacts from previous job instead
+        with:
+          name: ${{ matrix.settings.bun-target }}
+          path: zig-out/lib # download to the same folder of "zig build -Doptimize=ReleaseSafe"
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        run: bun install
+        working-directory: ./bun
+      - name: Bun - Unit Tests
+        run: bun test:unit
+        working-directory: ./bun
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs:
+      - bun-linux-x64-gnu
+      - bun-linux-arm64-gnu
+      - bun-linux-x64-musl
+      - bun-linux-arm64-musl
+      - bun-darwin
+    steps:
+      - name: Opening Release PR
+        if: github.ref == 'refs/heads/main'
+        uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          version: 1.2.13
+      - name: Bun - Install Dependencies
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun install
+        working-directory: ./bun
+      - name: Download all artifacts
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/download-artifact@v4
+        with:
+          path: bun/artifacts
+      - name: List artifacts
+        if: ${{ steps.release.outputs.release_created }}
+        run: ls -R ./bun/artifacts
+        shell: bash
+      - name: Create targetPackages
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun run prepublishOnly
+        working-directory: ./bun
+      - name: List targetPackages
+        if: ${{ steps.release.outputs.release_created }}
+        run: ls -R ./bun/targetPackages
+        shell: bash
+      - name: Publish
+        if: ${{ steps.release.outputs.release_created }}
+        run: bun run publish
+        working-directory: ./bun
