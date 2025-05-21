@@ -268,3 +268,5 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: bun run publish
         working-directory: ./bun
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
