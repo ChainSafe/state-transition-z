@@ -23,7 +23,7 @@
 	},
 	"scripts": {
 		"build": "bun ./node_modules/.bin/bun-ffi-z build",
-    "generate": "bun ./node_modules/.bin/bun-ffi-z generate-binding",
+		"generate": "bun ./node_modules/.bin/bun-ffi-z generate-binding",
 		"prepublishOnly": "bun ./node_modules/.bin/bun-ffi-z prepublish --artifacts artifacts",
 		"publish": "bun ./node_modules/.bin/bun-ffi-z publish",
 		"test:unit": "bun test test/unit",
@@ -44,8 +44,6 @@
 		],
 		"optimize": "ReleaseSafe",
 		"zigCwd": "..",
-    "zigExportFiles": [
-      "src/root_c_abi.zig"
-    ]
+		"zigExportFiles": ["src/root_c_abi.zig"]
 	}
 }
