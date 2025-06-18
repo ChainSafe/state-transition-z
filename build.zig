@@ -24,6 +24,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const dep_ssz = b.dependency("ssz", .{});
+    lib.root_module.addImport("ssz", dep_ssz.module("ssz"));
+    lib.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
+
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
@@ -90,6 +94,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    lib_unit_tests.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
