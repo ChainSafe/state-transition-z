@@ -1,10 +1,10 @@
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
-pub const PubkeyIndexMap = @import("pubkey_index_map.zig").PubkeyIndexMap;
-const PUBKEY_INDEX_MAP_KEY_SIZE = @import("pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
-const innerShuffleList = @import("shuffle.zig").innerShuffleList;
-const SEED_SIZE = @import("shuffle.zig").SEED_SIZE;
-const committee_indices = @import("committee_indices.zig");
+pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
+const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
+const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
+const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
+const committee_indices = @import("utils/committee_indices.zig");
 const ErrorCode = @import("error.zig").ErrorCode;
 const NOT_FOUND_INDEX = @import("error.zig").NOT_FOUND_INDEX;
 const ERROR_INDEX = @import("error.zig").ERROR_INDEX;
