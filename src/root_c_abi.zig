@@ -1,13 +1,25 @@
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
-pub const PubkeyIndexMap = @import("pubkey_index_map.zig").PubkeyIndexMap;
-const PUBKEY_INDEX_MAP_KEY_SIZE = @import("pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
-const innerShuffleList = @import("shuffle.zig").innerShuffleList;
-const SEED_SIZE = @import("shuffle.zig").SEED_SIZE;
-const committee_indices = @import("committee_indices.zig");
-const ErrorCode = @import("error.zig").ErrorCode;
-const NOT_FOUND_INDEX = @import("error.zig").NOT_FOUND_INDEX;
-const ERROR_INDEX = @import("error.zig").ERROR_INDEX;
+pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
+const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
+const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
+const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
+const committee_indices = @import("utils/committee_indices.zig");
+
+pub const ErrorCode = struct {
+    pub const Success: c_uint = 0;
+    pub const InvalidInput: c_uint = 1;
+    pub const Error: c_uint = 2;
+    pub const TooManyThreadError: c_uint = 2;
+    pub const MemoryError: c_uint = 3;
+    pub const ThreadError: c_uint = 4;
+    pub const InvalidPointerError: c_uint = 5;
+    pub const Pending: c_uint = 10;
+};
+
+// this special index 4,294,967,295 is used to mark a not found
+pub const NOT_FOUND_INDEX = 0xffffffff;
+pub const ERROR_INDEX = 0xffffffff;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
