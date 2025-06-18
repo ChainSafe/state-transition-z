@@ -4,7 +4,7 @@
     "": {
       "name": "@chainsafe/state-transition-bun",
       "dependencies": {
-        "@chainsafe/bun-ffi-z": "../../bun-ffi-z",
+        "@chainsafe/bun-ffi-z": "https://github.com/ChainSafe/bun-ffi-z.git#cayman/generate-binding",
       },
       "devDependencies": {
         "@biomejs/biome": "^1.9.3",
@@ -102,7 +102,7 @@
 
     "@chainsafe/blst-win32-x64-msvc": ["@chainsafe/blst-win32-x64-msvc@2.2.0", "", { "os": "win32", "cpu": "x64" }, "sha512-UFrZshl4dfX5Uh2zeKXAZtrkQ+otczHMON2tsrapQNICWmfHZrzE6pKuBL+9QeGAbgflwpbz7+D5nQRDpiuHxQ=="],
 
-    "@chainsafe/bun-ffi-z": ["@chainsafe/bun-ffi-z@file:../../bun-ffi-z", { "devDependencies": { "@types/bun": "latest" }, "peerDependencies": { "typescript": "^5" }, "bin": { "bun-ffi-z": "src/cli.ts" } }],
+    "@chainsafe/bun-ffi-z": ["@chainsafe/bun-ffi-z@github:ChainSafe/bun-ffi-z#179cdd1", { "peerDependencies": { "typescript": "^5" }, "bin": { "bun-ffi-z": "src/cli.ts" } }, "ChainSafe-bun-ffi-z-179cdd1"],
 
     "@chainsafe/hashtree": ["@chainsafe/hashtree@1.0.1", "", { "optionalDependencies": { "@chainsafe/hashtree-darwin-arm64": "1.0.1", "@chainsafe/hashtree-linux-arm64-gnu": "1.0.1", "@chainsafe/hashtree-linux-x64-gnu": "1.0.1" } }, "sha512-bleu9FjqBeR/l6W1u2Lz+HsS0b0LLJX2eUt3hOPBN7VqOhidx8wzkVh2S7YurS+iTQtfdK4K5QU9tcTGNrGwDg=="],
 
