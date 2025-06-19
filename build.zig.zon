@@ -38,8 +38,8 @@
     .dependencies = .{
         .ssz = .{
             // zig fetch --save git+https://github.com/ChainSafe/ssz-z.git#te/fix_state_transition
-            .url = "git+https://github.com/ChainSafe/ssz-z.git?ref=te/fix_state_transition#5616a2f0bd2322cc7eea851d7bf9558a527fb859",
-            .hash = "ssz-0.1.0-yORmzJtSBADG4HthLQinTIdE6njitUTQC0dwVh-2N_4B",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git?ref=te/fix_state_transition#75700a861c65e067eef9c6e9e05794b574e07ed4",
+            .hash = "ssz-0.1.0-yORmzNNSBADygQ2ydFhJbPpuKcCRIbGhEU9Ssm008pdE",
         },
     },
     .paths = .{
