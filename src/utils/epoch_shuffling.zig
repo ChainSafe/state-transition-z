@@ -85,3 +85,5 @@ fn computeCommitteeCount(active_validator_count: usize) usize {
     const committees_per_slot = @divFloor(validators_per_slot, preset.TARGET_COMMITTEE_SIZE);
     return @max(1, @min(preset.MAX_COMMITTEES_PER_SLOT, committees_per_slot));
 }
+
+// TODO: unit tests to make sure init/deinit works correctly
