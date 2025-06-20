@@ -14,6 +14,8 @@ pub fn build(b: *std.Build) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
+    const dep_ssz = b.dependency("ssz", .{});
+    const dep_blst_z = b.dependency("blst_z", .{});
 
     const lib = b.addStaticLibrary(.{
         .name = "state-transition",
@@ -24,9 +26,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const dep_ssz = b.dependency("ssz", .{});
     lib.root_module.addImport("ssz", dep_ssz.module("ssz"));
     lib.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
+    lib.root_module.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
