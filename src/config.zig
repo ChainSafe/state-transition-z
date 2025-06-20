@@ -263,11 +263,11 @@ const BeaconConfig = struct {
         const epoch = @divFloor(slot, preset.SLOTS_PER_EPOCH);
         const state_fork_info = self.getForkInfo(state_slot);
         const fork_name = if (epoch < state_fork_info.epoch) state_fork_info.prevForkName else state_fork_info.name;
-        const fork_info = self.forks.get(fork_name) orelse return Error.ForkNameNotFound;
+        const fork_info = self.forks.get(fork_name) orelse return error.ForkNameNotFound;
 
         const domain_by_type = self.domain_cache.get(fork_name) orelse {
             const new_map = DomainByTypeHashMap.init(self.allocator);
-            self.domain_cache.put(fork_name, new_map) catch return Error.DomainCachePutFailed;
+            self.domain_cache.put(fork_name, new_map) catch error.DomainCachePutFailed;
             return new_map;
         };
 
@@ -282,10 +282,10 @@ const BeaconConfig = struct {
     }
 
     pub fn getDomainAtFork(self: *BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
-        const fork_info = self.forks.get(fork_name) orelse return Error.ForkNameNotFound;
+        const fork_info = self.forks.get(fork_name) orelse return error.ForkNameNotFound;
         const domain_by_type = self.domain_cache.get(fork_name) orelse {
             const new_map = DomainByTypeHashMap.init(self.allocator);
-            self.domain_cache.put(fork_name, new_map) catch return Error.DomainCachePutFailed;
+            self.domain_cache.put(fork_name, new_map) catch return error.DomainCachePutFailed;
             return new_map;
         };
 
