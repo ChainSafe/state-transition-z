@@ -333,7 +333,7 @@ const Fork_Name_Capella = "capella";
 const Fork_Name_Deneb = "deneb";
 const Fork_Name_Electra = "electra";
 
-const ForkSeq = enum(u8) {
+pub const ForkSeq = enum(u8) {
     phase0 = 0,
     altair = 1,
     bellatrix = 2,

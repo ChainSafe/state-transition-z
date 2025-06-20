@@ -365,6 +365,17 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getSlashingCount(self: *const BeaconStateAllForks) usize {
+        return switch (self) {
+            .phase0 => |state| state.slashings.len,
+            .altair => |state| state.slashings.len,
+            .bellatrix => |state| state.slashings.len,
+            .capella => |state| state.slashings.len,
+            .deneb => |state| state.slashings.len,
+            .electra => |state| state.slashings.len,
+        };
+    }
+
     pub fn setSlashing(self: *BeaconStateAllForks, index: usize, slashing: u64) void {
         switch (self) {
             .phase0 => |state| state.slashings[index] = slashing,
@@ -820,6 +831,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => @panic("pending_partial_withdrawals is not available in capella"),
             .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals[index],
+        };
+    }
+
+    pub fn getPendingPartialWithdrawalCount(self: *const BeaconStateAllForks) usize {
+        return switch (self) {
+            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
+            .altair => @panic("pending_partial_withdrawals is not available in altair"),
+            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
+            .capella => @panic("pending_partial_withdrawals is not available in capella"),
+            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
+            .electra => |state| state.pending_partial_withdrawals.len,
         };
     }
 

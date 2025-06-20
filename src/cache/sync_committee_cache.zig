@@ -7,7 +7,7 @@ const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);
-const ValidatorIndices = std.ArrayList(ValidatorIndex);
+const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const SyncCommitteeCache = struct {
     allocator: Allocator,
 
