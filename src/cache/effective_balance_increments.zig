@@ -4,7 +4,7 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 pub const EffectiveBalanceIncrements = std.ArrayList(u16);
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
-const EFFECTIVE_BALANCE_INCREMENT = @import("../params.zig").EFFECTIVE_BALANCE_INCREMENT;
+const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 
 pub fn getEffectiveBalanceIncrementsZeroed(allocator: Allocator, len: usize) !EffectiveBalanceIncrements {
     var increments = EffectiveBalanceIncrements.init(allocator);
