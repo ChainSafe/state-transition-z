@@ -415,6 +415,17 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+        return switch (self) {
+            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
+            .altair => |state| state.previous_epoch_participation,
+            .bellatrix => |state| state.previous_epoch_participation,
+            .capella => |state| state.previous_epoch_participation,
+            .deneb => |state| state.previous_epoch_participation,
+            .electra => |state| state.previous_epoch_participation,
+        };
+    }
+
     /// from altair, epoch participation is just a byte
     pub fn setPreviousEpochParticipation(self: *BeaconStateAllForks, index: usize, participation: u8) void {
         switch (self) {
@@ -425,6 +436,17 @@ pub const BeaconStateAllForks = union(enum) {
             .deneb => |state| state.previous_epoch_participation[index] = participation,
             .electra => |state| state.previous_epoch_participation[index] = participation,
         }
+    }
+
+    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+        return switch (self) {
+            .phase0 => @panic("current_epoch_participation is not available in phase0"),
+            .altair => |state| state.current_epoch_participation,
+            .bellatrix => |state| state.current_epoch_participation,
+            .capella => |state| state.current_epoch_participation,
+            .deneb => |state| state.current_epoch_participation,
+            .electra => |state| state.current_epoch_participation,
+        };
     }
 
     pub fn getJustificationBits(self: *const BeaconStateAllForks) JustificationBits {

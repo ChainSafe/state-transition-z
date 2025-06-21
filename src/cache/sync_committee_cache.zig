@@ -8,22 +8,63 @@ const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
+const cloneValidatorIndices = @import("../type.zig").cloneValidatorIndices;
+
+pub const SyncCommitteeCacheAllForks = union(enum) {
+    phase0: void,
+    altair: SyncCommitteeCache,
+
+    pub fn getValidatorIndices(self: *const SyncCommitteeCacheAllForks) ValidatorIndices {
+        return switch (self) {
+            .phase0 => @panic("phase0 does not have sync_committee"),
+            .altair => self.altair.validator_indices,
+        };
+    }
+
+    pub fn getValidatorIndexMap(self: *const SyncCommitteeCacheAllForks) SyncComitteeValidatorIndexMap {
+        return switch (self) {
+            .phase0 => @panic("phase0 does not have sync_committee"),
+            .altair => self.altair.validator_index_map,
+        };
+    }
+
+    pub fn initEmpty() SyncCommitteeCacheAllForks {
+        return SyncCommitteeCacheAllForks{ .phase0 = {} };
+    }
+
+    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: SyncCommittee, pubkey_to_index: PubkeyIndexMap) !*SyncCommitteeCacheAllForks {
+        const cache = try SyncCommitteeCache.computeSyncCommitteeCache(allocator, sync_committee, pubkey_to_index);
+        return SyncCommitteeCacheAllForks{ .altair = cache };
+    }
+
+    pub fn getSyncCommitteeCache(allocator: Allocator, indices: ValidatorIndices) !*SyncCommitteeCacheAllForks {
+        const cache = try SyncCommitteeCache.getSyncCommitteeCache(allocator, indices);
+        return SyncCommitteeCacheAllForks{ .altair = cache };
+    }
+
+    pub fn deinit(self: *SyncCommitteeCacheAllForks) void {
+        switch (self) {
+            .phase0 => {},
+            .altair => self.altair.deinit(),
+        }
+    }
+};
+
+/// this is for post-altair
 const SyncCommitteeCache = struct {
     allocator: Allocator,
 
-    validator_indices: *ValidatorIndices,
+    validator_indices: ValidatorIndices,
 
     validator_index_map: SyncComitteeValidatorIndexMap,
 
-    // same to init
-    // TODO: consider not to use this function and use the below getSyncCommitteeCache instead?
-    // the reason is this function create managed validator_indices so it's inconsistent to getSyncCommitteeCache
     pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: SyncCommittee, pubkey_to_index: PubkeyIndexMap) !*SyncCommitteeCache {
         const validator_indices = try computeSyncCommitteeIndices(allocator, sync_committee, pubkey_to_index);
         return SyncCommitteeCache.getSyncCommitteeCache(allocator, validator_indices);
     }
 
-    pub fn getSyncCommitteeCache(allocator: Allocator, validator_indices: *const ValidatorIndices) !*SyncCommitteeCache {
+    pub fn getSyncCommitteeCache(allocator: Allocator, indices: ValidatorIndices) !*SyncCommitteeCache {
+        const validator_indices = try cloneValidatorIndices(allocator, indices);
         const cache = try allocator.create(SyncCommitteeCache);
 
         const validator_index_map = try computeSyncComitteeMap(allocator, validator_indices);
@@ -62,10 +103,9 @@ fn computeSyncComitteeMap(allocator: Allocator, sync_committee_indices: *const V
 
 // consumer should destroy the created SyncCommitteeCache
 // also deinit() before destroying
-fn computeSyncCommitteeIndices(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !*ValidatorIndices {
+fn computeSyncCommitteeIndices(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !ValidatorIndices {
     const pubkeys = sync_committee.pubkeys;
-    const validator_indices = try allocator.create(ValidatorIndices);
-    validator_indices.* = ValidatorIndices.init(allocator);
+    const validator_indices = ValidatorIndices.init(allocator);
     for (pubkeys) |pubkey| {
         const index = pubkey_to_index.get(pubkey[0..]) orelse return error.PubkeyNotFound;
         try validator_indices.append(@intCast(index));
