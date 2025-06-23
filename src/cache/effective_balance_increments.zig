@@ -2,9 +2,12 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-pub const EffectiveBalanceIncrements = std.ArrayList(u16);
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const getReferenceCount = @import("../utils/reference_count.zig").getReferenceCount;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
+
+pub const EffectiveBalanceIncrements = std.ArrayList(u16);
+pub const EffectiveBalanceIncrementsRc = getReferenceCount(EffectiveBalanceIncrements);
 
 // TODO: implement reference counting strategy
 

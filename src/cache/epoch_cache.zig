@@ -17,8 +17,9 @@ const BeaconConfig = @import("../config.zig").BeaconConfig;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap;
 const Index2PubkeyCache = @import("./pubkey_cache.zig").Index2PubkeyCache;
 const EpochShuffling = @import("../utils//epoch_shuffling.zig").EpochShuffling;
+const EpochShufflingRc = @import("../utils/epoch_shuffling.zig").EpochShufflingRc;
+const EffectiveBalanceIncrementsRc = @import("./effective_balance_increments.zig").EffectiveBalanceIncrementsRc;
 const EffectiveBalanceIncrements = @import("./effective_balance_increments.zig").EffectiveBalanceIncrements;
-const SyncCommitteeCache = @import("./sync_committee_cache.zig").SyncCommitteeCache;
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
@@ -27,9 +28,10 @@ const getTotalSlashingsByIncrement = @import("../epoch/process_slashings.zig").g
 const computeEpochShuffling = @import("../utils/epoch_shuffling.zig").computeEpochShuffling;
 const getSeed = @import("../utils/seed.zig").getSeed;
 const computeProposers = @import("../utils/seed.zig").computeProposers;
+const SyncCommitteeCacheRc = @import("./sync_committee_cache.zig").SyncCommitteeCacheRc;
+const SyncCommitteeCacheAllForks = @import("./sync_committee_cache.zig").SyncCommitteeCacheAllForks;
 const computeSyncParticipantReward = @import("../utils/sync_committee.zig").computeSyncParticipantReward;
 const computeBaseRewardPerIncrement = @import("../utils/sync_committee.zig").computeBaseRewardPerIncrement;
-const SyncCommitteeCacheAllForks = @import("./sync_committee_cache.zig").SyncCommitteeCacheAllForks;
 const computeSyncPeriodAtEpoch = @import("../utils/epoch.zig").computeSyncPeriodAtEpoch;
 const isAggregatorFromCommitteeLength = @import("../utils/aggregator.zig").isAggregatorFromCommitteeLength;
 
@@ -40,13 +42,13 @@ const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;
 const getChurnLimit = @import("../utils/validator.zig").getChurnLimit;
 const getActivationChurnLimit = @import("../utils/validator.zig").getActivationChurnLimit;
 
-const EpochCacheImmutableData = struct {
+pub const EpochCacheImmutableData = struct {
     config: *BeaconConfig,
     pubkey_to_index: PubkeyIndexMap,
     index_to_pubkey: Index2PubkeyCache,
 };
 
-const EpochCacheOpts = struct {
+pub const EpochCacheOpts = struct {
     skip_sync_committee_cache: bool,
     skip_sync_pubkeys: bool,
 };
@@ -56,7 +58,7 @@ pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOM
 const EpochCache = struct {
     allocator: Allocator,
 
-    config: BeaconConfig,
+    config: *BeaconConfig,
 
     // this is shared across applications, EpochCache does not own this field so should not deinit()
     pubkey_to_index: PubkeyIndexMap,
@@ -75,16 +77,18 @@ const EpochCache = struct {
     // current_decision_root
     // next_decision_root
 
-    previous_shuffling: EpochShuffling,
+    // EpochCache does not take ownership of EpochShuffling, it is shared across EpochCache instances
+    previous_shuffling: EpochShufflingRc,
 
-    current_shuffling: EpochShuffling,
+    current_shuffling: EpochShufflingRc,
 
-    next_shuffling: EpochShuffling,
+    next_shuffling: EpochShufflingRc,
 
     // this is not needed if we compute next_shuffling eagerly
     // next_active_indices
 
-    effective_balance_increment: EffectiveBalanceIncrements,
+    // EpochCache does not take ownership of EffectiveBalanceIncrements, it is shared across EpochCache instances
+    effective_balance_increment: EffectiveBalanceIncrementsRc,
 
     total_slashings_by_increment: u64,
 
@@ -108,9 +112,10 @@ const EpochCache = struct {
 
     previous_target_unslashed_balance_increments: u64,
 
-    current_sync_committee_indexed: SyncCommitteeCacheAllForks,
+    // EpochCache does not take ownership of SyncCommitteeCache, it is shared across EpochCache instances
+    current_sync_committee_indexed: SyncCommitteeCacheRc,
 
-    next_sync_committee_indexed: SyncCommitteeCacheAllForks,
+    next_sync_committee_indexed: SyncCommitteeCacheRc,
 
     sync_period: SyncPeriod,
 
@@ -256,10 +261,10 @@ const EpochCache = struct {
             .proposers = proposers.items,
             // On first epoch, set to null to prevent unnecessary work since this is only used for metrics
             .proposer_prev_epoch = null,
-            .previous_shuffling = previous_shuffling,
-            .current_shuffling = current_shuffling,
-            .next_shuffling = next_shuffling,
-            .effective_balance_increment = effective_balance_increment,
+            .previous_shuffling = EpochShufflingRc.init(previous_shuffling),
+            .current_shuffling = EpochShufflingRc.init(current_shuffling),
+            .next_shuffling = EpochShufflingRc.init(next_shuffling),
+            .effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increment),
             .total_slashings_by_increment = total_slashings_by_increment,
             .sync_participant_reward = sync_participant_reward,
             .sync_proposer_reward = sync_proposer_reward,
@@ -271,8 +276,8 @@ const EpochCache = struct {
             .exit_queue_churn = exit_queue_churn,
             .current_target_unslashed_balance_increments = current_target_unslashed_balance_increments,
             .previous_target_unslashed_balance_increments = previous_target_unslashed_balance_increments,
-            .current_sync_committee_indexed = current_sync_committee_indexed,
-            .next_sync_committee_indexed = next_sync_committee_indexed,
+            .current_sync_committee_indexed = SyncCommitteeCacheRc.init(current_sync_committee_indexed),
+            .next_sync_committee_indexed = SyncCommitteeCacheRc.init(next_sync_committee_indexed),
             .sync_period = computeSyncPeriodAtEpoch(current_epoch),
             .epoch = current_epoch,
             .next_epoch = next_epoch,
@@ -282,23 +287,19 @@ const EpochCache = struct {
     pub fn deinit(self: *EpochCache) void {
         // pubkey_to_index and index_to_pubkey are shared across applications, EpochCache does not own this field so should not deinit()
 
-        // Deinitialize the epoch shufflings
-        self.previous_shuffling.deinit();
-        self.current_shuffling.deinit();
-        self.next_shuffling.deinit();
+        // unref the epoch shufflings
+        self.previous_shuffling.release();
+        self.current_shuffling.release();
+        self.next_shuffling.release();
 
-        // Deinitialize the effective balance increments
-        self.effective_balance_increment.deinit();
+        // unref the effective balance increments
+        self.effective_balance_increment.release();
 
-        // Deinitialize the sync committee caches
-        self.current_sync_committee_indexed.deinit();
-        self.next_sync_committee_indexed.deinit();
-
-        // Deinitialize the proposers list
-        self.proposers.deinit();
+        // unref the sync committee caches
+        self.current_sync_committee_indexed.release();
+        self.next_sync_committee_indexed.release();
     }
 
-    // TODO: increase reference count
     pub fn clone(self: *const EpochCache) EpochCache {
         return .EpochCache{
             .allocator = self.allocator,
@@ -309,11 +310,12 @@ const EpochCache = struct {
             // Immutable data
             .proposers = self.proposers,
             .proposer_prev_epoch = self.proposer_prev_epoch,
-            .previous_shuffling = self.previous_shuffling,
-            .current_shuffling = self.current_shuffling,
-            .next_shuffling = self.next_shuffling,
-            // cloned only when necessary before an epoch transition
-            .effective_balance_increment = self.effective_balance_increment.clone(),
+            // reuse the same instances, increase reference count
+            .previous_shuffling = self.previous_shuffling.acquire(),
+            .current_shuffling = self.current_shuffling.acquire(),
+            .next_shuffling = self.next_shuffling.acquire(),
+            // reuse the same instances, increase reference count, cloned only when necessary before an epoch transition
+            .effective_balance_increment = self.effective_balance_increment.acquire(),
             .total_slashings_by_increment = self.total_slashings_by_increment,
             // Basic types (numbers) cloned implicitly
             .sync_participant_reward = self.sync_participant_reward,
@@ -326,8 +328,9 @@ const EpochCache = struct {
             .exit_queue_churn = self.exit_queue_churn,
             .current_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments,
             .previous_target_unslashed_balance_increments = self.previous_target_unslashed_balance_increments,
-            .current_sync_committee_indexed = self.current_sync_committee_indexed.clone(),
-            .next_sync_committee_indexed = self.next_sync_committee_indexed.clone(),
+            // reuse the same instances, increase reference count
+            .current_sync_committee_indexed = self.current_sync_committee_indexed.acquire(),
+            .next_sync_committee_indexed = self.next_sync_committee_indexed.acquire(),
             .sync_period = self.sync_period,
             .epoch = self.epoch,
             .next_epoch = self.next_epoch,
@@ -335,11 +338,14 @@ const EpochCache = struct {
     }
 
     // TODO: afterProcessEpoch
+
     pub fn beforeEpochTransition(self: *EpochCache) void {
         // Clone (copy) before being mutated in processEffectiveBalanceUpdates
         const effective_balance_increment = EffectiveBalanceIncrements.initCapacity(self.allocator, self.effective_balance_increment.items.len);
         effective_balance_increment.appendSlice(self.effective_balance_increment.items);
-        self.effective_balance_increment = effective_balance_increment;
+        // unref the previous effective balance increment
+        self.effective_balance_increment.release();
+        self.effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increment);
     }
 
     pub fn getBeaconCommittee(self: *const EpochCache, slot: Slot, index: CommitteeIndex) ![]const u32 {
@@ -412,9 +418,9 @@ const EpochCache = struct {
 
     pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?EpochShuffling {
         switch (epoch) {
-            self.epoch - 1 => return self.previous_shuffling,
-            self.epoch => return self.current_shuffling,
-            self.next_epoch => return self.next_shuffling,
+            self.epoch - 1 => return self.previous_shuffling.get(),
+            self.epoch => return self.current_shuffling.get(),
+            self.next_epoch => return self.next_shuffling.get(),
             else => return null,
         }
     }
@@ -430,25 +436,27 @@ const EpochCache = struct {
     pub fn getIndexedSyncCommitteeAtEpoch(self: *const EpochCache, epoch: Epoch) !SyncCommitteeCacheAllForks {
         const sync_period = computeSyncPeriodAtEpoch(epoch);
         switch (sync_period) {
-            self.sync_period => return self.current_sync_committee_indexed,
-            self.sync_period + 1 => return self.next_sync_committee_indexed,
+            self.sync_period => return self.current_sync_committee_indexed.get(),
+            self.sync_period + 1 => return self.next_sync_committee_indexed.get(),
             else => return error.SyncCommitteeNotFound,
         }
     }
 
     pub fn rotateSyncCommitteeIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
-        // this deinit() function should decrease the reference count only
-        self.current_sync_committee_indexed.deinit();
-        // this transfers the reference
+        // unref the old instance
+        self.current_sync_committee_indexed.release();
+        // this is the transfer of reference count
+        // should not do an release() then acquire() here as it may trigger a deinit()
         self.current_sync_committee_indexed = self.next_sync_committee_indexed;
-        self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices);
+        self.next_sync_committee_indexed = SyncCommitteeCacheRc.acquire(try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices));
     }
 
-    pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
-        self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices);
-        // TODO: also increase reference count
-        self.current_sync_committee_indexed = self.next_sync_committee_indexed;
-    }
+    // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead
+    // TODO: also increase reference count
+    // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
+    //     self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices);
+    //     self.current_sync_committee_indexed = self.next_sync_committee_indexed;
+    // }
 
     // TODO: effectiveBalanceIncrementsSet, need to work on this after the reference count strategy is implemented
 
