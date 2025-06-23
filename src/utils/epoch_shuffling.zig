@@ -8,6 +8,7 @@ const params = @import("../params.zig");
 const innerShuffleList = @import("./shuffle.zig").innerShuffleList;
 const Epoch = ssz.primitive.Epoch.Type;
 
+// TODO: implement reference counting strategy
 pub const EpochShuffling = struct {
     allocator: Allocator,
 
@@ -21,13 +22,12 @@ pub const EpochShuffling = struct {
 
     committees_per_slot: usize,
 
-    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: []const u32) !*EpochShuffling {
+    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: []const u32) !EpochShuffling {
         const shuffling = try allocator.alloc(u32, active_indices.len);
         std.mem.copyForwards(u32, shuffling, active_indices);
         try unshuffleList(shuffling, seed[0..], preset.SHUFFLE_ROUND_COUNT);
         const committees = try buildCommitteesFromShuffling(allocator, shuffling);
-        const epoch_shuffling = try allocator.create(EpochShuffling);
-        epoch_shuffling.* = EpochShuffling{
+        return EpochShuffling{
             .allocator = allocator,
             .epoch = epoch,
             .active_indices = active_indices,
@@ -68,7 +68,7 @@ pub const EpochShuffling = struct {
     }
 };
 
-pub fn computeEpochShuffling(allocator: Allocator, state: BeaconStateAllForks, active_indices: []const u32, epoch: Epoch) !*EpochShuffling {
+pub fn computeEpochShuffling(allocator: Allocator, state: BeaconStateAllForks, active_indices: []const u32, epoch: Epoch) !EpochShuffling {
     var seed = [_]u8{0} ** 32;
     try getSeed(state, epoch, params.DOMAIN_BEACON_ATTESTER, &seed);
     return EpochShuffling.init(allocator, seed, epoch, active_indices);

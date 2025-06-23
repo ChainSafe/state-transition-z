@@ -11,6 +11,7 @@ const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
 const Eth1Data = ssz.phase0.Eth1Data.Type;
 const Eth1DataVotes = ssz.phase0.Eth1DataVotes.Type;
 const Validator = ssz.phase0.Validator.Type;
+const Validators = ssz.phase0.Validators.Type;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 const JustificationBits = ssz.phase0.JustificationBits.Type;
 const Checkpoint = ssz.phase0.Checkpoint.Type;
@@ -285,6 +286,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.validators[index],
             .deneb => |state| state.validators[index],
             .electra => |state| state.validators[index],
+        };
+    }
+
+    pub fn getValidators(self: *const BeaconStateAllForks) Validators {
+        return switch (self) {
+            .phase0 => |state| state.validators,
+            .altair => |state| state.validators,
+            .bellatrix => |state| state.validators,
+            .capella => |state| state.validators,
+            .deneb => |state| state.validators,
+            .electra => |state| state.validators,
         };
     }
 

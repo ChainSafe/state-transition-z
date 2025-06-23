@@ -6,6 +6,8 @@ pub const EffectiveBalanceIncrements = std.ArrayList(u16);
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 
+// TODO: implement reference counting strategy
+
 pub fn getEffectiveBalanceIncrementsZeroed(allocator: Allocator, len: usize) !EffectiveBalanceIncrements {
     var increments = EffectiveBalanceIncrements.init(allocator);
     try increments.ensureTotalCapacity(len);
