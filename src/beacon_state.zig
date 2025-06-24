@@ -857,6 +857,17 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn pushPendingDeposit(self: *BeaconStateAllForks, pending_deposit: PendingDeposit) !void {
+        switch (self) {
+            .phase0 => @panic("pending_deposits is not available in phase0"),
+            .altair => @panic("pending_deposits is not available in altair"),
+            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
+            .capella => @panic("pending_deposits is not available in capella"),
+            .deneb => @panic("pending_deposits is not available in deneb"),
+            .electra => |state| state.pending_deposits.append(pending_deposit),
+        }
+    }
+
     pub fn getPendingPartialWithdrawal(self: *const BeaconStateAllForks, index: usize) PendingPartialWithdrawal {
         return switch (self) {
             .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
