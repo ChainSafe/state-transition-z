@@ -408,11 +408,27 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     /// only for phase0
+    pub fn getPreviousEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
+        return switch (self) {
+            .phase0 => |state| state.previous_epoch_attestations,
+            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
+        };
+    }
+
+    /// only for phase0
     pub fn setPreviousEpochPendingAttestation(self: *BeaconStateAllForks, index: usize, attestation: PendingAttestation) void {
         switch (self) {
             .phase0 => |state| state.previous_epoch_attestations[index] = attestation,
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         }
+    }
+
+    // only for phase0
+    pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
+        return switch (self) {
+            .phase0 => |state| state.current_epoch_attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        };
     }
 
     /// from altair, epoch pariticipation is just a byte
@@ -427,6 +443,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    // from altair
     pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
         return switch (self) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
