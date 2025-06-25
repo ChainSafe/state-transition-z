@@ -1,6 +1,62 @@
+const std = @import("std");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const ForkSeq = @import("../config.zig").ForkSeq;
+const decreaseBalance = @import("../utils//balance.zig").decreaseBalance;
+const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
+const PROPORTIONAL_SLASHING_MULTIPLIER = preset.PROPORTIONAL_SLASHING_MULTIPLIER;
+const PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR = preset.PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR;
+const PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX = preset.PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;
+
+/// TODO: consider returning number[] when we switch to TreeView
+pub fn processSlashings(
+    allocator: std.mem.Allocator,
+    cached_state: CachedBeaconStateAllForks,
+    cache: EpochTransitionCache,
+) void {
+    // Return early if there no index to slash
+    if (cache.indicesToSlash.length == 0) {
+        return;
+    }
+    const config = cached_state.config;
+    const epoch_cache = cached_state.epoch_cache;
+    const state = cached_state.state;
+
+    const total_balance_by_increment = cache.total_active_stake_by_increment;
+    const fork = config.getForkSeq(state.getSlot());
+    const proportional_slashing_multiplier =
+        if (fork == ForkSeq.phase0) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork == ForkSeq.altair)
+            PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR
+        else
+            PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;
+
+    const effective_balance_increments = epoch_cache.effective_balance_increment;
+    const adjusted_total_slashing_balance_by_increment = @min(getTotalSlashingsByIncrement(state) * proportional_slashing_multiplier, total_balance_by_increment);
+    const increment = EFFECTIVE_BALANCE_INCREMENT;
+
+    const penalty_per_effective_balance_increment = @divFloor((adjusted_total_slashing_balance_by_increment * increment), total_balance_by_increment);
+
+    const penaltiesByEffectiveBalanceIncrement = std.AutoHashMap(u64, u64).init(allocator);
+    defer penaltiesByEffectiveBalanceIncrement.deinit();
+
+    for (cache.indices_to_slash) |index| {
+        const effective_balance_increment = effective_balance_increments[index];
+        var penalty = penaltiesByEffectiveBalanceIncrement.get(effective_balance_increment);
+        if (penalty == null) {
+            if (fork < ForkSeq.electra) {
+                const penalty_numerator_by_increment = effective_balance_increment * adjusted_total_slashing_balance_by_increment;
+                penalty = @divFloor(penalty_numerator_by_increment, total_balance_by_increment) * increment;
+            } else {
+                penalty = penalty_per_effective_balance_increment * effective_balance_increment;
+            }
+            penaltiesByEffectiveBalanceIncrement.put(effective_balance_increment, penalty);
+        }
+        decreaseBalance(state, index, penalty);
+    }
+}
 
 pub fn getTotalSlashingsByIncrement(state: *const BeaconStateAllForks) u64 {
     var total_slashings_by_increment: u64 = 0;
