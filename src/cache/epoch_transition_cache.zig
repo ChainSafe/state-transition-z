@@ -65,9 +65,9 @@ pub const EpochTransitionCache = struct {
     current_epoch: Epoch,
     total_active_stake_by_increment: u64,
     base_reward_per_increment: u64,
-    prev_epoch_unslashed_stake_source: u64,
-    prev_epoch_unslashed_stake_target: u64,
-    prev_epoch_unslashed_stake_head: u64,
+    prev_epoch_unslashed_stake_source_by_increment: u64,
+    prev_epoch_unslashed_stake_target_by_increment: u64,
+    prev_epoch_unslashed_stake_head_by_increment: u64,
     curr_epoch_unslashed_target_stake_by_increment: u64,
     indices_to_slash: ValidatorIndices,
     indices_eligible_for_activation_queue: ValidatorIndices,
@@ -392,3 +392,5 @@ pub const EpochTransitionCache = struct {
         }
     }
 };
+
+// TODO: unit tests
