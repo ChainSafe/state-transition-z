@@ -112,9 +112,9 @@ pub const EpochTransitionCache = struct {
         try reused_cache.next_epoch_shuffling_active_validator_indices.ensureTotalCapacity(validator_count);
         var next_epoch_shuffling_active_indices_length: usize = 0;
         // pre-fill with true (most validators are active)
-        try reused_cache.is_active_prev_epoch.ensureTotalCapacity(validator_count);
-        try reused_cache.is_active_current_epoch.ensureTotalCapacity(validator_count);
-        try reused_cache.is_active_next_epoch.ensureTotalCapacity(validator_count);
+        try reused_cache.is_active_prev_epoch.resize(validator_count);
+        try reused_cache.is_active_current_epoch.resize(validator_count);
+        try reused_cache.is_active_next_epoch.resize(validator_count);
         @memset(reused_cache.is_active_prev_epoch.items, true);
         @memset(reused_cache.is_active_current_epoch.items, true);
         @memset(reused_cache.is_active_next_epoch.items, true);
@@ -264,10 +264,10 @@ pub const EpochTransitionCache = struct {
         std.mem.sort(ValidatorActivation, validator_activation_list.items, {}, sort_fn);
 
         if (fork_seq == ForkSeq.phase0) {
-            reused_cache.proposer_indices.ensureTotalCapacity(validator_count);
+            reused_cache.proposer_indices.resize(validator_count);
             // in typescript we prefill with -1 as unset value, in zig we use  validator_count
             @memset(reused_cache.proposer_indices.items, validator_count);
-            reused_cache.inclusion_delays.ensureTotalCapacity(validator_count);
+            reused_cache.inclusion_delays.resize(validator_count);
             @memset(reused_cache.inclusion_delays.items, 0);
             try processPendingAttestations(state, reused_cache.proposer_indices, validator_count, reused_cache.inclusion_delays, reused_cache.flags, state.getPreviousEpochPendingAttestations(), prev_epoch, FLAG_PREV_SOURCE_ATTESTER, FLAG_PREV_TARGET_ATTESTER, FLAG_PREV_HEAD_ATTESTER);
             try processPendingAttestations(state, reused_cache.proposer_indices, validator_count, reused_cache.inclusion_delays, reused_cache.flags, state.getCurrentEpochPendingAttestations(), current_epoch, FLAG_CURR_SOURCE_ATTESTER, FLAG_CURR_TARGET_ATTESTER, FLAG_CURR_HEAD_ATTESTER);
