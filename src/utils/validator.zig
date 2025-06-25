@@ -9,6 +9,7 @@ const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const BeaconConfig = @import("../config.zig").BeaconConfig;
 const ForkSeq = @import("../config.zig").ForkSeq;
+const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
 
 pub fn isActiveValidator(validator: *const Validator, epoch: Epoch) bool {
     return validator.activation_epoch <= epoch and epoch < validator.exit_epoch;
@@ -52,8 +53,18 @@ pub fn getBalanceChurnLimit(total_active_balance_increments: u64, churn_limit_qu
     return churn - (churn % preset.EFFECTIVE_BALANCE_INCREMENT);
 }
 
-// TODO getBalanceChurnLimitFromCache: need EpochCache
-// TODO getConsolidationChurnLimit: need EpochCach
+pub fn getBalanceChurnLimitFromCache(epoch_cache: EpochCache) u64 {
+    return getBalanceChurnLimit(epoch_cache.total_acrive_balance_increments, epoch_cache.config.config.CHURN_LIMIT_QUOTIENT, epoch_cache.config.config.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
+}
+
+pub fn getActivationExitChurnLimit(epoch_cache: EpochCache) u64 {
+    return @min(epoch_cache.config.config.MAX_PER_EPOCH_ACTIVATION_EXIT_CHURN_LIMIT, getBalanceChurnLimitFromCache(epoch_cache));
+}
+
+pub fn getConsolidationChurnLimit(epoch_cache: EpochCache) u64 {
+    return getBalanceChurnLimitFromCache(epoch_cache) - getActivationExitChurnLimit(epoch_cache);
+}
+
 // TODO getMaxEffectiveBalance: implement electra utils
 
 pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validatorIndex: ValidatorIndex) u64 {
