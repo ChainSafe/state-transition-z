@@ -21,8 +21,8 @@ jobs:
             bun-target: linux-x64-musl
           - os: ubuntu-24.04-arm
             bun-target: linux-arm64-musl
-          - os: macos-13
-            bun-target: darwin-x64
+          # - os: macos-13 # skip because hashtree does not support macos x64 yet
+          #   bun-target: darwin-x64
           - os: macos-latest
             bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
@@ -194,8 +194,9 @@ jobs:
     strategy:
       matrix:
         settings:
-          - os: macos-13
-            bun-target: darwin-x64
+          # skip because hashtree does not support macos x64 yet
+          # - os: macos-13
+          #   bun-target: darwin-x64
           - os: macos-latest
             bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
