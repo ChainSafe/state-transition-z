@@ -111,7 +111,7 @@ pub const KZG_COMMITMENT_SUBTREE_INDEX0 = KZG_COMMITMENT_GINDEX0 - 2 ** preset.K
 pub const BLOBSIDECAR_FIXED_SIZE = if (std.mem.eql(u8, preset_str, "minimal")) 131704 else 131928;
 
 // Electra Misc
-pub const UNSET_DEPOSIT_REQUESTS_START_INDEX = 2n ** 64n - 1n;
+pub const UNSET_DEPOSIT_REQUESTS_START_INDEX = 2 ** 64 - 1;
 pub const FULL_EXIT_REQUEST_AMOUNT = 0;
 pub const FINALIZED_ROOT_GINDEX_ELECTRA = 169;
 pub const FINALIZED_ROOT_DEPTH_ELECTRA = 7;

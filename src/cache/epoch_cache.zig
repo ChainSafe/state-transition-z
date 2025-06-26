@@ -55,7 +55,7 @@ pub const EpochCacheOpts = struct {
 
 pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOMINATOR - params.PROPOSER_WEIGHT);
 
-const EpochCache = struct {
+pub const EpochCache = struct {
     allocator: Allocator,
 
     config: *BeaconConfig,

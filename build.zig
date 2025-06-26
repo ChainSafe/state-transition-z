@@ -96,7 +96,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    lib_unit_tests.root_module.addImport("ssz", dep_ssz.module("ssz"));
     lib_unit_tests.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
+    lib_unit_tests.root_module.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 

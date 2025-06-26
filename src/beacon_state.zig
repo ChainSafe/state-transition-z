@@ -245,14 +245,15 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    // TODO: fix for other functions
     pub fn setEth1DataVotes(self: *BeaconStateAllForks, eth1_data_votes: Eth1DataVotes) void {
-        switch (self) {
-            .phase0 => |state| state.eth1_data_votes = eth1_data_votes,
-            .altair => |state| state.eth1_data_votes = eth1_data_votes,
-            .bellatrix => |state| state.eth1_data_votes = eth1_data_votes,
-            .capella => |state| state.eth1_data_votes = eth1_data_votes,
-            .deneb => |state| state.eth1_data_votes = eth1_data_votes,
-            .electra => |state| state.eth1_data_votes = eth1_data_votes,
+        switch (self.*) {
+            .phase0 => |*state| state.eth1_data_votes = eth1_data_votes,
+            .altair => |*state| state.eth1_data_votes = eth1_data_votes,
+            .bellatrix => |*state| state.eth1_data_votes = eth1_data_votes,
+            .capella => |*state| state.eth1_data_votes = eth1_data_votes,
+            .deneb => |*state| state.eth1_data_votes = eth1_data_votes,
+            .electra => |*state| state.eth1_data_votes = eth1_data_votes,
         }
     }
 

@@ -9,6 +9,7 @@ const ValidatorIndex = types.ValidatorIndex;
 const PendingDeposit = types.PendingDeposit;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const hasEth1WithdrawalCredential = @import("./capella.zig").hasEth1WithdrawalCredential;
+const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
 
 pub fn hasCompoundingWithdrawalCredential(withdrawal_credentials: WithdrawalCredentials) bool {
     return withdrawal_credentials[0] == COMPOUNDING_WITHDRAWAL_PREFIX;
@@ -44,10 +45,9 @@ pub fn queueExcessActiveBalance(cached_state: *CachedBeaconStateAllForks, index:
             .withdrawal_credentials = validator.withdrawal_credentials,
             .amount = excess_balance,
             // Use bls.G2_POINT_AT_INFINITY as a signature field placeholder
-            // TODO: define constant.zig
             .signature = G2_POINT_AT_INFINITY,
             //  Use GENESIS_SLOT to distinguish from a pending deposit request
-            .slot = GENESIS_SLOT,
+            .slot = params.GENESIS_SLOT,
         };
 
         try state.pushPendingDeposit(pending_deposit);

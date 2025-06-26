@@ -13,7 +13,7 @@ pub fn sumTargetUnslashedBalanceIncrements(participations: []const u8, epoch: Ep
         if ((participation & TIMELY_TARGET) == TIMELY_TARGET) {
             const validator = validators[i];
             if (isActiveValidator(validator, epoch) and !validator.slashed) {
-                total += @divFloor(validator.effective_balance / preset.EFFECTIVE_BALANCE_INCREMENT);
+                total += @divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
             }
         }
     }

@@ -105,7 +105,7 @@ const DomainByTypeHashMap = std.AutoHashMap([]const u8, []const u8);
 const DomainByTypeByForkHashMap = std.AutoHashMap([]const u8, DomainByTypeHashMap);
 const ForkInfoHashMap = std.AutoHashMap([]const u8, ForkInfo);
 
-const BeaconConfig = struct {
+pub const BeaconConfig = struct {
     allocator: Allocator,
     config: ChainConfig,
     forks: ForkInfoHashMap,

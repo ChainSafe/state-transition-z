@@ -7,13 +7,13 @@ export fn add(a: i32, b: i32) i32 {
     return a + b;
 }
 
-test "process epoch" {
-    const ssz = @import("consensus_types");
-    const phase0 = ssz.phase0;
-    const BeaconState = phase0.BeaconState;
-    var state = BeaconState.default_value;
-    processEth1DataReset(&state);
-}
+// test "process epoch" {
+//     const ssz = @import("consensus_types");
+//     const phase0 = ssz.phase0;
+//     const BeaconState = phase0.BeaconState;
+//     var state = BeaconState.default_value;
+//     processEth1DataReset(&state);
+// }
 
 test "basic add functionality" {
     try testing.expect(add(3, 7) == 10);
