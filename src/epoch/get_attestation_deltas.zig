@@ -1,0 +1,163 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const attester_status = @import("../utils/attester_status.zig");
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
+const preset = @import("consensus_types").preset;
+const params = @import("../params.zig");
+const constants = @import("../constants.zig");
+const BASE_REWARDS_PER_EPOCH_CONST = params.BASE_REWARDS_PER_EPOCH;
+const PROPOSER_REWARD_QUOTIENT = preset.PROPOSER_REWARD_QUOTIENT;
+const MIN_EPOCHS_TO_INACTIVITY_PENALTY = preset.MIN_EPOCHS_TO_INACTIVITY_PENALTY;
+const BASE_REWARD_FACTOR = preset.BASE_REWARD_FACTOR;
+const INACTIVITY_PENALTY_QUOTIENT = preset.INACTIVITY_PENALTY_QUOTIENT;
+
+const FLAG_PREV_SOURCE_ATTESTER = attester_status.FLAG_PREV_SOURCE_ATTESTER;
+const FLAG_PREV_TARGET_ATTESTER = attester_status.FLAG_PREV_TARGET_ATTESTER;
+const FLAG_PREV_HEAD_ATTESTER = attester_status.FLAG_PREV_HEAD_ATTESTER;
+const FLAG_UNSLASHED = attester_status.FLAG_UNSLASHED;
+const FLAG_ELIGIBLE_ATTESTER = attester_status.FLAG_ELIGIBLE_ATTESTER;
+
+const FLAG_PREV_SOURCE_ATTESTER_OR_UNSLASHED = FLAG_PREV_SOURCE_ATTESTER | FLAG_UNSLASHED;
+const FLAG_PREV_TARGET_ATTESTER_OR_UNSLASHED = FLAG_PREV_TARGET_ATTESTER | FLAG_UNSLASHED;
+const FLAG_PREV_HEAD_ATTESTER_OR_UNSLASHED = FLAG_PREV_HEAD_ATTESTER | FLAG_UNSLASHED;
+
+const hasMarkers = attester_status.hasMarkers;
+
+const RewardPenaltyItem = struct {
+    base_reward: u64,
+    proposer_reward: u64,
+    max_attester_reward: u64,
+    source_checkpoint_reward: u64,
+    target_checkpoint_reward: u64,
+    head_reward: u64,
+    base_penalty: u64,
+    finality_delay_penalty: u64,
+};
+
+const U64Array = std.ArrayList(u64);
+
+// TODO: reuse it in EpochTransitionCache
+pub const RewardsPenaltiesArray = struct {
+    rewards: U64Array,
+    penalties: U64Array,
+};
+
+/// consumer should deinit `rewards` and `penalties` arrays
+pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) RewardsPenaltiesArray {
+    const state = cached_state.state;
+    const epoch_cache = cached_state.epoch_cache;
+
+    const flags = cache.flags;
+    const proposer_indices = cache.proposer_indices;
+    const inclusion_delays = cache.inclusion_delays;
+    const validator_count = flags.items.len;
+    const rewards = U64Array.init(allocator);
+    rewards.resize(validator_count);
+    @memset(rewards.items, 0);
+    const penalties = U64Array.init(allocator);
+    penalties.resize(validator_count);
+    @memset(penalties.items, 0);
+
+    const total_balance = cache.total_active_stake_by_increment;
+    const total_balance_in_gwei = total_balance * preset.EFFECTIVE_BALANCE_INCREMENT;
+
+    // increment is factored out from balance totals to avoid overflow
+    const prev_epoch_source_stake_by_increment = cache.prev_epoch_unslashed_stake_source_by_increment;
+    const prev_epoch_target_stake_by_increment = cache.prev_epoch_unslashed_stake_target_by_increment;
+    const prev_epoch_head_stake_by_increment = cache.prev_epoch_unslashed_stake_head_by_increment;
+
+    // sqrt first, before factoring out the increment for later usage
+    const balance_sq_root = @sqrt(total_balance_in_gwei);
+    const finality_delay = cache.prev_epoch - state.getFinalizedCheckpoint().epoch;
+
+    const BASE_REWARDS_PER_EPOCH = BASE_REWARDS_PER_EPOCH_CONST;
+    const proposer_reward_quotient = PROPOSER_REWARD_QUOTIENT;
+    const is_in_inactivity_leak = finality_delay > MIN_EPOCHS_TO_INACTIVITY_PENALTY;
+
+    // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
+    // so there are limited values of them like 32, 31, 30
+    const reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    defer reward_penalty_item_cache.deinit();
+
+    const effective_balance_increments = epoch_cache.effective_balance_increment;
+    for (0..flags.items.len) |i| {
+        const flag = flags.items[i];
+        const effective_balance_increment = effective_balance_increments.items[i];
+        const effective_balance = effective_balance_increment * preset.EFFECTIVE_BALANCE_INCREMENT;
+
+        var reward_item = reward_penalty_item_cache.get(effective_balance_increment);
+        if (reward_item == null) {
+            const base_reward = @divFloor(@divFloor(effective_balance * BASE_REWARD_FACTOR, balance_sq_root), BASE_REWARDS_PER_EPOCH);
+            const proposer_reward = @divFloor(base_reward, proposer_reward_quotient);
+            reward_item = .{
+                .base_reward = base_reward,
+                .proposer_reward = proposer_reward,
+                .max_attester_reward = base_reward - proposer_reward,
+                .source_checkpoint_reward = if (is_in_inactivity_leak) base_reward else @divFloor(base_reward * prev_epoch_source_stake_by_increment, total_balance),
+                .target_checkpoint_reward = if (is_in_inactivity_leak) base_reward else @divFloor(base_reward * prev_epoch_target_stake_by_increment, total_balance),
+                .head_reward = if (is_in_inactivity_leak) base_reward else @divFloor(base_reward * prev_epoch_head_stake_by_increment, total_balance),
+                .base_penalty = base_reward * BASE_REWARDS_PER_EPOCH_CONST - proposer_reward,
+                .finality_delay_penalty = @divFloor((effective_balance * finality_delay), INACTIVITY_PENALTY_QUOTIENT),
+            };
+            try reward_penalty_item_cache.put(effective_balance_increment, reward_item);
+        }
+
+        const base_reward = reward_item.?.base_reward;
+        const proposer_reward = reward_item.?.proposer_reward;
+        const max_attester_reward = reward_item.?.max_attester_reward;
+        const source_checkpoint_reward = reward_item.?.source_checkpoint_reward;
+        const target_checkpoint_reward = reward_item.?.target_checkpoint_reward;
+        const head_reward = reward_item.?.head_reward;
+        const base_penalty = reward_item.?.base_penalty;
+        const finality_delay_penalty = reward_item.?.finality_delay_penalty;
+
+        // inclusion speed bonus
+        if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_OR_UNSLASHED)) {
+            rewards[proposer_indices[i]] += proposer_reward;
+            rewards[i] += @divFloor(max_attester_reward, inclusion_delays[i]);
+        }
+
+        if (hasMarkers(flag, FLAG_ELIGIBLE_ATTESTER)) {
+            // expected FFG source
+            if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_OR_UNSLASHED)) {
+                // justification-participation reward
+                rewards[i] += source_checkpoint_reward;
+            } else {
+                // justification-non-participation R-penalty
+                penalties[i] += base_reward;
+            }
+
+            // expected FFG target
+            if (hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_OR_UNSLASHED)) {
+                // boundary-attestation reward
+                rewards[i] += target_checkpoint_reward;
+            } else {
+                // boundary-attestation-non-participation R-penalty
+                penalties[i] += base_reward;
+            }
+            // expected head
+            if (hasMarkers(flag, FLAG_PREV_HEAD_ATTESTER_OR_UNSLASHED)) {
+                // canonical-participation reward
+                rewards[i] += head_reward;
+            } else {
+                // canonical-participation R-penalty
+                penalties[i] += base_reward;
+            }
+
+            // take away max rewards if we're not finalizing
+            if (is_in_inactivity_leak) {
+                penalties[i] += base_penalty;
+
+                if (!hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_OR_UNSLASHED)) {
+                    penalties[i] += finality_delay_penalty;
+                }
+            }
+        }
+
+        return .{
+            .rewards = rewards,
+            .penalties = penalties,
+        };
+    }
+}
