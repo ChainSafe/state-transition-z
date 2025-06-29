@@ -1,3 +1,4 @@
+const std = @import("std");
 const ssz = @import("consensus_types");
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
 const BeaconStateAltair = ssz.altair.BeaconState.Type;
@@ -301,14 +302,25 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn setValidator(self: *BeaconStateAllForks, index: usize, validator: Validator) void {
+    pub fn setValidator(self: *BeaconStateAllForks, index: usize, validator: *const Validator) void {
         switch (self) {
-            .phase0 => |state| state.validators[index] = validator,
-            .altair => |state| state.validators[index] = validator,
-            .bellatrix => |state| state.validators[index] = validator,
-            .capella => |state| state.validators[index] = validator,
-            .deneb => |state| state.validators[index] = validator,
-            .electra => |state| state.validators[index] = validator,
+            .phase0 => |state| state.validators[index] = *validator,
+            .altair => |state| state.validators[index] = *validator,
+            .bellatrix => |state| state.validators[index] = *validator,
+            .capella => |state| state.validators[index] = *validator,
+            .deneb => |state| state.validators[index] = *validator,
+            .electra => |state| state.validators[index] = *validator,
+        }
+    }
+
+    pub fn appendValidator(self: *BeaconStateAllForks, validator: *const Validator) void {
+        switch (self) {
+            .phase0 => |state| state.validators.append(*validator),
+            .altair => |state| state.validators.append(*validator),
+            .bellatrix => |state| state.validators.append(*validator),
+            .capella => |state| state.validators.append(*validator),
+            .deneb => |state| state.validators.append(*validator),
+            .electra => |state| state.validators.append(*validator),
         }
     }
 
@@ -321,6 +333,17 @@ pub const BeaconStateAllForks = union(enum) {
             .deneb => |state| state.balances[index],
             .electra => |state| state.balances[index],
         };
+    }
+
+    pub fn appendBalance(self: *BeaconStateAllForks, amount: u64) void {
+        switch (self) {
+            .phase0 => |state| state.balances.append(amount),
+            .altair => |state| state.balances.append(amount),
+            .bellatrix => |state| state.balances.append(amount),
+            .capella => |state| state.balances.append(amount),
+            .deneb => |state| state.balances.append(amount),
+            .electra => |state| state.balances.append(amount),
+        }
     }
 
     pub fn setBalance(self: *BeaconStateAllForks, index: usize, balance: u64) void {
@@ -448,12 +471,23 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
         return switch (self) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            .altair => |state| state.previous_epoch_participation,
-            .bellatrix => |state| state.previous_epoch_participation,
-            .capella => |state| state.previous_epoch_participation,
-            .deneb => |state| state.previous_epoch_participation,
-            .electra => |state| state.previous_epoch_participation,
+            .altair => |state| state.previous_epoch_participation.items,
+            .bellatrix => |state| state.previous_epoch_participation.items,
+            .capella => |state| state.previous_epoch_participation.items,
+            .deneb => |state| state.previous_epoch_participation.items,
+            .electra => |state| state.previous_epoch_participation.items,
         };
+    }
+
+    pub fn addPreviousEpochParticipation(self: *BeaconStateAllForks, participation: u8) void {
+        switch (self) {
+            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
+            .altair => |state| state.previous_epoch_participation.append(participation),
+            .bellatrix => |state| state.previous_epoch_participation.append(participation),
+            .capella => |state| state.previous_epoch_participation.append(participation),
+            .deneb => |state| state.previous_epoch_participation.append(participation),
+            .electra => |state| state.previous_epoch_participation.append(participation),
+        }
     }
 
     /// from altair, epoch participation is just a byte
@@ -471,12 +505,23 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
         return switch (self) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            .altair => |state| state.current_epoch_participation,
-            .bellatrix => |state| state.current_epoch_participation,
-            .capella => |state| state.current_epoch_participation,
-            .deneb => |state| state.current_epoch_participation,
-            .electra => |state| state.current_epoch_participation,
+            .altair => |state| state.current_epoch_participation.items,
+            .bellatrix => |state| state.current_epoch_participation.items,
+            .capella => |state| state.current_epoch_participation.items,
+            .deneb => |state| state.current_epoch_participation.items,
+            .electra => |state| state.current_epoch_participation.items,
         };
+    }
+
+    pub fn addCurrentEpochParticipation(self: *BeaconStateAllForks, participation: u8) void {
+        switch (self) {
+            .phase0 => @panic("current_epoch_participation is not available in phase0"),
+            .altair => |state| state.current_epoch_participation.append(participation),
+            .bellatrix => |state| state.current_epoch_participation.append(participation),
+            .capella => |state| state.current_epoch_participation.append(participation),
+            .deneb => |state| state.current_epoch_participation.append(participation),
+            .electra => |state| state.current_epoch_participation.append(participation),
+        }
     }
 
     pub fn getJustificationBits(self: *const BeaconStateAllForks) JustificationBits {
@@ -586,6 +631,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.inactivity_scores[index] = score,
             .deneb => |state| state.inactivity_scores[index] = score,
             .electra => |state| state.inactivity_scores[index] = score,
+        }
+    }
+
+    pub fn addInactivityScore(self: *BeaconStateAllForks, score: u64) void {
+        switch (self) {
+            .phase0 => @panic("inactivity_scores is not available in phase0"),
+            .altair => |state| state.inactivity_scores.append(score),
+            .bellatrix => |state| state.inactivity_scores.append(score),
+            .capella => |state| state.inactivity_scores.append(score),
+            .deneb => |state| state.inactivity_scores.append(score),
+            .electra => |state| state.inactivity_scores.append(score),
         }
     }
 
@@ -864,6 +920,28 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getPendingDeposits(self: *const BeaconStateAllForks) []const PendingDeposit {
+        return switch (self) {
+            .phase0 => @panic("pending_deposits is not available in phase0"),
+            .altair => @panic("pending_deposits is not available in altair"),
+            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
+            .capella => @panic("pending_deposits is not available in capella"),
+            .deneb => @panic("pending_deposits is not available in deneb"),
+            .electra => |state| state.pending_deposits.items,
+        };
+    }
+
+    pub fn getPendingDepositCount(self: *const BeaconStateAllForks) usize {
+        return switch (self) {
+            .phase0 => @panic("pending_deposits is not available in phase0"),
+            .altair => @panic("pending_deposits is not available in altair"),
+            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
+            .capella => @panic("pending_deposits is not available in capella"),
+            .deneb => @panic("pending_deposits is not available in deneb"),
+            .electra => |state| state.pending_deposits.len,
+        };
+    }
+
     pub fn setPendingDeposit(self: *BeaconStateAllForks, index: usize, deposit: PendingDeposit) void {
         switch (self) {
             .phase0 => @panic("pending_deposits is not available in phase0"),
@@ -875,7 +953,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn pushPendingDeposit(self: *BeaconStateAllForks, pending_deposit: PendingDeposit) !void {
+    pub fn addPendingDeposit(self: *BeaconStateAllForks, pending_deposit: PendingDeposit) !void {
         switch (self) {
             .phase0 => @panic("pending_deposits is not available in phase0"),
             .altair => @panic("pending_deposits is not available in altair"),
@@ -883,6 +961,29 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => @panic("pending_deposits is not available in capella"),
             .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| state.pending_deposits.append(pending_deposit),
+        }
+    }
+
+    // TODO(ssz): implement sliceFrom api for TreeView
+    pub fn sliceFromPendingDeposits(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingDeposit) {
+        switch (self) {
+            .phase0 => @panic("pending_deposits is not available in phase0"),
+            .altair => @panic("pending_deposits is not available in altair"),
+            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
+            .capella => @panic("pending_deposits is not available in capella"),
+            .deneb => @panic("pending_deposits is not available in deneb"),
+            .electra => |state| try state.pending_deposits.sliceFrom(start_index),
+        }
+    }
+
+    pub fn setPendingDeposits(self: *BeaconStateAllForks, deposits: std.ArrayListUnmanaged(ssz.electra.PendingDeposit)) void {
+        switch (self) {
+            .phase0 => @panic("pending_deposits is not available in phase0"),
+            .altair => @panic("pending_deposits is not available in altair"),
+            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
+            .capella => @panic("pending_deposits is not available in capella"),
+            .deneb => @panic("pending_deposits is not available in deneb"),
+            .electra => |state| state.pending_deposits = deposits,
         }
     }
 

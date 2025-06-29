@@ -458,7 +458,17 @@ pub const EpochCache = struct {
     //     self.current_sync_committee_indexed = self.next_sync_committee_indexed;
     // }
 
-    // TODO: effectiveBalanceIncrementsSet, need to work on this after the reference count strategy is implemented
+    /// This is different from typescript version: only allocate new EffectiveBalanceIncrements if needed
+    pub fn effectiveBalanceIncrementsSet(self: *const EpochCache, index: usize, effective_balance: u64) void {
+        var effective_balance_increments = self.effective_balance_increment.get();
+        if (index >= effective_balance_increments.items.len) {
+            // Clone and extend effectiveBalanceIncrements
+            effective_balance_increments = getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
+            self.effective_balance_increment.release();
+            self.effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increments);
+        }
+        self.effective_balance_increment.get().items[index] = @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
+    }
 
     pub fn isPostElectra(self: *const EpochCache) bool {
         return self.epoch >= self.config.config.ELECTRA_FORK_EPOCH;

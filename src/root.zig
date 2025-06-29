@@ -2,6 +2,7 @@ const std = @import("std");
 const testing = std.testing;
 
 pub const processEth1DataReset = @import("epoch/process_eth1_data_reset.zig").processEth1DataReset;
+// pub const computeSigningRoot = @import("utils/signining_root.zig").computeSigningRoot;
 
 export fn add(a: i32, b: i32) i32 {
     return a + b;

@@ -10,6 +10,7 @@ const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const BeaconConfig = @import("../config.zig").BeaconConfig;
 const ForkSeq = @import("../config.zig").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
+const hasCompoundingWithdrawalCredential = @import("./electra.zig").hasCompoundingWithdrawalCredential;
 
 pub fn isActiveValidator(validator: *const Validator, epoch: Epoch) bool {
     return validator.activation_epoch <= epoch and epoch < validator.exit_epoch;
@@ -65,7 +66,13 @@ pub fn getConsolidationChurnLimit(epoch_cache: EpochCache) u64 {
     return getBalanceChurnLimitFromCache(epoch_cache) - getActivationExitChurnLimit(epoch_cache);
 }
 
-// TODO getMaxEffectiveBalance: implement electra utils
+pub fn getMaxEffectiveBalance(withdrawal_credentials: []const u8) u64 {
+    // Compounding withdrawal credential only available since Electra
+    if (hasCompoundingWithdrawalCredential(withdrawal_credentials)) {
+        return preset.MAX_EFFECTIVE_BALANCE_ELECTRA;
+    }
+    return preset.MIN_ACTIVATION_BALANCE;
+}
 
 pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validatorIndex: ValidatorIndex) u64 {
     var total: u64 = 0;

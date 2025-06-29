@@ -1,0 +1,170 @@
+const BeaconConfig = @import("../config.zig").BeaconConfig;
+const types = @import("../type.zig");
+const BLSPubkey = types.BLSPubkey;
+const WithdrawalCredentials = types.WithdrawalCredentials;
+const BLSSignature = types.BLSSignature;
+const DepositMessage = types.DepositMessage;
+const Domain = types.Domain;
+const Root = types.Root;
+const PendingDeposit = types.PendingDeposit;
+const Phase0Deposit = types.Phase0Deposit;
+const ssz = @import("consensus_types");
+const params = @import("../params.zig");
+const preset = ssz.preset;
+const DOMAIN_DEPOSIT = params.DOMAIN_DEPOSIT;
+const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+const computeDomain = @import("../utils/domain.zig").computeDomain;
+const computeSigningRoot = @import("../utils/signining_root.zig").computeSigningRoot;
+const blst = @import("blst_min_pk");
+const verify = @import("../utils/bls.zig").verify;
+const ForkSeq = types.ForkSeq;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
+const increaseBalance = @import("../utils/balance.zig").increaseBalance;
+
+pub const DepositData = union(enum) {
+    phase0: ssz.phase0.DepositData.Type,
+    electra: ssz.electra.DepositRequest.Type,
+
+    pub fn getPubkey(self: *const DepositData) BLSPubkey {
+        return switch (self) {
+            .phase0 => |data| data.pubkey,
+            .electra => |data| data.pubkey,
+        };
+    }
+
+    pub fn getWithdrawalCredentials(self: *const DepositData) WithdrawalCredentials {
+        return switch (self) {
+            .phase0 => |data| data.withdrawal_credentials,
+            .electra => |data| data.withdrawal_credentials,
+        };
+    }
+
+    pub fn getAmount(self: *const DepositData) u64 {
+        return switch (self) {
+            .phase0 => |data| data.amount,
+            .electra => |data| data.amount,
+        };
+    }
+
+    pub fn getSignature(self: *const DepositData) BLSSignature {
+        return switch (self) {
+            .phase0 => |data| data.signature,
+            .electra => |data| data.signature,
+        };
+    }
+};
+
+// // TODO: implement verifyMerkleBranch
+// pub fn processDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, deposit: *const Phase0Deposit) !void {
+//     // verify the merkle branch
+// }
+
+/// Adds a new validator into the registry. Or increase balance if already exist.
+/// Follows applyDeposit() in consensus spec. Will be used by processDeposit() and processDepositRequest()
+pub fn applyDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
+    const config = cached_state.config;
+    const state = cached_state.state;
+    const epoch_cache = cached_state.epoch_cache;
+    const pubkey = deposit.getPubkey();
+    const withdrawal_credentials = deposit.getWithdrawalCredentials();
+    const amount = deposit.getAmount();
+    const signature = deposit.getSignature();
+
+    const cached_index = epoch_cache.getValidatorIndex(&pubkey);
+    const is_new_validator = cached_index == null or cached_index.? >= state.getValidatorsCount();
+
+    if (fork < ForkSeq.electra) {
+        if (is_new_validator) {
+            if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
+                try addValidatorToRegistry(fork, cached_state, pubkey, withdrawal_credentials, amount);
+            }
+        } else {
+            // increase balance by deposit amount right away pre-electra
+            const index = cached_index.?;
+            increaseBalance(state, index, amount);
+        }
+    } else {
+        const pending_deposit = PendingDeposit{
+            .pubkey = pubkey,
+            .withdrawal_credentials = withdrawal_credentials,
+            .amount = amount,
+            .signature = signature,
+            .slot = preset.GENESIS_SLOT, // Use GENESIS_SLOT to distinguish from a pending deposit request
+        };
+
+        if (is_new_validator) {
+            if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
+                try addValidatorToRegistry(fork, cached_state, pubkey, withdrawal_credentials, 0);
+                state.addPendingDeposit(pending_deposit);
+            }
+        } else {
+            state.addPendingDeposit(pending_deposit);
+        }
+    }
+}
+
+pub fn addValidatorToRegistry(fork_seq: ForkSeq, state_cache: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
+    const epoch_cache = state_cache.epoch_cache;
+    const state = state_cache.state;
+    const validators = state.validators;
+    // add validator and balance entries
+    const effective_balance = @min(
+        amount - (amount % preset.EFFECTIVE_BALANCE_INCREMENT),
+        if (fork_seq < ForkSeq.electra) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
+    );
+    state.appendValidator(.{
+        .pubkey = pubkey,
+        .withdrawal_credentials = withdrawal_credentials,
+        .activation_eligibility_epoch = preset.FAR_FUTURE_EPOCH,
+        .activation_epoch = preset.FAR_FUTURE_EPOCH,
+        .exit_epoch = preset.FAR_FUTURE_EPOCH,
+        .withdrawable_epoch = preset.FAR_FUTURE_EPOCH,
+        .effective_balance = effective_balance,
+        .slashed = false,
+    });
+
+    const validator_index = validators.len - 1;
+    // TODO Electra: Review this
+    // Updating here is better than updating at once on epoch transition
+    // - Simplify genesis fn applyDeposits(): effectiveBalanceIncrements is populated immediately
+    // - Keep related code together to reduce risk of breaking this cache
+    // - Should have equal performance since it sets a value in a flat array
+    epoch_cache.effectiveBalanceIncrementsSet(validator_index, effective_balance);
+
+    // now that there is a new validator, update the epoch context with the new pubkey
+    epoch_cache.addPubkey(validator_index, pubkey);
+
+    // Only after altair:
+    if (fork_seq >= ForkSeq.altair) {
+        state.addInactivityScore(0);
+
+        // add participation caches
+        state.addPreviousEpochParticipation(0);
+        state.addCurrentEpochParticipation(0);
+    }
+
+    state.appendBalance(amount);
+}
+
+pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, withdrawal_credential: WithdrawalCredentials, amount: u64, deposit_signature: BLSSignature) !bool {
+    // verify the deposit signature (proof of posession) which is not checked by the deposit contract
+    const deposit_message = DepositMessage{
+        .pubkey = pubkey,
+        .withdrawal_credentials = withdrawal_credential,
+        .amount = amount,
+    };
+
+    const GENESIS_FORK_VERSION = config.config.GENESIS_FORK_VERSION;
+
+    // fork-agnostic domain since deposits are valid across forks
+    var domain: Domain = undefined;
+    try computeDomain(DOMAIN_DEPOSIT, GENESIS_FORK_VERSION, ZERO_HASH, &domain);
+    var signing_root: Root = undefined;
+    try computeSigningRoot(ssz.phase0.DepositMessage, &deposit_message, domain, &signing_root);
+
+    // Pubkeys must be checked for group + inf. This must be done only once when the validator deposit is processed
+    const public_key = try blst.PublicKey.fromBytes(&pubkey, true);
+    const signature = try blst.Signature.fromBytes(&deposit_signature, true);
+    return try verify(&signing_root, &public_key, &signature, null, null);
+}
