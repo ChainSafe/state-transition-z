@@ -1031,6 +1031,17 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getPendingConsolidations(self: *const BeaconStateAllForks) []const PendingConsolidation {
+        return switch (self) {
+            .phase0 => @panic("pending_consolidations is not available in phase0"),
+            .altair => @panic("pending_consolidations is not available in altair"),
+            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
+            .capella => @panic("pending_consolidations is not available in capella"),
+            .deneb => @panic("pending_consolidations is not available in deneb"),
+            .electra => |state| state.pending_consolidations.items,
+        };
+    }
+
     pub fn setPendingConsolidation(self: *BeaconStateAllForks, index: usize, consolidation: PendingConsolidation) void {
         switch (self) {
             .phase0 => @panic("pending_consolidations is not available in phase0"),
@@ -1039,6 +1050,29 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => @panic("pending_consolidations is not available in capella"),
             .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| state.pending_consolidations[index] = consolidation,
+        }
+    }
+
+    // TODO: implement sliceFrom api
+    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation) {
+        switch (self) {
+            .phase0 => @panic("pending_consolidations is not available in phase0"),
+            .altair => @panic("pending_consolidations is not available in altair"),
+            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
+            .capella => @panic("pending_consolidations is not available in capella"),
+            .deneb => @panic("pending_consolidations is not available in deneb"),
+            .electra => |state| try state.pending_consolidations.sliceFrom(start_index),
+        }
+    }
+
+    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation)) void {
+        switch (self) {
+            .phase0 => @panic("pending_consolidations is not available in phase0"),
+            .altair => @panic("pending_consolidations is not available in altair"),
+            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
+            .capella => @panic("pending_consolidations is not available in capella"),
+            .deneb => @panic("pending_consolidations is not available in deneb"),
+            .electra => |state| state.pending_consolidations = consolidations,
         }
     }
 };

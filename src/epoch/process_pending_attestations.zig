@@ -34,7 +34,7 @@ pub fn processPendingAttestations(cached_state: *const CachedBeaconStateAllForks
         const att_voted_target_root = std.mem.eql(u8, att_data.target.root[0..], actual_target_block_root[0..]);
         const att_voted_head_root = att_slot < state_slot and std.mem.eql(u8, att_data.beacon_block_root[0..], try getBlockRootAtSlot(state, att_slot));
         const committee = try epoch_cache.getBeaconCommittee(att_slot, att_data.index);
-        // TODO(ssz): implement intersectValues
+        // TODO(ssz): implement intersectValues api in https://github.com/ChainSafe/ssz-z/issues/25
         const participants = att.aggregate_bit.intersectValues(committee);
 
         if (epoch == prev_epoch) {

@@ -31,7 +31,6 @@ pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks
     // Process justifications
     state.setPreviousJustifiedCheckpoint(state.getCurrentJustifiedCheckpoint());
     const justification_bits = state.getJustificationBits();
-    // TODO(ssz): implement toBoolArray() api in ssz
     const bits = [_]bool{false} ** ssz.phase0.JustificationBits.length;
     for (0..bits.len) |i| {
         bits[i] = try justification_bits.get(i);
