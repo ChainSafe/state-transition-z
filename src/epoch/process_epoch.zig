@@ -11,6 +11,12 @@ const processEth1DataReset = @import("./process_eth1_data_reset.zig").processEth
 const processPendingDeposits = @import("./process_pending_deposits.zig").processPendingDeposits;
 const processPendingConsolidations = @import("./process_pending_consolidations.zig").processPendingConsolidations;
 const processEffectiveBalanceUpdates = @import("./process_effective_balance_updates.zig").processEffectiveBalanceUpdates;
+const processSlashingsReset = @import("./process_slashings_reset.zig").processSlashingsReset;
+const processRandaoMixesReset = @import("./process_randao_mixes_reset.zig").processRandaoMixesReset;
+const processHistoricalSummariesUpdate = @import("./process_historical_summaries_update.zig").processHistoricalSummariesUpdate;
+const processHistoricalRootsUpdate = @import("./process_historical_roots_update.zig").processHistoricalRootsUpdate;
+const processParticipationRecordUpdates = @import("./process_participation_record_updates.zig").processParticipationRecordUpdates;
+const processParticipationFlagUpdates = @import("./process_participation_flag_updates.zig").processParticipationFlagUpdates;
 
 // TODO: add metrics
 pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
@@ -36,20 +42,20 @@ pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *Cached
     // const numUpdate = processEffectiveBalanceUpdates(fork, state, cache);
     _ = try processEffectiveBalanceUpdates(fork, state, cache);
 
-    // processSlashingsReset(state, cache);
-    // processRandaoMixesReset(state, cache);
+    processSlashingsReset(state, cache);
+    processRandaoMixesReset(state, cache);
 
-    // if (fork >= ForkSeq.capella) {
-    //     processHistoricalSummariesUpdate(state, cache);
-    // } else {
-    //     processHistoricalRootsUpdate(state, cache);
-    // }
+    if (fork >= ForkSeq.capella) {
+        processHistoricalSummariesUpdate(state, cache);
+    } else {
+        processHistoricalRootsUpdate(state, cache);
+    }
 
-    // if (fork == ForkSeq.phase0) {
-    //     processParticipationRecordUpdates(state);
-    // } else {
-    //     processParticipationFlagUpdates(state);
-    // }
+    if (fork == ForkSeq.phase0) {
+        processParticipationRecordUpdates(state);
+    } else {
+        processParticipationFlagUpdates(allocator, state);
+    }
 
     // processSyncCommitteeUpdates(fork, state);
 

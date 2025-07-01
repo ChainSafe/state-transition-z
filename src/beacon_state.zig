@@ -158,6 +158,17 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getBlockRoots(self: *const BeaconStateAllForks) []const Root {
+        return switch (self) {
+            .phase0 => |state| state.block_roots.items,
+            .altair => |state| state.block_roots.items,
+            .bellatrix => |state| state.block_roots.items,
+            .capella => |state| state.block_roots.items,
+            .deneb => |state| state.block_roots.items,
+            .electra => |state| state.block_roots.items,
+        };
+    }
+
     pub fn setBlockRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
         switch (self) {
             .phase0 => |state| state.block_roots[index] = root,
@@ -177,6 +188,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.state_roots[index],
             .deneb => |state| state.state_roots[index],
             .electra => |state| state.state_roots[index],
+        };
+    }
+
+    pub fn getStateRoots(self: *const BeaconStateAllForks) []const Root {
+        return switch (self) {
+            .phase0 => |state| state.state_roots.items,
+            .altair => |state| state.state_roots.items,
+            .bellatrix => |state| state.state_roots.items,
+            .capella => |state| state.state_roots.items,
+            .deneb => |state| state.state_roots.items,
+            .electra => |state| state.state_roots.items,
         };
     }
 
@@ -210,6 +232,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.historical_roots[index] = root,
             .deneb => |state| state.historical_roots[index] = root,
             .electra => |state| state.historical_roots[index] = root,
+        }
+    }
+
+    pub fn addHistoricalRoot(self: *BeaconStateAllForks, root: Root) void {
+        switch (self) {
+            .phase0 => |state| state.historical_roots.append(root),
+            .altair => |state| state.historical_roots.append(root),
+            .bellatrix => |state| state.historical_roots.append(root),
+            .capella => |state| state.historical_roots.append(root),
+            .deneb => |state| state.historical_roots.append(root),
+            .electra => |state| state.historical_roots.append(root),
         }
     }
 
@@ -458,12 +491,26 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn setPreviousEpochPendingAttestations(self: *BeaconStateAllForks, attestations: std.ArrayListUnmanaged(PendingAttestation)) void {
+        switch (self) {
+            .phase0 => |state| state.previous_epoch_attestations = attestations,
+            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
+        }
+    }
+
     // only for phase0
     pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
         return switch (self) {
             .phase0 => |state| state.current_epoch_attestations,
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
         };
+    }
+
+    pub fn setCurrentEpochPendingAttestations(self: *BeaconStateAllForks, attestations: std.ArrayListUnmanaged(PendingAttestation)) void {
+        switch (self) {
+            .phase0 => |state| state.current_epoch_attestations = attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        }
     }
 
     /// from altair, epoch pariticipation is just a byte
@@ -479,14 +526,14 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     // from altair
-    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) std.ArrayListUnmanaged(u8) {
         return switch (self) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            .altair => |state| state.previous_epoch_participation.items,
-            .bellatrix => |state| state.previous_epoch_participation.items,
-            .capella => |state| state.previous_epoch_participation.items,
-            .deneb => |state| state.previous_epoch_participation.items,
-            .electra => |state| state.previous_epoch_participation.items,
+            .altair => |state| state.previous_epoch_participation,
+            .bellatrix => |state| state.previous_epoch_participation,
+            .capella => |state| state.previous_epoch_participation,
+            .deneb => |state| state.previous_epoch_participation,
+            .electra => |state| state.previous_epoch_participation,
         };
     }
 
@@ -505,11 +552,11 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn setPreviousEpochParticipation(self: *BeaconStateAllForks, index: usize, participation: u8) void {
         switch (self) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            .altair => |state| state.previous_epoch_participation[index] = participation,
-            .bellatrix => |state| state.previous_epoch_participation[index] = participation,
-            .capella => |state| state.previous_epoch_participation[index] = participation,
-            .deneb => |state| state.previous_epoch_participation[index] = participation,
-            .electra => |state| state.previous_epoch_participation[index] = participation,
+            .altair => |state| state.previous_epoch_participation.items[index] = participation,
+            .bellatrix => |state| state.previous_epoch_participation.items[index] = participation,
+            .capella => |state| state.previous_epoch_participation.items[index] = participation,
+            .deneb => |state| state.previous_epoch_participation.items[index] = participation,
+            .electra => |state| state.previous_epoch_participation.items[index] = participation,
         }
     }
 
@@ -524,6 +571,17 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn setPreviousEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
+        switch (self) {
+            .phase0 => @panic("current_epoch_participation is not available in phase0"),
+            .altair => |state| state.previous_epoch_attestations = participations,
+            .bellatrix => |state| state.previous_epoch_attestations = participations,
+            .capella => |state| state.previous_epoch_attestations = participations,
+            .deneb => |state| state.previous_epoch_attestations = participations,
+            .electra => |state| state.previous_epoch_attestations = participations,
+        }
+    }
+
     pub fn addCurrentEpochParticipation(self: *BeaconStateAllForks, participation: u8) void {
         switch (self) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
@@ -532,6 +590,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.current_epoch_participation.append(participation),
             .deneb => |state| state.current_epoch_participation.append(participation),
             .electra => |state| state.current_epoch_participation.append(participation),
+        }
+    }
+
+    pub fn setCurrentEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
+        switch (self) {
+            .phase0 => @panic("current_epoch_participation is not available in phase0"),
+            .altair => |state| state.current_epoch_participation = participations,
+            .bellatrix => |state| state.current_epoch_participation = participations,
+            .capella => |state| state.current_epoch_participation = participations,
+            .deneb => |state| state.current_epoch_participation = participations,
+            .electra => |state| state.current_epoch_participation = participations,
         }
     }
 
@@ -785,6 +854,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.historical_summaries[index] = summary,
             .deneb => |state| state.historical_summaries[index] = summary,
             .electra => |state| state.historical_summaries[index] = summary,
+        }
+    }
+
+    pub fn addHistoricalSummary(self: *BeaconStateAllForks, summary: HistoricalSummary) void {
+        switch (self) {
+            .phase0 => @panic("historical_summary is not available in phase0"),
+            .altair => @panic("historical_summary is not available in altair"),
+            .bellatrix => @panic("historical_summary is not available in bellatrix"),
+            .capella => |state| state.historical_summaries.append(summary),
+            .deneb => |state| state.historical_summaries.append(summary),
+            .electra => |state| state.historical_summaries.append(summary),
         }
     }
 

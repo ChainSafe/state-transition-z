@@ -1,0 +1,46 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const ForkSeq = @import("../config.zig").ForkSeq;
+const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
+const ssz = @import("consensus_types");
+const preset = ssz.preset;
+
+pub fn processParticipationFlagUpdates(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) void {
+    const state = cached_state.state;
+    // Set view and tree from currentEpochParticipation to previousEpochParticipation
+    state.getPreviousEpochParticipations().deinit(allocator);
+    state.setPreviousEpochParticipations(state.getCurrentEpochParticipations());
+
+    // We need to replace the node of currentEpochParticipation with a node that represents an empty list of some length.
+    // SSZ represents a list as = new BranchNode(chunksNode, lengthNode).
+    // Since the chunks represent all zero'ed data we can re-use the pre-computed zeroNode at chunkDepth to skip any
+    // data transformation and create the required tree almost for free.
+
+    // TODO(ssz) implement this using TreeView
+    //   const currentEpochParticipationNode = ssz.altair.EpochParticipation.tree_setChunksNode(
+    //   state.currentEpochParticipation.node,
+    //   zeroNode(ssz.altair.EpochParticipation.chunkDepth),
+    //   state.currentEpochParticipation.length
+    // );
+
+    // state.currentEpochParticipation = ssz.altair.EpochParticipation.getViewDU(currentEpochParticipationNode);
+    state.setCurrentEpochParticipations(std.ArrayListUnmanaged(u8).init(allocator));
+}
+
+// export function processParticipationFlagUpdates(state: CachedBeaconStateAltair): void {
+//   // Set view and tree from currentEpochParticipation to previousEpochParticipation
+//   state.previousEpochParticipation = state.currentEpochParticipation;
+
+//   // We need to replace the node of currentEpochParticipation with a node that represents and empty list of some length.
+//   // SSZ represents a list as = new BranchNode(chunksNode, lengthNode).
+//   // Since the chunks represent all zero'ed data we can re-use the pre-compouted zeroNode at chunkDepth to skip any
+//   // data transformation and create the required tree almost for free.
+//   const currentEpochParticipationNode = ssz.altair.EpochParticipation.tree_setChunksNode(
+//     state.currentEpochParticipation.node,
+//     zeroNode(ssz.altair.EpochParticipation.chunkDepth),
+//     state.currentEpochParticipation.length
+//   );
+
+//   state.currentEpochParticipation = ssz.altair.EpochParticipation.getViewDU(currentEpochParticipationNode);
+// }
