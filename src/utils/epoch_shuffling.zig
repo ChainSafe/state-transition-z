@@ -8,6 +8,7 @@ const params = @import("../params.zig");
 const innerShuffleList = @import("./shuffle.zig").innerShuffleList;
 const Epoch = ssz.primitive.Epoch.Type;
 const getReferenceCount = @import("./reference_count.zig").getReferenceCount;
+const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 
 pub const EpochShufflingRc = getReferenceCount(EpochShuffling);
 
@@ -18,8 +19,8 @@ pub const EpochShuffling = struct {
     allocator: Allocator,
 
     epoch: Epoch,
-
-    active_indices: []const u32,
+    // EpochShuffling takes ownership of all properties below
+    active_indices: ValidatorIndices,
 
     shuffling: []const u32,
 
@@ -27,9 +28,9 @@ pub const EpochShuffling = struct {
 
     committees_per_slot: usize,
 
-    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: []const u32) !EpochShuffling {
-        const shuffling = try allocator.alloc(u32, active_indices.len);
-        std.mem.copyForwards(u32, shuffling, active_indices);
+    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: ValidatorIndices) !EpochShuffling {
+        const shuffling = try allocator.alloc(u32, active_indices.items.len);
+        std.mem.copyForwards(u32, shuffling, active_indices.items);
         try unshuffleList(shuffling, seed[0..], preset.SHUFFLE_ROUND_COUNT);
         const committees = try buildCommitteesFromShuffling(allocator, shuffling);
         return EpochShuffling{
@@ -48,8 +49,9 @@ pub const EpochShuffling = struct {
                 self.allocator.free(committee);
             }
         }
+        self.active_indices.deinit();
+        self.allocator.free(self.shuffling);
         self.allocator.free(self.committees);
-        self.allocator.destroy(self.shuffling);
     }
 
     fn buildCommitteesFromShuffling(allocator: Allocator, shuffling: []const u32) ![]const []const u32 {
@@ -73,7 +75,8 @@ pub const EpochShuffling = struct {
     }
 };
 
-pub fn computeEpochShuffling(allocator: Allocator, state: BeaconStateAllForks, active_indices: []const u32, epoch: Epoch) !EpochShuffling {
+/// active_indices is allocated at consumer side and transfer ownership to EpochShuffling
+pub fn computeEpochShuffling(allocator: Allocator, state: BeaconStateAllForks, active_indices: ValidatorIndices, epoch: Epoch) !EpochShuffling {
     var seed = [_]u8{0} ** 32;
     try getSeed(state, epoch, params.DOMAIN_BEACON_ATTESTER, &seed);
     return EpochShuffling.init(allocator, seed, epoch, active_indices);

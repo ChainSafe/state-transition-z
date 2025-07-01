@@ -21,6 +21,8 @@ const EpochShufflingRc = @import("../utils/epoch_shuffling.zig").EpochShufflingR
 const EffectiveBalanceIncrementsRc = @import("./effective_balance_increments.zig").EffectiveBalanceIncrementsRc;
 const EffectiveBalanceIncrements = @import("./effective_balance_increments.zig").EffectiveBalanceIncrements;
 const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
 const getEffectiveBalanceIncrementsWithLen = @import("./effective_balance_increments.zig").getEffectiveBalanceIncrementsWithLen;
@@ -71,7 +73,7 @@ pub const EpochCache = struct {
     proposer_prev_epoch: ?[preset.SLOTS_PER_EPOCH]u32,
 
     // TODO: may not need this
-    // proposers_next_epoch
+    // proposers_next_epoch: not needed after EIP-7917
     // the below is not needed if we compute the next epoch shuffling eagerly
     // previous_decision_root
     // current_decision_root
@@ -84,7 +86,7 @@ pub const EpochCache = struct {
 
     next_shuffling: EpochShufflingRc,
 
-    // this is not needed if we compute next_shuffling eagerly
+    // TODO: not needed, maybe just get from the next shuffling?
     // next_active_indices
 
     // EpochCache does not take ownership of EffectiveBalanceIncrements, it is shared across EpochCache instances
@@ -337,7 +339,51 @@ pub const EpochCache = struct {
         };
     }
 
-    // TODO: afterProcessEpoch
+    pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {
+        const state = cached_state.state;
+        const upcoming_epoch = self.next_epoch;
+
+        // move current to previous
+        self.previous_shuffling.release();
+        // no need to release current_shuffling and next_shuffling
+        self.previous_shuffling = self.current_shuffling;
+        self.current_shuffling = self.next_shuffling;
+        // allocate next_shuffling_active_indices here and transfer owner ship to EpochShuffling
+        const next_shuffling_active_indices = try self.allocator.alloc(ValidatorIndex, epoch_transition_cache.next_shuffling_active_indices.len);
+        std.mem.copyForwards(ValidatorIndex, next_shuffling_active_indices, epoch_transition_cache.next_shuffling_active_indices);
+        const next_shuffling = try computeEpochShuffling(
+            self.allocator,
+            state,
+            next_shuffling_active_indices,
+            upcoming_epoch,
+        );
+        self.next_shuffling = EpochShufflingRc.init(next_shuffling);
+
+        var upcoming_proposer_seed: [32]u8 = undefined;
+        try getSeed(state, upcoming_epoch, params.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
+        try computeProposers(self.allocator, self.config.getForkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
+
+        self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
+        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.getForkSeq(state.getSlot()), self.current_shuffling.get().active_indices.items.len);
+
+        const exit_queue_epoch = computeActivationExitEpoch(upcoming_epoch);
+        if (exit_queue_epoch > self.exit_queue_epoch) {
+            self.exit_queue_epoch = exit_queue_epoch;
+            self.exit_queue_churn = 0;
+        }
+
+        self.total_acrive_balance_increments = epoch_transition_cache.total_active_balance_increments;
+        if (upcoming_epoch >= self.config.config.ALTAIR_FORK_EPOCH) {
+            self.sync_participant_reward = computeSyncParticipantReward(self.total_acrive_balance_increments);
+            self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
+            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_acrive_balance_increments);
+        }
+
+        self.previous_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments;
+        self.current_target_unslashed_balance_increments = 0;
+        self.epoch = computeEpochAtSlot(state.getSlot());
+        self.sync_period = computeSyncPeriodAtEpoch(self.epoch);
+    }
 
     pub fn beforeEpochTransition(self: *EpochCache) void {
         // Clone (copy) before being mutated in processEffectiveBalanceUpdates

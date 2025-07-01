@@ -79,7 +79,7 @@ pub const EpochTransitionCache = struct {
     flags: U8Array,
     is_compounding_validator_arr: BoolArray,
     balances: ?U64Array,
-    next_shuffling_active_indices: ValidatorIndices,
+    next_shuffling_active_indices: []ValidatorIndex,
     // TODO: nextShufflingDecisionRoot may not needed as we don't use ShufflingCache
     next_epoch_total_active_balance_by_increment: u64,
     // TODO: asyncShufflingCalculation may not needed as we don't use ShufflingCache

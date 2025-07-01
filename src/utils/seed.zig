@@ -12,13 +12,14 @@ const params = @import("../params.zig");
 const EPOCHS_PER_HISTORICAL_VECTOR = ssz.preset.EPOCHS_PER_HISTORICAL_VECTOR;
 const MIN_SEED_LOOKAHEAD = ssz.preset.MIN_SEED_LOOKAHEAD;
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
+const ValidatorIndex = @import("../type.zig").ValidatorIndex;
 const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 const computeProposerIndex = @import("./committee_indices.zig").computeProposerIndex;
 const computeSyncCommitteeIndices = @import("./committee_indices.zig").computeSyncCommitteeIndices;
 const computeEpochAtSlot = @import("./epoch.zig").computeEpochAtSlot;
 
-pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: ValidatorIndices, effective_balance_increments: EffiectiveBalanceIncrements, out: []u32) !void {
+pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffiectiveBalanceIncrements, out: []u32) !void {
     const start_slot = computeStartSlotAtEpoch(epoch);
     for (start_slot..start_slot + preset.SLOTS_PER_EPOCH, 0..) |slot, i| {
         const slot_buf: [8]u8 = undefined;
