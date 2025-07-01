@@ -357,6 +357,17 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn getBalances(self: *const BeaconStateAllForks) []const u64 {
+        return switch (self) {
+            .phase0 => |state| state.balances,
+            .altair => |state| state.balances,
+            .bellatrix => |state| state.balances,
+            .capella => |state| state.balances,
+            .deneb => |state| state.balances,
+            .electra => |state| state.balances,
+        };
+    }
+
     pub fn getValidatorsCount(self: *const BeaconStateAllForks) usize {
         return switch (self) {
             .phase0 => |state| state.validators.len,

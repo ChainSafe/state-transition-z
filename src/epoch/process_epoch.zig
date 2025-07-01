@@ -10,6 +10,7 @@ const processRewardsAndPenalties = @import("./process_rewards_and_penalties.zig"
 const processEth1DataReset = @import("./process_eth1_data_reset.zig").processEth1DataReset;
 const processPendingDeposits = @import("./process_pending_deposits.zig").processPendingDeposits;
 const processPendingConsolidations = @import("./process_pending_consolidations.zig").processPendingConsolidations;
+const processEffectiveBalanceUpdates = @import("./process_effective_balance_updates.zig").processEffectiveBalanceUpdates;
 
 // TODO: add metrics
 pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
@@ -29,10 +30,11 @@ pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *Cached
 
     if (fork >= ForkSeq.electra) {
         try processPendingDeposits(state, cache);
-        processPendingConsolidations(state, cache);
+        try processPendingConsolidations(state, cache);
     }
 
     // const numUpdate = processEffectiveBalanceUpdates(fork, state, cache);
+    _ = try processEffectiveBalanceUpdates(fork, state, cache);
 
     // processSlashingsReset(state, cache);
     // processRandaoMixesReset(state, cache);
