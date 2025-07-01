@@ -13,13 +13,13 @@ const EPOCHS_PER_HISTORICAL_VECTOR = ssz.preset.EPOCHS_PER_HISTORICAL_VECTOR;
 const MIN_SEED_LOOKAHEAD = ssz.preset.MIN_SEED_LOOKAHEAD;
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const ValidatorIndex = @import("../type.zig").ValidatorIndex;
-const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
+const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 const computeProposerIndex = @import("./committee_indices.zig").computeProposerIndex;
 const computeSyncCommitteeIndices = @import("./committee_indices.zig").computeSyncCommitteeIndices;
 const computeEpochAtSlot = @import("./epoch.zig").computeEpochAtSlot;
 
-pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffiectiveBalanceIncrements, out: []u32) !void {
+pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
     const start_slot = computeStartSlotAtEpoch(epoch);
     for (start_slot..start_slot + preset.SLOTS_PER_EPOCH, 0..) |slot, i| {
         const slot_buf: [8]u8 = undefined;
@@ -38,7 +38,7 @@ pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8,
     }
 }
 
-pub fn getNextSyncCommitteeIndices(allocator: Allocator, fork: ForkSeq, state: *const BeaconStateAllForks, active_indices: ValidatorIndices, effective_balance_increments: EffiectiveBalanceIncrements, out: []u32) !void {
+pub fn getNextSyncCommitteeIndices(allocator: Allocator, fork: ForkSeq, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
     const rand_byte_count = if (fork >= ForkSeq.electra) 2 else 1;
     const max_effective_balance = if (fork >= ForkSeq.electra) preset.MAX_EFFECTIVE_BALANCE_PRE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
 

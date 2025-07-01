@@ -17,6 +17,7 @@ const processHistoricalSummariesUpdate = @import("./process_historical_summaries
 const processHistoricalRootsUpdate = @import("./process_historical_roots_update.zig").processHistoricalRootsUpdate;
 const processParticipationRecordUpdates = @import("./process_participation_record_updates.zig").processParticipationRecordUpdates;
 const processParticipationFlagUpdates = @import("./process_participation_flag_updates.zig").processParticipationFlagUpdates;
+const processSyncCommitteeUpdates = @import("./process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 
 // TODO: add metrics
 pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
@@ -57,8 +58,8 @@ pub fn process_epoch(allocator: std.mem.Allocator, fork: ForkSeq, state: *Cached
         processParticipationFlagUpdates(allocator, state);
     }
 
-    // processSyncCommitteeUpdates(fork, state);
+    processSyncCommitteeUpdates(fork, state);
 
-    // TODO
+    // TODO(fulu)
     // processProposerLookahead(fork, state);
 }

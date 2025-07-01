@@ -1,4 +1,5 @@
-const blst = @import("blst_min_pk");
+pub const blst = @import("blst_min_pk");
+pub const aggregateSerializedPublicKeys = blst.AggregatePublicKey.aggregateSerialized;
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
 /// See https://github.com/ethereum/consensus-specs/blob/v1.4.0/specs/phase0/beacon-chain.md#bls-signatures
