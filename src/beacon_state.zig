@@ -760,7 +760,12 @@ pub const BeaconStateAllForks = union(enum) {
             .bellatrix => @panic("pending_deposits is not available in bellatrix"),
             .capella => @panic("pending_deposits is not available in capella"),
             .deneb => @panic("pending_deposits is not available in deneb"),
-            .electra => |state| try state.pending_deposits.sliceFrom(start_index),
+            .electra => |state| {
+                if (start_index >= state.pending_deposits.len) return error.IndexOutOfBounds;
+                const new_array = try std.ArrayListUnmanaged(ssz.electra.PendingDeposit).initCapacity(state.pending_deposits.items.len - start_index);
+                try new_array.appendSlice(state.pending_deposits.items[start_index..]);
+                return new_array;
+            },
         }
     }
 
@@ -786,6 +791,22 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
+        switch (self.*) {
+            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
+            .altair => @panic("pending_partial_withdrawals is not available in altair"),
+            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
+            .capella => @panic("pending_partial_withdrawals is not available in capella"),
+            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
+            .electra => |state| {
+                if (start_index >= state.pending_partial_withdrawals.len) return error.IndexOutOfBounds;
+                const new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(state.pending_partial_withdrawals.items.len - start_index);
+                try new_array.appendSlice(state.pending_partial_withdrawals.items[start_index..]);
+                return new_array;
+            },
+        }
+    }
+
     pub fn getPendingPartialWithdrawalCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
             .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
@@ -805,6 +826,17 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => @panic("pending_partial_withdrawals is not available in capella"),
             .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals[index] = *withdrawal,
+        }
+    }
+
+    pub fn setPendingPartialWithdrawals(self: *BeaconStateAllForks, withdrawals: std.ArrayListUnmanaged(PendingPartialWithdrawal)) void {
+        switch (self.*) {
+            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
+            .altair => @panic("pending_partial_withdrawals is not available in altair"),
+            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
+            .capella => @panic("pending_partial_withdrawals is not available in capella"),
+            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
+            .electra => |state| state.pending_partial_withdrawals = withdrawals,
         }
     }
 
@@ -841,7 +873,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    // TODO: implement sliceFrom api
+    // TODO: implement sliceFrom api for TreeView
     pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation) {
         switch (self.*) {
             .phase0 => @panic("pending_consolidations is not available in phase0"),
@@ -849,7 +881,12 @@ pub const BeaconStateAllForks = union(enum) {
             .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
             .capella => @panic("pending_consolidations is not available in capella"),
             .deneb => @panic("pending_consolidations is not available in deneb"),
-            .electra => |state| try state.pending_consolidations.sliceFrom(start_index),
+            .electra => |state| {
+                if (start_index >= state.pending_consolidations.ites.len) return error.IndexOutOfBounds;
+                const new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation).initCapacity(state.pending_consolidations.items.len - start_index);
+                try new_array.appendSlice(state.pending_consolidations.items[start_index..]);
+                return new_array;
+            },
         }
     }
 

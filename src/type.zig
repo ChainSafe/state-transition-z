@@ -11,11 +11,17 @@ pub const Root = ssz.primitive.Root.Type;
 pub const Slot = ssz.primitive.Slot.Type;
 pub const BLSSignature = ssz.primitive.BLSSignature.Type;
 pub const Domain = ssz.primitive.Domain.Type;
+pub const ExecutionAddress = ssz.primitive.ExecutionAddress.Type;
 
+// phase0
 pub const SigningData = ssz.phase0.SigningData.Type;
 pub const DepositMessage = ssz.phase0.DepositMessage.Type;
 pub const Phase0Deposit = ssz.phase0.Deposit.Type;
 pub const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
+
+// capella
+pub const Withdrawal = ssz.capella.Withdrawal.Type;
+pub const ExecutionPayload = ssz.capella.ExecutionPayload.Type;
 
 pub const PendingDeposit = ssz.electra.PendingDeposit.Type;
 pub const ForkSeq = @import("./config.zig").ForkSeq;
