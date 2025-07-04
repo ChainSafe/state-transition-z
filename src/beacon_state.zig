@@ -7,6 +7,7 @@ const BeaconStateBellatrix = ssz.bellatrix.BeaconState.Type;
 const BeaconStateCapella = ssz.capella.BeaconState.Type;
 const BeaconStateDeneb = ssz.deneb.BeaconState.Type;
 const BeaconStateElectra = ssz.electra.BeaconState.Type;
+const ExecutionPayloadHeader = @import("./execution_payload.zig").ExecutionPayloadHeader;
 const Root = ssz.primitive.Root.Type;
 const Fork = ssz.phase0.Fork.Type;
 const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
@@ -18,7 +19,6 @@ const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 const JustificationBits = ssz.phase0.JustificationBits.Type;
 const Checkpoint = ssz.phase0.Checkpoint.Type;
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
-const ExecutionPayloadHeader = ssz.bellatrix.ExecutionPayloadHeader.Type;
 const HistoricalSummary = ssz.capella.HistoricalSummary;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const PendingPartialWithdrawal = ssz.electra.PendingPartialWithdrawal.Type;
@@ -46,6 +46,41 @@ pub const BeaconStateAllForks = union(enum) {
             inline .capella => |state| try ssz.capella.BeaconState.hashTreeRoot(allocator, state, out),
             inline .deneb => |state| try ssz.deneb.BeaconState.hashTreeRoot(allocator, state, out),
             inline .electra => |state| try ssz.electra.BeaconState.hashTreeRoot(allocator, state, out),
+        };
+    }
+
+    pub fn isPostAltair(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0 => false,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => true,
+        };
+    }
+
+    pub fn isPostBellatrix(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair => false,
+            inline .bellatrix, .capella, .deneb, .electra => true,
+        };
+    }
+
+    pub fn isPostCapella(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix => false,
+            inline .capella, .deneb, .electra => true,
+        };
+    }
+
+    pub fn isPostDeneb(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella => false,
+            inline .deneb, .electra => true,
+        };
+    }
+
+    pub fn isPostElectra(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb => false,
+            inline .electra => true,
         };
     }
 
@@ -490,7 +525,9 @@ pub const BeaconStateAllForks = union(enum) {
         return switch (self.*) {
             .phase0 => @panic("latest_execution_payload_header is not available in phase0"),
             .altair => @panic("latest_execution_payload_header is not available in altair"),
-            else => |state| &state.latest_execution_payload_header,
+            .bellatrix => |state| &.{ .bellatrix = state.latest_execution_payload_header },
+            .capella => |state| &.{ .capella = state.latest_execution_payload_header },
+            .deneb, .electra => |state| &.{ .deneb = state.latest_execution_payload_header },
         };
     }
 
@@ -498,7 +535,9 @@ pub const BeaconStateAllForks = union(enum) {
         switch (self.*) {
             .phase0 => @panic("latest_execution_payload_header is not available in phase0"),
             .altair => @panic("latest_execution_payload_header is not available in altair"),
-            else => |state| state.latest_execution_payload_header = *header,
+            .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
+            .capella => |state| state.latest_execution_payload_header = header.*.capella,
+            .deneb, .electra => |state| state.latest_execution_payload_header = header.*.deneb,
         }
     }
 
