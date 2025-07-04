@@ -56,6 +56,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn isBellatrix(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .bellatrix => true,
+            else => false,
+        };
+    }
+
     pub fn isPostBellatrix(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair => false,

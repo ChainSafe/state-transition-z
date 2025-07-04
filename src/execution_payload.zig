@@ -1,6 +1,7 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
+const Root = @import("./type.zig").Root;
 
 pub const ExecutionPayload = union(enum) {
     bellatrix: *const ssz.bellatrix.ExecutionPayload.Type,
@@ -151,13 +152,15 @@ pub const ExecutionPayload = union(enum) {
 
     pub fn getBlobGasUsed(self: *const ExecutionPayload) u64 {
         return switch (self.*) {
-            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.blob_gas_used,
+            inline .bellatrix, .capella => @panic("Blob gas used is not available in bellatrix or capella"),
+            inline .deneb, .electra => |payload| payload.blob_gas_used,
         };
     }
 
     pub fn getExcessBlobGas(self: *const ExecutionPayload) u64 {
         return switch (self.*) {
-            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.excess_blob_gas,
+            inline .bellatrix, .capella => @panic("Excess blob gas is not available in bellatrix or capella"),
+            inline .deneb, .electra => |payload| payload.excess_blob_gas,
         };
     }
 };
@@ -172,6 +175,111 @@ pub const ExecutionPayloadHeader = union(enum) {
         return switch (self.*) {
             .bellatrix => false,
             else => true,
+        };
+    }
+
+    pub fn getParentHash(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.parent_hash,
+        };
+    }
+
+    pub fn getFeeRecipient(self: *const ExecutionPayload) ssz.primitive.Bytes20.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.fee_recipient,
+        };
+    }
+
+    pub fn getStateRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.state_root,
+        };
+    }
+
+    pub fn getReceiptsRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.receipts_root,
+        };
+    }
+
+    pub fn getLogsBloom(self: *const ExecutionPayload) ssz.bellatrix.LogsBoom.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.logs_bloom,
+        };
+    }
+
+    pub fn getPrevRandao(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.prev_randao,
+        };
+    }
+
+    pub fn getBlockNumber(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.block_number,
+        };
+    }
+
+    pub fn getGasLimit(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.gas_limit,
+        };
+    }
+
+    pub fn getGasUsed(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.gas_used,
+        };
+    }
+
+    pub fn getTimestamp(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.timestamp,
+        };
+    }
+
+    pub fn getExtraData(self: *const ExecutionPayload) ssz.bellatrix.ExtraData.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.extra_data,
+        };
+    }
+
+    pub fn getBaseFeePerGas(self: *const ExecutionPayload) u256 {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.base_fee_per_gas,
+        };
+    }
+
+    pub fn getBlockHash(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.block_hash,
+        };
+    }
+
+    pub fn getTransactionsRoot(self: *const ExecutionPayload) Root {
+        return switch (self.*) {
+            inline .bellatrix, .capella, .deneb, .electra => |payload| payload.transactions_root,
+        };
+    }
+
+    pub fn getWithdrawalsRoot(self: *const ExecutionPayload) Root {
+        return switch (self.*) {
+            .bellatrix => @panic("Withdrawals are not available in bellatrix"),
+            inline .capella, .deneb, .electra => |payload| payload.withdrawals_root,
+        };
+    }
+
+    pub fn getBlobGasUsed(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella => @panic("Blob gas used is not available in bellatrix or capella"),
+            inline .deneb, .electra => |payload| payload.blob_gas_used,
+        };
+    }
+
+    pub fn getExcessBlobGas(self: *const ExecutionPayload) u64 {
+        return switch (self.*) {
+            inline .bellatrix, .capella => @panic("Excess blob gas is not available in bellatrix or capella"),
+            inline .deneb, .electra => |payload| payload.excess_blob_gas,
         };
     }
 };

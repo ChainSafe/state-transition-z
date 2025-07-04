@@ -239,6 +239,18 @@ pub const BeaconConfig = struct {
         return self.getForkInfo(slot).name;
     }
 
+    pub fn getForkNameBySeq(seq: ForkSeq) []const u8 {
+        switch (seq) {
+            .phase0 => return Fork_Name_Phase0,
+            .altair => return Fork_Name_Altair,
+            .bellatrix => return Fork_Name_Bellatrix,
+            .capella => return Fork_Name_Capella,
+            .deneb => return Fork_Name_Deneb,
+            .electra => return Fork_Name_Electra,
+            else => unreachable,
+        }
+    }
+
     pub fn getForkSeq(self: *const BeaconConfig, slot: Slot) ForkSeq {
         return self.getForkInfo(slot).seq;
     }
@@ -255,8 +267,21 @@ pub const BeaconConfig = struct {
     // TODO: getPostBellatrixForkTypes
     // TODO: getPostAltairForkTypes
     // TODO: getPostDenebForkTypes
-    // TODO: getMaxBlobsPerBlock
-    // TODO: getMaxRequestBlobSidecars
+    pub fn getMaxBlobsPerBlock(self: *const BeaconConfig, epoch: Epoch) u64 {
+        const fork = self.getForkInfoAtEpoch(epoch).seq;
+        return switch (fork) {
+            .deneb => self.config.MAX_BLOBS_PER_BLOCK,
+            .electra => self.config.MAX_BLOBS_PER_BLOCK_ELECTRA,
+            else => {
+                // For forks before Deneb, we assume no blobs
+                0;
+            },
+        };
+    }
+
+    pub fn getMaxRequestBlobSidecars(self: *const BeaconConfig, fork: ForkSeq) u64 {
+        return if (isForkPostElectra(fork)) self.config.MAX_REQUEST_BLOB_SIDECARS_ELECTRA else self.config.MAX_REQUEST_BLOB_SIDECARS;
+    }
 
     pub fn getDomain(self: *BeaconConfig, state_slot: Slot, domain_type: DomainType, message_slot: ?Slot) ![32]u8 {
         const slot = if (message_slot) |s| s else state_slot;
@@ -351,5 +376,9 @@ const ForkInfo = struct {
     prevVersion: Version,
     prevForkName: []const u8,
 };
+
+pub fn isForkPostElectra(fork: ForkSeq) bool {
+    return fork >= ForkSeq.electra;
+}
 
 // TODO: unit tests
