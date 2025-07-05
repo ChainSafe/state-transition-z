@@ -43,8 +43,8 @@
         },
         // zig fetch --save git+https://github.com/ChainSafe/blst-z.git#te/fix_state_transition
         .blst_z = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git?ref=te/fix_state_transition#d5857a06800b2a586ca081179b3fa1838f4e17df",
-            .hash = "blst_z-0.0.0-td3FNOioAgDcS278JOj22_XPbarZ0yHpdHNXCa4AoWRj",
+            .url = "git+https://github.com/ChainSafe/blst-z.git?ref=te/fix_state_transition#d38c5644b897ed9c6b3cfde0c0542307ec872206",
+            .hash = "blst_z-0.0.0-td3FNO6pAgB2tWfWGNrF6oKwEGvFryqAZ6o48o6XafeP",
         },
     },
     .paths = .{
