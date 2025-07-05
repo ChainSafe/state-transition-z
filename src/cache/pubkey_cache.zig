@@ -2,11 +2,14 @@ const std = @import("std");
 const blst = @import("blst_min_pk");
 const ssz = @import("consensus_types");
 const PublicKey = blst.PublicKey;
-pub const Index2PubkeyCache = std.ArrayList(PublicKey);
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap;
 const Validator = ssz.phase0.Validator.Type;
 // ArrayListUnmanaged is used in ssz VariableListType
 const ValidatorList = std.ArrayListUnmanaged(Validator);
+
+// TODO: blst requires *const PublicKey while ssz uses PublicKey inside Validator
+// so need to convert PublicKey to *const PublicKey
+pub const Index2PubkeyCache = std.ArrayList(*const PublicKey);
 
 pub fn syncPubkeys(
     validators: ValidatorList,

@@ -146,6 +146,7 @@ pub const EpochCache = struct {
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
         const skip_sync_pubkeys = if (option) |opt| opt.skip_sync_pubkeys else false;
         if (!skip_sync_pubkeys) {
+            // TODO: implement this
             pubkey_to_index.ensureSyncPubkeys(allocator, state, config);
         }
 
@@ -432,7 +433,7 @@ pub const EpochCache = struct {
 
     // TODO: getIndexedAttestation - need getAttestingIndices
 
-    // TODO: getAttestingIndices - need ssz getTrueBitIndexes
+    // TODO(ssz): getAttestingIndices - need ssz getTrueBitIndexes https://github.com/ChainSafe/ssz-z/issues/25
 
     // TODO: getCommitteeAssignments
 
