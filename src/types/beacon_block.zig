@@ -7,6 +7,7 @@ const Slot = types.Slot;
 const ValidatorIndex = types.ValidatorIndex;
 const Root = types.Root;
 const ExecutionPayload = @import("./execution_payload.zig").ExecutionPayload;
+const Attestations = @import("./attestation.zig").Attestations;
 
 pub const SignedBeaconBlock = union(enum) {
     phase0: *const ssz.phase0.SignedBeaconBlock.Type,
@@ -217,29 +218,6 @@ pub const BeaconBlockBody = union(enum) {
             .electra => |body| &body.execution_requests,
         };
     }
-};
-
-pub const Attestations = union(enum) {
-    phase0: *const ssz.phase0.Attestations.Type,
-    electra: *const ssz.electra.Attestations.Type,
-
-    pub fn length(self: *const Attestations) usize {
-        return switch (self.*) {
-            inline .phase0, .electra => |attestations| attestations.items.len,
-        };
-    }
-
-    pub fn items(self: *const Attestations) AttestationItems {
-        return switch (self.*) {
-            .phase0 => |attestations| .{ .phase0 = attestations.items },
-            .electra => |attestations| .{ .electra = attestations.items },
-        };
-    }
-};
-
-pub const AttestationItems = union(enum) {
-    phase0: []ssz.phase0.Attestation.Type,
-    electra: []ssz.electra.Attestation.Type,
 };
 
 test "electra - sanity" {

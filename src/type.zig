@@ -1,3 +1,4 @@
+// TODO: move to "types" folder
 const std = @import("std");
 const ssz = @import("consensus_types");
 pub const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
