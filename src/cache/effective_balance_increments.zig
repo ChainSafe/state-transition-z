@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const getReferenceCount = @import("../utils/reference_count.zig").getReferenceCount;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 

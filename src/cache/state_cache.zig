@@ -4,7 +4,7 @@ const BeaconConfig = @import("../config.zig").BeaconConfig;
 const EpochCache = @import("./epoch_cache.zig").EpochCache;
 const EpochCacheImmutableData = @import("./epoch_cache.zig").EpochCacheImmutableData;
 const EpochCacheOpts = @import("./epoch_cache.zig").EpochCacheOpts;
-const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 
 // TODO: create a generic struct with state type if needed
 pub const CachedBeaconStateAllForks = struct {

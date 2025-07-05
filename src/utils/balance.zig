@@ -1,4 +1,4 @@
-const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ValidatorIndex = @import("../type.zig").ValidatorIndex;
 
 /// Increase the balance for a validator with the given ``index`` by ``delta``.

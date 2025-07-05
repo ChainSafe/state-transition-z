@@ -1,11 +1,11 @@
 const ForkSeq = @import("../config.zig").ForkSeq;
 const ssz = @import("consensus_types");
-const BeaconBlock = @import("../beacon_block.zig").BeaconBlock;
-const BeaconBlockBody = @import("../beacon_block.zig").BeaconBlockBody;
-const ExecutionPayload = @import("../beacon_block.zig").ExecutionPayload;
+const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
+const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
+const ExecutionPayload = @import("../types/beacon_block.zig").ExecutionPayload;
 // const ExecutionPayloadHeader
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 
 // TODO: support BlindedBeaconBlock
 pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const BeaconBlock) bool {

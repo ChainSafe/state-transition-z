@@ -5,7 +5,7 @@ const params = @import("../params.zig");
 const Slot = ssz.primitive.Slot.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const SyncPeriod = ssz.primitive.SyncPeriod.Type;
-const BeaconStateAllForks = @import("../beacon_state.zig").BeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const Gwei = ssz.primitive.Gwei.Type;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
-const Root = @import("./type.zig").Root;
+const Root = @import("../type.zig").Root;
 
 pub const ExecutionPayload = union(enum) {
     bellatrix: *const ssz.bellatrix.ExecutionPayload.Type,

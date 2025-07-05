@@ -18,6 +18,8 @@ pub const SigningData = ssz.phase0.SigningData.Type;
 pub const DepositMessage = ssz.phase0.DepositMessage.Type;
 pub const Phase0Deposit = ssz.phase0.Deposit.Type;
 pub const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
+pub const AttestationData = ssz.phase0.AttestationData.Type;
+pub const Attestation = ssz.phase0.Attestation.Type;
 
 // capella
 pub const Withdrawal = ssz.capella.Withdrawal.Type;
