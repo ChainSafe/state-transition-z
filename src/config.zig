@@ -9,6 +9,11 @@ const Version = ssz.primitive.Version.Type;
 const Root = ssz.primitive.Root.Type;
 const DomainType = ssz.primitive.DomainType.Type;
 const DOMAIN_VOLUNTARY_EXIT = @import("./params.zig").DOMAIN_VOLUNTARY_EXIT;
+const forks_def = @import("./fork.zig");
+const ForkSeq = forks_def.ForkSeq;
+const ForkInfo = forks_def.ForkInfo;
+const TOTAL_FORKS = forks_def.TOTAL_FORKS;
+const getForkSeqByForkName = forks_def.getForkSeqByForkName;
 
 /// Run-time chain configuration
 /// This starts with ChainConfig, similar to typescript version
@@ -102,71 +107,63 @@ const BlobScheduleEntry = struct {
 };
 
 const DomainByTypeHashMap = std.AutoHashMap([]const u8, []const u8);
-const DomainByTypeByForkHashMap = std.AutoHashMap([]const u8, DomainByTypeHashMap);
-const ForkInfoHashMap = std.AutoHashMap([]const u8, ForkInfo);
+const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);
 
 pub const BeaconConfig = struct {
     allocator: Allocator,
     config: ChainConfig,
-    forks: ForkInfoHashMap,
-    forks_ascending_epoch_order: [6]ForkInfo,
-    forks_descending_epoch_order: [6]ForkInfo,
+    forks_ascending_epoch_order: [TOTAL_FORKS]ForkInfo,
+    forks_descending_epoch_order: [TOTAL_FORKS]ForkInfo,
     genesis_validator_root: Root,
-    domain_cache: DomainByTypeByForkHashMap,
+    domain_cache: DomainByTypeByFork,
 
     pub fn init(allocator: Allocator, config: ChainConfig, genesis_validator_root: Root) !*BeaconConfig {
         const phase0 = ForkInfo{
-            .name = "phase0",
-            .seq = ForkSeq.phase0,
+            .fork_seq = ForkSeq.phase0,
             .epoch = 0,
             .version = config.GENESIS_FORK_VERSION,
-            .prevVersion = [4]u8{ 0, 0, 0, 0 },
-            .prevForkName = "phase0",
+            .prev_version = [4]u8{ 0, 0, 0, 0 },
+            .prev_fork_seq = ForkSeq.phase0,
         };
 
         const altair = ForkInfo{
-            .name = "altair",
-            .seq = ForkSeq.altair,
+            .fork_seq = ForkSeq.altair,
             .epoch = config.ALTAIR_FORK_EPOCH,
             .version = config.ALTAIR_FORK_VERSION,
-            .prevVersion = config.GENESIS_FORK_VERSION,
-            .prevForkName = phase0.name,
+            .prev_version = config.GENESIS_FORK_VERSION,
+            .prev_fork_seq = ForkSeq.phase0,
         };
 
         const bellatrix = ForkInfo{
-            .name = "bellatrix",
-            .seq = ForkSeq.bellatrix,
+            .fork_seq = ForkSeq.bellatrix,
             .epoch = config.BELLATRIX_FORK_EPOCH,
             .version = config.BELLATRIX_FORK_VERSION,
-            .prevVersion = config.ALTAIR_FORK_VERSION,
-            .prevForkName = altair.name,
+            .prev_version = config.ALTAIR_FORK_VERSION,
+            .prev_fork_seq = ForkSeq.altair,
         };
 
         const capella = ForkInfo{
-            .name = "capella",
-            .seq = ForkSeq.capella,
+            .fork_seq = ForkSeq.capella,
             .epoch = config.CAPELLA_FORK_EPOCH,
             .version = config.CAPELLA_FORK_VERSION,
-            .prevVersion = config.BELLATRIX_FORK_VERSION,
-            .prevForkName = bellatrix.name,
+            .prev_version = config.BELLATRIX_FORK_VERSION,
+            .prev_fork_seq = ForkSeq.bellatrix,
         };
 
         const deneb = ForkInfo{
-            .name = "deneb",
-            .seq = ForkSeq.deneb,
+            .fork_seq = ForkSeq.deneb,
             .epoch = config.DENEB_FORK_EPOCH,
             .version = config.DENEB_FORK_VERSION,
-            .prevVersion = config.CAPELLA_FORK_VERSION,
-            .prevForkName = capella.name,
+            .prev_version = config.CAPELLA_FORK_VERSION,
+            .prev_fork_seq = ForkSeq.capella,
         };
 
         const electra = ForkInfo{
-            .name = "electra",
-            .seq = ForkSeq.electra,
+            .fork_seq = ForkSeq.electra,
             .epoch = config.ELECTRA_FORK_EPOCH,
             .version = config.ELECTRA_FORK_VERSION,
-            .prevVersion = config.DENEB_FORK_VERSION,
-            .prevForkName = deneb.name,
+            .prev_version = config.DENEB_FORK_VERSION,
+            .prev_fork_seq = ForkSeq.deneb,
         };
 
         const forks_ascending_epoch_order = [_]ForkInfo{
@@ -177,15 +174,27 @@ pub const BeaconConfig = struct {
             deneb,
             electra,
         };
-        const forks = ForkInfoHashMap.init(allocator);
-        try forks.put(phase0.name, phase0);
-        try forks.put(altair.name, altair);
-        try forks.put(bellatrix.name, bellatrix);
-        try forks.put(capella.name, capella);
-        try forks.put(deneb.name, deneb);
-        try forks.put(electra.name, electra);
+        const forks_descending_epoch_order = [_]ForkInfo{
+            electra,
+            deneb,
+            capella,
+            bellatrix,
+            altair,
+            phase0,
+        };
+        const forks = [_]ForkInfo{
+            phase0,
+            altair,
+            bellatrix,
+            capella,
+            deneb,
+            electra,
+        };
 
-        const domain_cache = DomainByTypeByForkHashMap.init(allocator);
+        const domain_cache = DomainByTypeByFork.init(allocator);
+        for (0..TOTAL_FORKS) |_| {
+            domain_cache.append(DomainByTypeHashMap.init(allocator));
+        }
 
         const beacon_config = try allocator.create(BeaconConfig);
         beacon_config.* = BeaconConfig{
@@ -193,14 +202,7 @@ pub const BeaconConfig = struct {
             .config = config,
             .forks = forks,
             .forks_ascending_epoch_order = forks_ascending_epoch_order,
-            .forks_descending_epoch_order = [_]ForkInfo{
-                electra,
-                deneb,
-                capella,
-                bellatrix,
-                altair,
-                phase0,
-            },
+            .forks_descending_epoch_order = forks_descending_epoch_order,
             .genesis_validator_root = genesis_validator_root,
             .domain_cache = domain_cache,
         };
@@ -209,10 +211,8 @@ pub const BeaconConfig = struct {
     }
 
     pub fn deinit(self: *BeaconConfig) void {
-        self.forks.deinit();
-        for (self.domain_cache.iterator()) |entry| {
-            // TODO: fix this
-            entry.value.deinit();
+        for (0..TOTAL_FORKS) |i| {
+            self.domain_cache.items[i].deinit();
         }
         self.domain_cache.deinit();
         self.allocator.destroy(self);
@@ -232,31 +232,19 @@ pub const BeaconConfig = struct {
         }
 
         // phase0
-        return self.forks[0];
+        return self.forks_ascending_epoch_order[ForkSeq.phase0];
     }
 
     pub fn getForkName(self: *const BeaconConfig, slot: Slot) []const u8 {
         return self.getForkInfo(slot).name;
     }
 
-    pub fn getForkNameBySeq(seq: ForkSeq) []const u8 {
-        switch (seq) {
-            .phase0 => return Fork_Name_Phase0,
-            .altair => return Fork_Name_Altair,
-            .bellatrix => return Fork_Name_Bellatrix,
-            .capella => return Fork_Name_Capella,
-            .deneb => return Fork_Name_Deneb,
-            .electra => return Fork_Name_Electra,
-            else => unreachable,
-        }
-    }
-
     pub fn getForkSeq(self: *const BeaconConfig, slot: Slot) ForkSeq {
-        return self.getForkInfo(slot).seq;
+        return self.getForkInfo(slot).fork_seq;
     }
 
     pub fn getForkSeqAtEpoch(self: *const BeaconConfig, epoch: Epoch) ForkSeq {
-        return self.getForkInfoAtEpoch(epoch).seq;
+        return self.getForkInfoAtEpoch(epoch).fork_seq;
     }
 
     pub fn getForkVersion(self: *const BeaconConfig, slot: Slot) [4]u8 {
@@ -268,7 +256,7 @@ pub const BeaconConfig = struct {
     // TODO: getPostAltairForkTypes
     // TODO: getPostDenebForkTypes
     pub fn getMaxBlobsPerBlock(self: *const BeaconConfig, epoch: Epoch) u64 {
-        const fork = self.getForkInfoAtEpoch(epoch).seq;
+        const fork = self.getForkInfoAtEpoch(epoch).fork_seq;
         return switch (fork) {
             .deneb => self.config.MAX_BLOBS_PER_BLOCK,
             .electra => self.config.MAX_BLOBS_PER_BLOCK_ELECTRA,
@@ -280,42 +268,31 @@ pub const BeaconConfig = struct {
     }
 
     pub fn getMaxRequestBlobSidecars(self: *const BeaconConfig, fork: ForkSeq) u64 {
-        return if (isForkPostElectra(fork)) self.config.MAX_REQUEST_BLOB_SIDECARS_ELECTRA else self.config.MAX_REQUEST_BLOB_SIDECARS;
+        return if (fork.isForkPostElectra()) self.config.MAX_REQUEST_BLOB_SIDECARS_ELECTRA else self.config.MAX_REQUEST_BLOB_SIDECARS;
     }
 
     pub fn getDomain(self: *BeaconConfig, state_slot: Slot, domain_type: DomainType, message_slot: ?Slot) ![32]u8 {
         const slot = if (message_slot) |s| s else state_slot;
         const epoch = @divFloor(slot, preset.SLOTS_PER_EPOCH);
         const state_fork_info = self.getForkInfo(state_slot);
-        const fork_name = if (epoch < state_fork_info.epoch) state_fork_info.prevForkName else state_fork_info.name;
-        const fork_info = self.forks.get(fork_name) orelse return error.ForkNameNotFound;
+        const fork_seq = if (epoch < state_fork_info.epoch) state_fork_info.prev_fork_seq else state_fork_info.fork_seq;
 
-        const domain_by_type = self.domain_cache.get(fork_name) orelse {
-            const new_map = DomainByTypeHashMap.init(self.allocator);
-            self.domain_cache.put(fork_name, new_map) catch error.DomainCachePutFailed;
-            return new_map;
-        };
-
-        const domain = domain_by_type.get(domain_type) orelse {
-            const out = try self.allocator.create([32]u8);
-            computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
-            try domain_by_type.put(domain_type, out);
-            return out;
-        };
-
-        return domain.*;
+        return self.getDomainByForkSeq(fork_seq, domain_type);
     }
 
-    pub fn getDomainAtFork(self: *BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
-        const fork_info = self.forks.get(fork_name) orelse return error.ForkNameNotFound;
-        const domain_by_type = self.domain_cache.get(fork_name) orelse {
-            const new_map = DomainByTypeHashMap.init(self.allocator);
-            self.domain_cache.put(fork_name, new_map) catch return error.DomainCachePutFailed;
-            return new_map;
-        };
+    // TODO: may not need this method
+    pub fn getDomainByForkName(self: *BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
+        const fork_seq = getForkSeqByForkName(fork_name);
+        return try self.getDomainByForkSeq(fork_seq, domain_type);
+    }
 
+    pub fn getDomainByForkSeq(self: *BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
+        if (fork_seq >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
+
+        const domain_by_type = self.domain_cache.items[fork_seq];
         const domain = domain_by_type.get(domain_type) orelse {
             const out = try self.allocator.create([32]u8);
+            const fork_info = self.forks_ascending_epoch_order[fork_seq];
             computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
             try domain_by_type.put(domain_type, out);
             return out;
@@ -328,7 +305,7 @@ pub const BeaconConfig = struct {
         const domain = if (state_slot < self.config.DENEB_FORK_EPOCH * preset.SLOTS_PER_EPOCH) {
             return self.getDomain(state_slot, DOMAIN_VOLUNTARY_EXIT, message_slot);
         } else {
-            return self.getDomainAtFork(Fork_Name_Capella, DOMAIN_VOLUNTARY_EXIT);
+            return self.getDomainByForkSeq(ForkSeq.capella, DOMAIN_VOLUNTARY_EXIT);
         };
 
         return domain;
@@ -349,36 +326,6 @@ fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, 
         .genesis_validators_root = genesis_validators_root,
     };
     ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
-}
-
-const Fork_Name_Phase0 = "phase0";
-const Fork_Name_Altair = "altair";
-const Fork_Name_Bellatrix = "bellatrix";
-const Fork_Name_Capella = "capella";
-const Fork_Name_Deneb = "deneb";
-const Fork_Name_Electra = "electra";
-
-pub const ForkSeq = enum(u8) {
-    phase0 = 0,
-    altair = 1,
-    bellatrix = 2,
-    capella = 3,
-    deneb = 4,
-    electra = 5,
-    fulu = 6,
-};
-
-const ForkInfo = struct {
-    name: []const u8,
-    seq: ForkSeq,
-    epoch: Epoch,
-    version: Version,
-    prevVersion: Version,
-    prevForkName: []const u8,
-};
-
-pub fn isForkPostElectra(fork: ForkSeq) bool {
-    return fork >= ForkSeq.electra;
 }
 
 // TODO: unit tests
