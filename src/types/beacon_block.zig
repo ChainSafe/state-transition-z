@@ -8,6 +8,7 @@ const ValidatorIndex = types.ValidatorIndex;
 const Root = types.Root;
 const ExecutionPayload = @import("./execution_payload.zig").ExecutionPayload;
 const Attestations = @import("./attestation.zig").Attestations;
+const AttesterSlashings = @import("./attester_slashing.zig").AttesterSlashings;
 
 pub const SignedBeaconBlock = union(enum) {
     phase0: *const ssz.phase0.SignedBeaconBlock.Type,
@@ -138,9 +139,10 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getAttesterSlashings(self: *const BeaconBlockBody) *const ssz.phase0.AttesterSlashings.Type {
+    pub fn getAttesterSlashings(self: *const BeaconBlockBody) AttesterSlashings {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.attester_slashings,
+            .electra => |body| .{ .electra = body.attester_slashings },
+            inline .phase0, .altair, .bellatrix, .capella, .deneb => |body| .{ .phase0 = body.attester_slashings },
         };
     }
 
@@ -254,7 +256,7 @@ test "electra - sanity" {
     try expect(eth1_data.deposit_count == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getGraffity());
     try expect(block_body.getProposerSlashings().items.len == 0);
-    try expect(block_body.getAttesterSlashings().items.len == 0);
+    try expect(block_body.getAttesterSlashings().length() == 0);
     try expect(block_body.getAttestations().length() == 1);
     try expect(block_body.getAttestations().items().electra[0].data.slot == 12345);
     try expect(block_body.getDeposits().items.len == 0);
