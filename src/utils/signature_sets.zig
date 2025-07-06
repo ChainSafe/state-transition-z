@@ -12,12 +12,14 @@ const fastAggregateVerify = @import("./bls.zig").fastAggregateVerify;
 pub const SignatureSetType = enum { single, aggregate };
 
 pub const SingleSignatureSet = struct {
-    pubkey: *const PublicKey,
+    // fromBytes api return PublicKey so it's more convenient to model this as value
+    pubkey: PublicKey,
     signing_root: Root,
     signature: BLSSignature,
 };
 
 pub const AggregatedSignatureSet = struct {
+    // fastAggregateVerify also requires []*const PublicKey
     pubkeys: []*const PublicKey,
     signing_root: Root,
     signature: BLSSignature,
@@ -26,7 +28,7 @@ pub const AggregatedSignatureSet = struct {
 pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
     const signature = Signature.fromBytes(&set.signature, true);
-    return verify(&set.signing_root, set.pubkey, &signature, null, null);
+    return verify(&set.signing_root, &set.pubkey, &signature, null, null);
 }
 
 pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) bool {

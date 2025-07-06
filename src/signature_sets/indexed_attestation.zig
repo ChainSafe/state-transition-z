@@ -5,7 +5,6 @@ const PublicKey = blst.PublicKey;
 const ssz = @import("consensus_types");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
-const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const params = @import("../params.zig");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;

@@ -22,7 +22,7 @@ pub fn getRandaoRevealSignatureSet(cached_state: *const CachedBeaconStateAllFork
     const domain = config.getDomain(state.getSlot(), params.DOMAIN_RANDAO, block.getSlot());
 
     return .{
-        .pubkey = epoch_cache.index2pubkey[block.getProposerIndex()],
+        .pubkey = *epoch_cache.index_to_pubkey[block.getProposerIndex()],
         .signing_root = computeSigningRoot(ssz.primitive.Epoch, epoch, domain),
         .signature = block.getBeaconBlockBody().getRandaoReveal(),
     };
