@@ -1,0 +1,42 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock;
+const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
+const params = @import("../params.zig");
+const ssz = @import("consensus_types");
+const Root = ssz.primitive.Root;
+const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
+const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
+const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
+const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
+
+pub fn verifyVoluntaryExitSignature(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) bool {
+    const signature_set = getVoluntaryExitSignatureSet(cached_state, signed_voluntary_exit);
+    return verifySingleSignatureSet(&signature_set);
+}
+
+pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) SingleSignatureSet {
+    const config = cached_state.config;
+    const state = cached_state.state;
+    const epoch_cache = cached_state.epoch_cache;
+
+    const slot = computeStartSlotAtEpoch(signed_voluntary_exit.message.epoch);
+    const domain = config.getDomainForVoluntaryExit(state.getSlot(), slot);
+    var signing_root: Root = undefined;
+    try computeSigningRoot(ssz.phase0.VoluntaryExit, signed_voluntary_exit.message, domain, &signing_root);
+
+    return .{
+        .pubkey = epoch_cache.index_to_pubkey(signed_voluntary_exit.message.validatorIndex),
+        .signing_root = signing_root,
+        .signature = signed_voluntary_exit.signature,
+    };
+}
+
+pub fn getVoluntaryExitsSignatureSets(cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
+    const voluntary_exits = signed_block.getBeaconBlock().getBeaconBlockBody().getVoluntaryExits().items;
+    for (voluntary_exits) |signed_voluntary_exit| {
+        const signature_set = getVoluntaryExitSignatureSet(cached_state, &signed_voluntary_exit);
+        try out.append(signature_set);
+    }
+}
