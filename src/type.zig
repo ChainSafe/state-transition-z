@@ -1,4 +1,4 @@
-// TODO: move to "types" folder
+// TODO: move to "types" folder, maybe just use ssz types and only define types other than that
 const std = @import("std");
 const ssz = @import("consensus_types");
 pub const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
@@ -21,6 +21,7 @@ pub const Phase0Deposit = ssz.phase0.Deposit.Type;
 pub const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
 pub const AttestationData = ssz.phase0.AttestationData.Type;
 pub const Attestation = ssz.phase0.Attestation.Type;
+pub const Fork = ssz.phase0.Fork.Type;
 
 // capella
 pub const Withdrawal = ssz.capella.Withdrawal.Type;
@@ -28,7 +29,6 @@ pub const ExecutionPayload = ssz.capella.ExecutionPayload.Type;
 
 pub const PendingDeposit = ssz.electra.PendingDeposit.Type;
 pub const ForkSeq = @import("./config.zig").ForkSeq;
-pub const Fork = ssz.phase0.Fork.Type;
 
 pub fn cloneValidatorIndices(allocator: std.mem.Allocator, indices: ValidatorIndices) !ValidatorIndices {
     var cloned = try ValidatorIndices.initCapacity(allocator, indices.items.len);
