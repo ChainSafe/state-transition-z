@@ -6,6 +6,7 @@ const types = @import("../type.zig");
 const Slot = types.Slot;
 const ValidatorIndex = types.ValidatorIndex;
 const Root = types.Root;
+const ProposerSlashings = ssz.phase0.ProposerSlashings.Type;
 const ExecutionPayload = @import("./execution_payload.zig").ExecutionPayload;
 const Attestations = @import("./attestation.zig").Attestations;
 const AttesterSlashings = @import("./attester_slashing.zig").AttesterSlashings;
@@ -133,7 +134,7 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getProposerSlashings(self: *const BeaconBlockBody) *const ssz.phase0.ProposerSlashings.Type {
+    pub fn getProposerSlashings(self: *const BeaconBlockBody) *const ProposerSlashings {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.proposer_slashings,
         };
