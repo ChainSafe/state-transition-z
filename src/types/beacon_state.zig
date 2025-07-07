@@ -410,6 +410,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn getCurrentEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
+        return switch (self.*) {
+            .phase0 => @panic("current_epoch_participation is not available in phase0"),
+            else => |state| state.current_epoch_participation.items[index],
+        };
+    }
+
     pub fn setPreviousEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
         switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),

@@ -6,7 +6,7 @@ const ForkSeq = @import("../config.zig").ForkSeq;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
 const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
 
-pub fn processRegistryUpdates(fork: ForkSeq, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processRegistryUpdates(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
     const epoch_cache = cached_state.epoch_cache;
     const state = cached_state.state;
 
@@ -19,7 +19,9 @@ pub fn processRegistryUpdates(fork: ForkSeq, cached_state: CachedBeaconStateAllF
     for (cache.indices_to_eject) |index| {
         // set validator exit epoch and withdrawable epoch
         // TODO: Figure out a way to quickly set properties on the validators tree
-        initiateValidatorExit(fork, state, validators.get(index));
+        const validator = validators.get(index);
+        initiateValidatorExit(fork, state, &validator);
+        state.setValidator(index, validator);
     }
 
     // set new activation eligibilities

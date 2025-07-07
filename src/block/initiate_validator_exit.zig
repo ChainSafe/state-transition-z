@@ -25,7 +25,7 @@ const computeExitEpochAndUpdateChurn = @import("../utils/epoch.zig").computeExit
 /// ```
 /// Forcing consumers to pass the SubTree of `validator` directly mitigates this issue.
 ///
-pub fn initiateValidatorExit(fork: ForkSeq, cached_state: CachedBeaconStateAllForks, validator: Validator) !void {
+pub fn initiateValidatorExit(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, validator: *Validator) !void {
     const config = cached_state.config.config;
     const epoch_cache = cached_state.epoch_cache;
 
