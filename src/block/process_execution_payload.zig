@@ -5,11 +5,12 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("../params.zig");
 const ForkSeq = @import("../config.zig").ForkSeq;
-const BeaconBlockBody = @import("../beacon_block.zig").BeaconBlockBody;
+const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
 const ExecutionPayloadStatus = @import("./external_data.zig").ExecutionPayloadStatus;
 const BeaconConfig = @import("../config.zig").BeaconConfig;
 const isMergeTransitionComplete = @import("../utils/execution.zig").isMergeTransitionComplete;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
+const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 
 // TODO: support BlindedBeaconBlockBody
 pub fn processExecutionPayload(allocator: Allocator, fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, body: BeaconBlockBody, external_data: ExecutionPayloadStatus) !void {
@@ -27,7 +28,7 @@ pub fn processExecutionPayload(allocator: Allocator, fork: ForkSeq, cached_state
     }
 
     // Verify random
-    const expected_random = state.getRanDaoMix(epoch_cache.epoch);
+    const expected_random = getRandaoMix(state.*, epoch_cache.epoch);
     if (!std.mem.eql(u8, &payload.getPrevRandao(), &expected_random)) {
         return error.InvalidExecutionPayloadRandom;
     }
