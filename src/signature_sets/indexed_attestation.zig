@@ -41,16 +41,9 @@ pub fn getAttestationWithIndicesSignatureSet(allocator: Allocator, cached_state:
     return createAggregateSignatureSetFromComponents(pubkeys, signing_root, signature);
 }
 
-pub const getIndexedAttestationSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IndexedAttestation) !AggregatedSignatureSet {
-    return getAttestationWithIndicesSignatureSet(
-        allocator,
-        cached_state,
-        &indexed_attestation.data,
-        indexed_attestation.signature,
-        indexed_attestation.attesting_indices
-    );
+pub fn getIndexedAttestationSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IndexedAttestation) !AggregatedSignatureSet {
+    return try getAttestationWithIndicesSignatureSet(allocator, cached_state, &indexed_attestation.data, indexed_attestation.signature, indexed_attestation.attesting_indices);
 }
-
 
 // TODO: implement getIndexedAttestation in EpochCache
 // export function getAttestationsSignatureSets(
