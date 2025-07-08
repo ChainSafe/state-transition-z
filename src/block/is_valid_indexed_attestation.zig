@@ -8,12 +8,12 @@ const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySi
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
 const getIndexedAttestationSignatureSet = @import("../signature_sets/indexed_attestation.zig").getIndexedAttestationSignatureSet;
 
-pub fn isValidIndexedAttestation(cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IndexedAttestation, verify_signature: bool) !bool {
+pub fn isValidIndexedAttestation(cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IndexedAttestation, verify_signature: ?bool) !bool {
     if (!isValidIndexedAttestationIndices(cached_state, indexed_attestation.attesting_indices.items)) {
         return false;
     }
 
-    if (verify_signature) {
+    if (verify_signature orelse true) {
         const signature_set = try getIndexedAttestationSignatureSet(cached_state.allocator, cached_state, indexed_attestation);
         return verifyAggregatedSignatureSet(signature_set);
     }
