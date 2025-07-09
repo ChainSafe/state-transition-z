@@ -28,7 +28,7 @@ const SLOTS_PER_EPOCH_SQRT = std.math.sqrt(preset.SLOTS_PER_EPOCH);
 /// AT = AttestationType
 /// for phase0 it's `ssz.phase0.Attestation.Type`
 /// for electra it's `ssz.electra.Attestation.Type`
-pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: std.ArrayListUnmanaged(AT), verify_signature: ?bool) !void {
+pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
     const effective_balance_increments = epoch_cache.effective_balance_increment;
@@ -44,7 +44,7 @@ pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_sta
     // let newSeenAttestersEffectiveBalance = 0;
 
     var proposer_reward: u64 = 0;
-    for (attestations.items) |attestation| {
+    for (attestations) |attestation| {
         const data = attestation.data;
         if (AT == Phase0Attestation) {
             try validatePhase0Attestation(fork, cached_state, attestation);
