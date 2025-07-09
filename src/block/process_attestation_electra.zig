@@ -1,0 +1,76 @@
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const ssz = @import("consensus_types");
+const preset = ssz.preset;
+const ForkSeq = @import("../config.zig").ForkSeq;
+const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
+const Slot = ssz.primitive.Slot.Type;
+const Checkpoint = ssz.phase0.Checkpoint.Type;
+const ElectraAttestation = ssz.electra.Attestation.Type;
+const isTimelyTarget = @import("./process_attestation_pre_electra.zig").isTimelyTarget;
+
+pub fn validateElectraAttestation(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, attestation: ElectraAttestation) !void {
+    const epoch_cache = cached_state.epoch_cache;
+    const state = cached_state.state;
+    const slot = state.getSlot();
+    const data = attestation.data;
+    const computed_epoch = computeEpochAtSlot(data.slot);
+    const committee_count = try epoch_cache.getCommitteeCountPerSlot(computed_epoch);
+    if (data.target.epoch != epoch_cache.previous_shuffling.epoch and data.target.epoch != epoch_cache.epoch) {
+        // TODO: print to stderr?
+        return error.InvalidAttestationTargetEpochNotInPreviousOrCurrentEpoch;
+    }
+
+    if (data.target.epoch != computed_epoch) {
+        return error.InvalidAttestationTargetEpochDoesNotMatchComputedEpoch;
+    }
+
+    // post deneb, the attestations are valid till end of next epoch
+    if (!(data.slot + preset.MIN_ATTESTATION_INCLUSION_DELAY <= slot and isTimelyTarget(fork, slot - data.slot))) {
+        return error.InvalidAttestationSlotNotWithInInclusionWindow;
+    }
+
+    // specific logic of electra
+
+    if (data.index != 0) {
+        return error.InvalidAttestationNonZeroDataIndex;
+    }
+    // TODO(ssz): implement getTrueBitIndexes() api
+    const committee_indices = attestation.committee_bits.getTrueBitIndexes();
+    if (committee_indices.items.len == 0) {
+        return error.InvalidAttestationCommitteeBitsEmpty;
+    }
+
+    const last_committee_index = committee_indices.items[committee_indices.items.len - 1];
+
+    if (last_committee_index >= committee_count) {
+        return error.InvalidAttestationInvalidLstCommitteeIndex;
+    }
+
+    // const validators_by_committee = try epoch_cache.getBeaconCommittees(slot, committee_indices.items);
+    // TODO(ssz): implement toBoolArray() for BitVector/BitList https://github.com/ChainSafe/ssz-z/issues/25
+    const aggregation_bits_array = attestation.aggregation_bits.toBoolArray().items;
+    // instead of implementing/calling getBeaconCommittees(slot, committee_indices.items), we call getBeaconCommittee(slot, index)
+    var committee_offset: usize = 0;
+    for (committee_indices.items) |committee_index| {
+        const committee_validators = try epoch_cache.getBeaconCommittee(slot, committee_index);
+        const committee_aggregation_bits = aggregation_bits_array[committee_offset..(committee_offset + committee_validators.len)];
+
+        // Assert aggregation bits in this committee have at least one true bit
+        var all_false: bool = true;
+        for (committee_aggregation_bits) |bit| {
+            if (bit == true) {
+                all_false = false;
+                break;
+            }
+        }
+
+        if (all_false) {
+            return error.InvalidAttestationCommitteeAggregationBitsAllFalse;
+        }
+        committee_offset += committee_validators.len;
+    }
+
+    if (attestation.aggregation_bits.bit_len != committee_offset) {
+        return error.InvalidAttestationCommitteeAggregationBitsLengthMismatch;
+    }
+}

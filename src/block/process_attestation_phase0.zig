@@ -15,7 +15,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
     const slot = state.getSlot();
     const data = attestation.data;
 
-    try validateAttestationPreElectra(ForkSeq.phase0, cached_state, attestation);
+    try validatePhase0Attestation(ForkSeq.phase0, cached_state, attestation);
 
     const pending_attestation = PendingAttestation{
         .data = data,
@@ -43,7 +43,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
     try isValidIndexedAttestation(cached_state, &indexed_attestation, verify_signature);
 }
 
-pub fn validateAttestationPreElectra(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, attestation: Phase0Attestation) !void {
+pub fn validatePhase0Attestation(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, attestation: Phase0Attestation) !void {
     const epoch_cache = cached_state.epoch_cache;
     const state = cached_state.state;
     const slot = state.getSlot();
