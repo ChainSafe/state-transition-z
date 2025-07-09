@@ -26,6 +26,11 @@ pub const AttestationItems = union(enum) {
     electra: []ssz.electra.Attestation.Type,
 };
 
+pub const Attestation = union(enum) {
+    phase0: ssz.phase0.Attestation.Type,
+    electra: ssz.electra.Attestation.Type,
+};
+
 pub const IndexedAttestation = union(enum) {
     phase0: *const ssz.phase0.IndexedAttestation.Type,
     electra: *const ssz.electra.IndexedAttestation.Type,

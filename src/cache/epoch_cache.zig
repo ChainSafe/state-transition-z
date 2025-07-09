@@ -44,6 +44,13 @@ const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;
 const getChurnLimit = @import("../utils/validator.zig").getChurnLimit;
 const getActivationChurnLimit = @import("../utils/validator.zig").getActivationChurnLimit;
 
+const Phase0Attestation = ssz.phase0.Attestation.Type;
+const ElectraAttestation = ssz.electra.Attestation.Type;
+const Attestation = @import("../types/attestation.zig").Attestation;
+const Phase0IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
+const ElectraIndexedAttestation = ssz.electra.IndexedAttestation.Type;
+const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
+
 pub const EpochCacheImmutableData = struct {
     config: *BeaconConfig,
     pubkey_to_index: PubkeyIndexMap,
@@ -404,8 +411,6 @@ pub const EpochCache = struct {
         return slot_committees[index];
     }
 
-    // TODO: getBeaconCommittees: may not needed
-
     pub fn getCommitteeCountPerSlot(self: *const EpochCache, epoch: Epoch) !usize {
         const shuffling = self.getShufflingAtEpochOrNull(epoch) orelse error.EpochShufflingNotFound;
         return shuffling.committees_per_slot;
@@ -429,11 +434,86 @@ pub const EpochCache = struct {
 
     // TODO: getBeaconProposersNextEpoch - may not needed post-fulu
 
-    // TODO: is getBeaconCommittees necessary?
+    // TODO: do we need getBeaconCommittees? in validateAttestationElectra we do a for loop over committee_indices and call getBeaconProposer() instead
 
-    // TODO: getIndexedAttestation - need getAttestingIndices
+    /// consumer takes ownership of the returned indexed attestation
+    /// hence it needs to deinit attesting_indices inside
+    /// TODO: unit test
+    pub fn getIndexedAttestation(self: *const EpochCache, attestation: Attestation) !IndexedAttestation {
+        const attesting_indices = switch (attestation.*) {
+            .phase0 => |phase0_attestation| try self.getAttestingIndicesPhase0(&phase0_attestation),
+            .electra => |electra_attestation| try self.getAttestingIndicesElectra(&electra_attestation),
+        };
 
-    // TODO(ssz): getAttestingIndices - need ssz getTrueBitIndexes https://github.com/ChainSafe/ssz-z/issues/25
+        const sort_fn = struct {
+            pub fn sort(_: anytype, a: ValidatorIndex, b: ValidatorIndex) bool {
+                return a < b;
+            }
+        }.sort;
+        std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
+
+        return switch (attestation.*) {
+            .phase0 => |phase0_attestation| Phase0IndexedAttestation{
+                .attesting_indices = attesting_indices,
+                .data = phase0_attestation.data,
+                .signature = phase0_attestation.signature,
+            },
+            .electra => |electra_attestation| ElectraIndexedAttestation{
+                .attesting_indices = attesting_indices,
+                .data = electra_attestation.data,
+                .signature = electra_attestation.signature,
+            },
+        };
+    }
+
+    pub fn getAttestingIndices(self: *const EpochCache, attestation: Attestation) !ValidatorIndices {
+        return switch (attestation.*) {
+            .phase0 => |phase0_attestation| self.getAttestingIndicesPhase0(&phase0_attestation),
+            .electra => |electra_attestation| self.getAttestingIndicesElectra(&electra_attestation),
+        };
+    }
+
+    // TODO(ssz): implement getTrueBitIndexes and intersectValues https://github.com/ChainSafe/ssz-z/issues/25
+    /// consumer takes ownership of the returned array
+    pub fn getAttestingIndicesPhase0(self: *const EpochCache, attestation: *const ssz.phase0.Attestation.Type) !std.ArrayList(ValidatorIndex) {
+        const aggregation_bits = attestation.aggregation_bits;
+        const data = attestation.data;
+        const validator_indices = try self.getBeaconCommittee(data.slot, data.index);
+        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, validator_indices);
+    }
+
+    /// consumer takes ownership of the returned array
+    pub fn getAttestingIndicesElectra(self: *const EpochCache, attestation: *const ssz.electra.Attestation.Type) !std.ArrayList(ValidatorIndex) {
+        const aggregation_bits = attestation.aggregation_bits;
+        const committee_bits = attestation.committee_bits;
+        const data = attestation.data;
+
+        // There is a naming conflict on the term `committeeIndices`
+        // In Lodestar it usually means a list of validator indices of participants in a committee
+        // In the spec it means a list of committee indices according to committeeBits
+        // This `committeeIndices` refers to the latter
+        // TODO Electra: resolve the naming conflicts
+        const committee_indices = try committee_bits.getTrueBitIndexes(self.allocator);
+        defer committee_indices.deinit();
+
+        var total_len: usize = 0;
+        for (committee_indices.items) |committee_index| {
+            const committee = try self.getBeaconCommittee(data.slot, committee_index);
+            total_len += committee.len;
+        }
+
+        var committee_validators = try self.allocator.alloc(ValidatorIndex, total_len);
+        defer self.allocator.free(committee_validators);
+
+        var offset: usize = 0;
+        for (committee_indices.items) |committee_index| {
+            const committee = try self.getBeaconCommittee(data.slot, committee_index);
+            std.mem.copyForwards(ValidatorIndex, committee_validators[offset..(offset + committee.len)], committee);
+            offset += committee.len;
+        }
+
+        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, committee_validators);
+    }
 
     // TODO: getCommitteeAssignments
 
