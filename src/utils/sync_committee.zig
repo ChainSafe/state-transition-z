@@ -20,9 +20,9 @@ const SyncCommitteeInfo = struct {
 };
 
 /// Consumer must deallocate the returned `SyncCommitteeInfo` struct
-pub fn getNextSyncCommittee(allocator: Allocator, fork: ForkSeq, state: *const BeaconStateAllForks, active_validators_indices: ValidatorIndices, effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
+pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: ValidatorIndices, effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
     const indices = ValidatorIndices.init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
-    try getNextSyncCommitteeIndices(allocator, fork, state, active_validators_indices, effecitve_balance_increment, indices.items);
+    try getNextSyncCommitteeIndices(allocator, state, active_validators_indices, effecitve_balance_increment, indices.items);
 
     // Using the index2pubkey cache is slower because it needs the serialized pubkey.
     var pubkeys: [preset.SYNC_COMMITTEE_SIZE]PublicKey = undefined;

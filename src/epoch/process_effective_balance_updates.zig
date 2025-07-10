@@ -9,12 +9,11 @@ const params = @import("../params.zig");
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
-pub fn processEffectiveBalanceUpdates(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !usize {
+pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !usize {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
     const validators = state.getValidators();
     const effective_balance_increments = epoch_cache.effective_balance_increment;
-    const fork_seq = epoch_cache.config.getForkSeq(state.getSlot());
     var next_epoch_total_active_balance_by_increment: u64 = 0;
 
     // update effective balances with hysteresis
@@ -32,7 +31,7 @@ pub fn processEffectiveBalanceUpdates(fork: ForkSeq, cached_state: *CachedBeacon
         // PERF: It's faster to access to get() every single element (4ms) than to convert to regular array then loop (9ms)
         var effective_balance_increment = effective_balance_increments[i];
         var effective_balance = effective_balance_increment * preset.EFFECTIVE_BALANCE_INCREMENT;
-        const effective_balance_limit = if (fork < ForkSeq.electra) {
+        const effective_balance_limit = if (state.isPreElectra()) {
             preset.MAX_EFFECTIVE_BALANCE;
         } else {
             // from electra, effectiveBalanceLimit is per validator
@@ -62,7 +61,7 @@ pub fn processEffectiveBalanceUpdates(fork: ForkSeq, cached_state: *CachedBeacon
 
             // TODO: describe issue. Compute progressive target balances
             // Must update target balances for consistency, see comments below
-            if (fork_seq > ForkSeq.altair) {
+            if (state.isPostAltair()) {
                 const delta_effective_balance_increment = new_effective_balance_increment - effective_balance_increment;
                 const previous_epoch_participation = state.getPreviousEpochParticipations();
                 const current_epoch_participation = state.getCurrentEpochParticipations();

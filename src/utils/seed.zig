@@ -38,9 +38,9 @@ pub fn computeProposers(allocator: Allocator, fork: ForkSeq, epoch_seed: [32]u8,
     }
 }
 
-pub fn getNextSyncCommitteeIndices(allocator: Allocator, fork: ForkSeq, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
-    const rand_byte_count = if (fork >= ForkSeq.electra) 2 else 1;
-    const max_effective_balance = if (fork >= ForkSeq.electra) preset.MAX_EFFECTIVE_BALANCE_PRE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
+pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
+    const rand_byte_count = if (state.isPostElectra()) 2 else 1;
+    const max_effective_balance = if (state.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_PRE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
 
     const epoch = computeEpochAtSlot(state.getSlot() + 1);
     var seed: [32]u8 = undefined;

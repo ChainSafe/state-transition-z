@@ -7,10 +7,10 @@ const getProposerSlashingSignatureSets = @import("../signature_sets/proposer_sla
 const verifySignature = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 const slashValidator = @import("./slash_validator.zig").slashValidator;
 
-pub fn processProposerSlashing(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, proposer_slashing: *const ProposerSlashing, verify_signatures: ?bool) !void {
+pub fn processProposerSlashing(cached_state: *CachedBeaconStateAllForks, proposer_slashing: *const ProposerSlashing, verify_signatures: ?bool) !void {
     try assertValidProposerSlashing(cached_state, proposer_slashing, verify_signatures);
     const proposer_index = proposer_slashing.signed_header_1.message.proposer_index;
-    try slashValidator(fork, cached_state, proposer_index, null);
+    try slashValidator(cached_state, proposer_index, null);
 }
 
 pub fn assertValidProposerSlashing(cached_state: *CachedBeaconStateAllForks, proposer_slashing: *const ProposerSlashing, verify_signature: ?bool) !void {

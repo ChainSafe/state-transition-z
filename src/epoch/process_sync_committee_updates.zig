@@ -10,7 +10,7 @@ const BLSPubkey = @import("../type.zig").BLSPubkey;
 const getNextSyncCommitteeIndices = @import("../utils/sync_committee.zig").getNextSyncCommitteeIndices;
 const aggregateSerializedPublicKeys = @import("../utils/bls.zig").aggregateSerializedPublicKeys;
 
-pub fn processSyncCommitteeUpdates(allocator: Allocator, fork_seq: ForkSeq, cached_state: *CachedBeaconStateAllForks) !void {
+pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
     const next_epoch = epoch_cache.epoch + 1;
@@ -19,7 +19,7 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, fork_seq: ForkSeq, cach
         const active_validator_indices = epoch_cache.next_shuffling.get().active_indices.items;
         const effective_balance_increments = epoch_cache.effective_balance_increment.get();
         const next_sync_committee_indices = try allocator.alloc(ValidatorIndex, preset.SYNC_COMMITTEE_SIZE);
-        try getNextSyncCommitteeIndices(allocator, fork_seq, state, active_validator_indices, effective_balance_increments, allocator.alloc(u32, preset.SYNC_COMMITTEE_SIZE), next_sync_committee_indices);
+        try getNextSyncCommitteeIndices(allocator, state, active_validator_indices, effective_balance_increments, allocator.alloc(u32, preset.SYNC_COMMITTEE_SIZE), next_sync_committee_indices);
         const validators = state.getValidators();
 
         // Using the index2pubkey cache is slower because it needs the serialized pubkey.

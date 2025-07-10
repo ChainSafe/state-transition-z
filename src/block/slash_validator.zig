@@ -11,7 +11,7 @@ const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateV
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
-pub fn slashValidator(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
+pub fn slashValidator(cached_state: *CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
     const epoch_cache = cached_state.epoch_cache;
     const state = cached_state.state;
     const epoch = epoch_cache.epoch;
@@ -20,7 +20,7 @@ pub fn slashValidator(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, s
     const validator = state.getValidator(slashed_index);
 
     // TODO: Bellatrix initiateValidatorExit validators.update() with the one below
-    try initiateValidatorExit(fork, state, validator);
+    try initiateValidatorExit(state, validator);
 
     validator.slashed = true;
     validator.withdrawable_epoch = @max(validator.withdrawable_epoch, epoch + preset.EPOCHS_PER_SLASHINGS_VECTOR);
@@ -39,15 +39,15 @@ pub fn slashValidator(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, s
 
     // TODO(ssz): define MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA
     const min_slashing_penalty_quotient =
-        if (fork == ForkSeq.phase0) preset.MIN_SLASHING_PENALTY_QUOTIENT else if (fork == ForkSeq.altair) preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR else if (fork < ForkSeq.electra) preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX else preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
+        if (state.isPhase0()) preset.MIN_SLASHING_PENALTY_QUOTIENT else if (state.isAltair()) preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR else if (state.isPreElectra()) preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX else preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
 
     decreaseBalance(state, slashed_index, @divFloor(effective_balance, min_slashing_penalty_quotient));
 
     // apply proposer and whistleblower rewards
     // TODO(ssz): define WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA
     const whistleblower_reward =
-        if (fork < ForkSeq.electra) @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT) else @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA);
-    const proposer_reward = if (fork == ForkSeq.phase0)
+        if (state.isPreElectra()) @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT) else @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA);
+    const proposer_reward = if (state.isPhase0())
         @divFloor(whistleblower_reward, preset.PROPOSER_REWARD_QUOTIENT)
     else
         @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR);
@@ -65,7 +65,7 @@ pub fn slashValidator(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, s
         // state.proposerRewards.slashing += whistleblowerReward;
     }
 
-    if (fork >= ForkSeq.altair) {
+    if (state.isPostAltair()) {
         if (state.getPreviousEpochParticipation(slashed_index) & TIMELY_TARGET == TIMELY_TARGET) {
             epoch_cache.previous_target_unslashed_balance_increments -= @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
         }

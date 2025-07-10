@@ -25,16 +25,17 @@ const computeExitEpochAndUpdateChurn = @import("../utils/epoch.zig").computeExit
 /// ```
 /// Forcing consumers to pass the SubTree of `validator` directly mitigates this issue.
 ///
-pub fn initiateValidatorExit(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, validator: *Validator) !void {
+pub fn initiateValidatorExit(cached_state: *const CachedBeaconStateAllForks, validator: *Validator) !void {
     const config = cached_state.config.config;
     const epoch_cache = cached_state.epoch_cache;
+    const state = cached_state.state;
 
     // return if validator already initiated exit
     if (validator.exit_epoch != FAR_FUTURE_EPOCH) {
         return;
     }
 
-    if (fork < ForkSeq.electra) {
+    if (state.isPreElectra()) {
         // Limits the number of validators that can exit on each epoch.
         // Expects all state.validators to follow this rule, i.e. no validator.exitEpoch is greater than exitQueueEpoch.
         // If there the churnLimit is reached at this current exitQueueEpoch, advance epoch and reset churn.

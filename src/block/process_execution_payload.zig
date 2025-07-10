@@ -13,7 +13,7 @@ const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 
 // TODO: support BlindedBeaconBlockBody
-pub fn processExecutionPayload(allocator: Allocator, fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, body: BeaconBlockBody, external_data: ExecutionPayloadStatus) !void {
+pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, body: BeaconBlockBody, external_data: ExecutionPayloadStatus) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
     const config = epoch_cache.config;
@@ -43,7 +43,7 @@ pub fn processExecutionPayload(allocator: Allocator, fork: ForkSeq, cached_state
         return error.InvalidExecutionPayloadTimestamp;
     }
 
-    if (fork >= ForkSeq.deneb) {
+    if (state.isPostDeneb()) {
         const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.getSlot()));
         const blob_kzg_commitments_len = body.getBlobKzgCommitments().items.len;
         if (blob_kzg_commitments_len > max_blobs_per_block) {

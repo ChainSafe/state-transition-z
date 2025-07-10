@@ -8,7 +8,7 @@ const isValidIndexedAttestation = @import("./is_valid_indexed_attestation.zig").
 const isSlashableValidator = @import("../utils/validator.zig").isSlashableValidator;
 const slashValidator = @import("./slash_validator.zig").slashValidator;
 
-pub fn processAttesterSlashing(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AttesterSlashing, verify_signature: ?bool) !void {
+pub fn processAttesterSlashing(cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AttesterSlashing, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch = cached_state.epoch_cache.epoch;
     try assertValidAttesterSlashing(cached_state, attester_slashing, verify_signature);
@@ -21,7 +21,7 @@ pub fn processAttesterSlashing(fork: ForkSeq, cached_state: *CachedBeaconStateAl
     for (intersecting_indices.items) |validator_index| {
         const validator = state.getValidator(validator_index);
         if (isSlashableValidator(&validator, epoch)) {
-            try slashValidator(fork, cached_state, validator_index, null);
+            try slashValidator(cached_state, validator_index, null);
             slashed_any = true;
         }
     }

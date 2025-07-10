@@ -56,13 +56,13 @@ pub const DepositData = union(enum) {
 };
 
 // // TODO: implement verifyMerkleBranch
-// pub fn processDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, deposit: *const Phase0Deposit) !void {
+// pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const Phase0Deposit) !void {
 //     // verify the merkle branch
 // }
 
 /// Adds a new validator into the registry. Or increase balance if already exist.
 /// Follows applyDeposit() in consensus spec. Will be used by processDeposit() and processDepositRequest()
-pub fn applyDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
+pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
@@ -74,10 +74,10 @@ pub fn applyDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, dep
     const cached_index = epoch_cache.getValidatorIndex(&pubkey);
     const is_new_validator = cached_index == null or cached_index.? >= state.getValidatorsCount();
 
-    if (fork < ForkSeq.electra) {
+    if (state.isPreElectra()) {
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
-                try addValidatorToRegistry(fork, cached_state, pubkey, withdrawal_credentials, amount);
+                try addValidatorToRegistry(cached_state, pubkey, withdrawal_credentials, amount);
             }
         } else {
             // increase balance by deposit amount right away pre-electra
@@ -95,7 +95,7 @@ pub fn applyDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, dep
 
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
-                try addValidatorToRegistry(fork, cached_state, pubkey, withdrawal_credentials, 0);
+                try addValidatorToRegistry(cached_state, pubkey, withdrawal_credentials, 0);
                 state.addPendingDeposit(pending_deposit);
             }
         } else {
@@ -104,14 +104,14 @@ pub fn applyDeposit(fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, dep
     }
 }
 
-pub fn addValidatorToRegistry(fork_seq: ForkSeq, state_cache: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
-    const epoch_cache = state_cache.epoch_cache;
-    const state = state_cache.state;
+pub fn addValidatorToRegistry(cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
+    const epoch_cache = cached_state.epoch_cache;
+    const state = cached_state.state;
     const validators = state.validators;
     // add validator and balance entries
     const effective_balance = @min(
         amount - (amount % preset.EFFECTIVE_BALANCE_INCREMENT),
-        if (fork_seq < ForkSeq.electra) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
+        if (state.isPreElectra()) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
     );
     state.appendValidator(.{
         .pubkey = pubkey,
@@ -136,7 +136,7 @@ pub fn addValidatorToRegistry(fork_seq: ForkSeq, state_cache: *CachedBeaconState
     epoch_cache.addPubkey(validator_index, pubkey);
 
     // Only after altair:
-    if (fork_seq >= ForkSeq.altair) {
+    if (state.isPostAltair()) {
         state.addInactivityScore(0);
 
         // add participation caches

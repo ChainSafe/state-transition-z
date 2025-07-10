@@ -26,6 +26,7 @@ const PendingConsolidation = ssz.electra.PendingConsolidation.Type;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const Gwei = ssz.primitive.Gwei.Type;
 const Epoch = ssz.primitive.Epoch.Type;
+const ForkSeq = @import("./fork.zig").ForkSeq;
 
 /// wrapper for all BeaconState types across forks so that we don't have to do switch/case for all methods
 /// right now this works with regular types
@@ -40,19 +41,51 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn hashTreeRoot(self: *const BeaconStateAllForks, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
-            inline .phase0 => |state| try ssz.phase0.BeaconState.hashTreeRoot(allocator, state, out),
-            inline .altair => |state| try ssz.altair.BeaconState.hashTreeRoot(allocator, state, out),
-            inline .bellatrix => |state| try ssz.bellatrix.BeaconState.hashTreeRoot(allocator, state, out),
-            inline .capella => |state| try ssz.capella.BeaconState.hashTreeRoot(allocator, state, out),
-            inline .deneb => |state| try ssz.deneb.BeaconState.hashTreeRoot(allocator, state, out),
-            inline .electra => |state| try ssz.electra.BeaconState.hashTreeRoot(allocator, state, out),
+            .phase0 => |state| try ssz.phase0.BeaconState.hashTreeRoot(allocator, state, out),
+            .altair => |state| try ssz.altair.BeaconState.hashTreeRoot(allocator, state, out),
+            .bellatrix => |state| try ssz.bellatrix.BeaconState.hashTreeRoot(allocator, state, out),
+            .capella => |state| try ssz.capella.BeaconState.hashTreeRoot(allocator, state, out),
+            .deneb => |state| try ssz.deneb.BeaconState.hashTreeRoot(allocator, state, out),
+            .electra => |state| try ssz.electra.BeaconState.hashTreeRoot(allocator, state, out),
+        };
+    }
+
+    pub fn getForkSeq(self: *const BeaconStateAllForks) ForkSeq {
+        return switch (self.*) {
+            .phase0 => ForkSeq.phase0,
+            .altair => ForkSeq.altair,
+            .bellatrix => ForkSeq.bellatrix,
+            .capella => ForkSeq.capella,
+            .deneb => ForkSeq.deneb,
+            .electra => ForkSeq.electra,
+        };
+    }
+
+    pub fn isPhase0(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .phase0 => true,
+            else => false,
+        };
+    }
+
+    pub fn isAltair(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .altair => true,
+            else => false,
+        };
+    }
+
+    pub fn isPreAltair(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .phase0 => true,
+            else => false,
         };
     }
 
     pub fn isPostAltair(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
-            inline .phase0 => false,
-            inline .altair, .bellatrix, .capella, .deneb, .electra => true,
+            .phase0 => false,
+            else => true,
         };
     }
 
@@ -63,31 +96,80 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn isPreBellatrix(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair => false,
+            else => true,
+        };
+    }
+
     pub fn isPostBellatrix(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair => false,
-            inline .bellatrix, .capella, .deneb, .electra => true,
+            else => true,
+        };
+    }
+
+    pub fn isCapella(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .capella => true,
+            else => false,
+        };
+    }
+
+    pub fn isPreCapella(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix => true,
+            else => false,
         };
     }
 
     pub fn isPostCapella(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix => false,
-            inline .capella, .deneb, .electra => true,
+            else => true,
+        };
+    }
+
+    pub fn isDeneb(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .deneb => true,
+            else => false,
+        };
+    }
+
+    pub fn isPreDeneb(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella => true,
+            else => false,
         };
     }
 
     pub fn isPostDeneb(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella => false,
-            inline .deneb, .electra => true,
+            else => true,
+        };
+    }
+
+    pub fn isElectra(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .electra => true,
+            else => false,
+        };
+    }
+
+    pub fn isPreElectra(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb => true,
+            else => false,
         };
     }
 
     pub fn isPostElectra(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => false,
-            inline .electra => true,
+            else => true,
         };
     }
 

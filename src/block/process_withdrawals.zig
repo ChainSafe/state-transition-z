@@ -33,7 +33,7 @@ const WithdrawalsResult = struct {
 };
 
 // TODO: support capella.FullOrBlindedExecutionPayload
-pub fn processWithdrawals(allocator: Allocator, fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, payload: *const ExecutionPayload) !void {
+pub fn processWithdrawals(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, payload: *const ExecutionPayload) !void {
     const state = cached_state.state;
     // processedPartialWithdrawalsCount is withdrawals coming from EL since electra (EIP-7002)
     const expected_withdrawals_result = try getExpectedWithdrawals(allocator, fork, cached_state);
@@ -58,7 +58,7 @@ pub fn processWithdrawals(allocator: Allocator, fork: ForkSeq, cached_state: *Ca
         decreaseBalance(state, withdrawal.validator_index, withdrawal.amount);
     }
 
-    if (fork >= ForkSeq.electra) {
+    if (state.isPostElectra()) {
         state.setPendingPartialWithdrawals(try state.sliceFromPendingPartialWithdrawals(processed_partial_withdrawals_count));
     }
 
@@ -80,12 +80,12 @@ pub fn processWithdrawals(allocator: Allocator, fork: ForkSeq, cached_state: *Ca
 }
 
 // Consumer should deinit WithdrawalsResult with .deinit() after use
-pub fn getExpectedWithdrawals(allocator: Allocator, fork: ForkSeq, cached_state: *CachedBeaconStateAllForks) !WithdrawalsResult {
-    if (fork < ForkSeq.capella) {
+pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !WithdrawalsResult {
+    const state = cached_state.state;
+    if (state.isPreCapella()) {
         return error.InvalidForkSequence;
     }
 
-    const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
 
     const epoch = epoch_cache.epoch;
@@ -96,11 +96,10 @@ pub fn getExpectedWithdrawals(allocator: Allocator, fork: ForkSeq, cached_state:
 
     var withdrawals_result = try WithdrawalsResult.init(allocator);
     var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
-    const is_post_electra = fork >= ForkSeq.electra;
     // partial_withdrawals_count is withdrawals coming from EL since electra (EIP-7002)
     var processed_partial_withdrawals_count: u64 = 0;
 
-    if (is_post_electra) {
+    if (state.isPostElectra()) {
         // TODO: this optimization logic is not needed for TreeView
         // MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP = 8, PENDING_PARTIAL_WITHDRAWALS_LIMIT: 134217728 so we should only call getAllReadonly() if it makes sense
         // pendingPartialWithdrawals comes from EIP-7002 smart contract where it takes fee so it's more likely than not validator is in correct condition to withdraw

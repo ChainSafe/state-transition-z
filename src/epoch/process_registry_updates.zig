@@ -6,7 +6,7 @@ const ForkSeq = @import("../config.zig").ForkSeq;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
 const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
 
-pub fn processRegistryUpdates(fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
     const epoch_cache = cached_state.epoch_cache;
     const state = cached_state.state;
 
@@ -20,7 +20,7 @@ pub fn processRegistryUpdates(fork: ForkSeq, cached_state: *const CachedBeaconSt
         // set validator exit epoch and withdrawable epoch
         // TODO: Figure out a way to quickly set properties on the validators tree
         const validator = validators.get(index);
-        initiateValidatorExit(fork, state, &validator);
+        initiateValidatorExit(state, &validator);
         state.setValidator(index, validator);
     }
 
@@ -30,7 +30,7 @@ pub fn processRegistryUpdates(fork: ForkSeq, cached_state: *const CachedBeaconSt
     }
 
     const finality_epoch = state.getFinalizedCheckpoint().epoch;
-    const len = if (fork < ForkSeq.electra) @min(cache.indices_eligible_for_activation.items.len, epoch_cache.activation_churn_limit) else cache.indices_eligible_for_activation.items.len;
+    const len = if (state.isPreElectra()) @min(cache.indices_eligible_for_activation.items.len, epoch_cache.activation_churn_limit) else cache.indices_eligible_for_activation.items.len;
     const activation_epoch = computeActivationExitEpoch(cache.current_epoch);
 
     // dequeue validators for activation up to churn limit
