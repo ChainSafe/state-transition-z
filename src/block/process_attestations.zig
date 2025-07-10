@@ -10,20 +10,22 @@ const Attestations = @import("../types/attestation.zig").Attestations;
 const processAttestationPhase0 = @import("./process_attestation_phase0.zig").processAttestationPhase0;
 const processAttestationsAltair = @import("./process_attestation_altair.zig").processAttestationsAltair;
 
-pub fn processAttestations(allocator: Allocator, fork: ForkSeq, cached_state: *CachedBeaconStateAllForks, attestations: Attestations, verify_signatures: ?bool) !void {
+pub fn processAttestations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestations: Attestations, verify_signatures: ?bool) !void {
+    const state = cached_state.state;
     switch (attestations) {
         .phase0 => |attestations_phase0| {
-            if (fork == ForkSeq.phase0) {
+            if (state.isPostAltair()) {
+                // altair to deneb
+                try processAttestationsAltair(allocator, cached_state, ssz.phase0.Attestation.Type, attestations_phase0.items, verify_signatures);
+            } else {
+                // phase0
                 for (attestations_phase0.items) |attestation| {
                     try processAttestationPhase0(cached_state, attestation, verify_signatures);
                 }
-            } else {
-                // altair to deneb
-                try processAttestationsAltair(allocator, fork, cached_state, ssz.phase0.Attestation.Type, attestations_phase0.items, verify_signatures);
             }
         },
         .electra => |attestations_electra| {
-            try processAttestationsAltair(allocator, fork, cached_state, ssz.electra.Attestation.Type, attestations_electra.items, verify_signatures);
+            try processAttestationsAltair(allocator, cached_state, ssz.electra.Attestation.Type, attestations_electra.items, verify_signatures);
         },
     }
 }

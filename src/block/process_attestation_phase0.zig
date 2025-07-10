@@ -1,4 +1,5 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const ForkSeq = @import("../config.zig").ForkSeq;
@@ -16,7 +17,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
     const slot = state.getSlot();
     const data = attestation.data;
 
-    try validateAttestation(Phase0Attestation, ForkSeq.phase0, cached_state, attestation);
+    try validateAttestation(Phase0Attestation, cached_state, attestation);
 
     const pending_attestation = PendingAttestation{
         .data = data,
@@ -45,7 +46,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
-pub fn validateAttestation(comptime AT: type, fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
+pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
     const epoch_cache = cached_state.epoch_cache;
     const state = cached_state.state;
     const slot = state.getSlot();
@@ -62,7 +63,7 @@ pub fn validateAttestation(comptime AT: type, fork: ForkSeq, cached_state: *cons
     }
 
     // post deneb, the attestations are valid till end of next epoch
-    if (!(data.slot + preset.MIN_ATTESTATION_INCLUSION_DELAY <= slot and isTimelyTarget(fork, slot - data.slot))) {
+    if (!(data.slot + preset.MIN_ATTESTATION_INCLUSION_DELAY <= slot and isTimelyTarget(state, slot - data.slot))) {
         return error.InvalidAttestationSlotNotWithInInclusionWindow;
     }
 
@@ -123,9 +124,9 @@ pub fn validateAttestation(comptime AT: type, fork: ForkSeq, cached_state: *cons
     }
 }
 
-pub fn isTimelyTarget(fork: ForkSeq, inclusion_distance: Slot) bool {
+pub fn isTimelyTarget(state: *const BeaconStateAllForks, inclusion_distance: Slot) bool {
     // post deneb attestation is valid till end of next epoch for target
-    if (fork >= ForkSeq.deneb) {
+    if (state.isPostDeneb()) {
         return true;
     }
 

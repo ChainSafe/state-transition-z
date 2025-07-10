@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
 const preset = ssz.preset;
@@ -27,7 +28,7 @@ const SLOTS_PER_EPOCH_SQRT = std.math.sqrt(preset.SLOTS_PER_EPOCH);
 /// AT = AttestationType
 /// for phase0 it's `ssz.phase0.Attestation.Type`
 /// for electra it's `ssz.electra.Attestation.Type`
-pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: ?bool) !void {
+pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
     const effective_balance_increments = epoch_cache.effective_balance_increment;
@@ -45,7 +46,7 @@ pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_sta
     var proposer_reward: u64 = 0;
     for (attestations) |attestation| {
         const data = attestation.data;
-        try validateAttestation(AT, fork, cached_state, attestation);
+        try validateAttestation(AT, cached_state, attestation);
 
         // Retrieve the validator indices from the attestation participation bitfield
         const attesting_indices = if (AT == Phase0Attestation) epoch_cache.getAttestingIndicesPhase0(&attestation) else epoch_cache.getAttestingIndicesElectra(&attestation);
@@ -63,7 +64,7 @@ pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_sta
 
         const in_current_epoch = data.target.epoch == current_epoch;
         const epoch_participation = if (in_current_epoch) state.getCurrentEpochParticipations() else state.getPreviousEpochParticipations();
-        const flags_attestation = try getAttestationParticipationStatus(fork, data, state_slot - data.slot, current_epoch, root_cache);
+        const flags_attestation = try getAttestationParticipationStatus(state, data, state_slot - data.slot, current_epoch, root_cache);
 
         // For each participant, update their participation
         // In epoch processing, this participation info is used to calculate balance updates
@@ -117,7 +118,7 @@ pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_sta
     }
 }
 
-pub fn getAttestationParticipationStatus(fork: ForkSeq, data: ssz.phase0.AttestationData.Type, inclusion_delay: u64, current_epoch: Epoch, root_cache: *RootCache) !u8 {
+pub fn getAttestationParticipationStatus(state: *const BeaconStateAllForks, data: ssz.phase0.AttestationData.Type, inclusion_delay: u64, current_epoch: Epoch, root_cache: *RootCache) !u8 {
     const justified_checkpoint: Checkpoint = if (data.target.epoch == current_epoch) {
         root_cache.current_justified_checkpoint;
     } else {
@@ -134,7 +135,7 @@ pub fn getAttestationParticipationStatus(fork: ForkSeq, data: ssz.phase0.Attesta
 
     var flags: u8 = 0;
     if (is_matching_source and inclusion_delay <= SLOTS_PER_EPOCH_SQRT) flags |= TIMELY_SOURCE;
-    if (is_matching_target and isTimelyTarget(fork, inclusion_delay)) flags |= TIMELY_TARGET;
+    if (is_matching_target and isTimelyTarget(state, inclusion_delay)) flags |= TIMELY_TARGET;
     if (is_matching_head and inclusion_delay == preset.MIN_ATTESTATION_INCLUSION_DELAY) flags |= TIMELY_HEAD;
     return flags;
 }
