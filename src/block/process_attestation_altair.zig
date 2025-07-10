@@ -7,8 +7,7 @@ const preset = ssz.preset;
 const params = @import("../params.zig");
 const ForkSeq = @import("../config.zig").ForkSeq;
 const RootCache = @import("../utils/root_cache.zig").RootCache;
-const validatePhase0Attestation = @import("./process_attestation_phase0.zig").validatePhase0Attestation;
-const validateElectraAttestation = @import("./process_attestation_electra.zig").validateElectraAttestation;
+const validateAttestation = @import("./process_attestation_phase0.zig").validateAttestation;
 const getAttestationWithIndicesSignatureSet = @import("../signature_sets/indexed_attestation.zig").getAttestationWithIndicesSignatureSet;
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
 const Phase0Attestation = ssz.phase0.Attestation.Type;
@@ -46,11 +45,7 @@ pub fn processAttestationsAltair(allocator: Allocator, fork: ForkSeq, cached_sta
     var proposer_reward: u64 = 0;
     for (attestations) |attestation| {
         const data = attestation.data;
-        if (AT == Phase0Attestation) {
-            try validatePhase0Attestation(fork, cached_state, attestation);
-        } else {
-            try validateElectraAttestation(fork, cached_state, attestation);
-        }
+        try validateAttestation(AT, fork, cached_state, attestation);
 
         // Retrieve the validator indices from the attestation participation bitfield
         const attesting_indices = if (AT == Phase0Attestation) epoch_cache.getAttestingIndicesPhase0(&attestation) else epoch_cache.getAttestingIndicesElectra(&attestation);
@@ -135,7 +130,7 @@ pub fn getAttestationParticipationStatus(fork: ForkSeq, data: ssz.phase0.Attesta
 
     // a timely head is only be set if the target is _also_ matching
     const is_matching_head =
-        isMatchingTarget and std.mem.eql(u8, &data.beacon_block_root, root_cache.getBlockRootAtSlot(data.slot));
+        is_matching_target and std.mem.eql(u8, &data.beacon_block_root, root_cache.getBlockRootAtSlot(data.slot));
 
     var flags: u8 = 0;
     if (is_matching_source and inclusion_delay <= SLOTS_PER_EPOCH_SQRT) flags |= TIMELY_SOURCE;
