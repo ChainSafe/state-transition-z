@@ -32,18 +32,14 @@ pub fn processAttesterSlashing(fork: ForkSeq, cached_state: *CachedBeaconStateAl
 }
 
 pub fn assertValidAttesterSlashing(cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AttesterSlashing, verify_signatures: ?bool) !void {
-    const attestation_1 = attester_slashing.attestation_1;
-    const attestation_2 = attester_slashing.attestation_2;
-
-    if (!isSlashableAttestationData(&attestation_1.data, &attestation_2.data)) {
+    const attestations = &.{ attester_slashing.attestation_1, attester_slashing.attestation_2 };
+    if (!isSlashableAttestationData(&attestations[0].data, &attestations[1].data)) {
         return error.InvalidAttesterSlashingNotSlashable;
     }
 
-    if (!try isValidIndexedAttestation(cached_state, attestation_1, verify_signatures)) {
-        return error.InvalidAttesterSlashingAttestation1Invalid;
-    }
-
-    if (!try isValidIndexedAttestation(cached_state, attestation_2, verify_signatures)) {
-        return error.InvalidAttesterSlashingAttestation2Invalid;
+    inline for (0..2) |i| {
+        if (!try isValidIndexedAttestation(cached_state, attestations[i], verify_signatures)) {
+            return error.InvalidAttesterSlashingAttestationInvalid;
+        }
     }
 }
