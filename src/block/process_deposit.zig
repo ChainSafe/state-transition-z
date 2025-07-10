@@ -21,6 +21,7 @@ const ForkSeq = types.ForkSeq;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
+const verifyMerkleBranch = @import("../utils/verify_merkle_branch.zig").verifyMerkleBranch;
 
 pub const DepositData = union(enum) {
     phase0: ssz.phase0.DepositData.Type,
@@ -55,10 +56,19 @@ pub const DepositData = union(enum) {
     }
 };
 
-// // TODO: implement verifyMerkleBranch
-// pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const Phase0Deposit) !void {
-//     // verify the merkle branch
-// }
+pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const ssz.phase0.Deposit.Type) !void {
+    const state = cached_state.state;
+    // verify the merkle branch
+    if (!verifyMerkleBranch(ssz.phase0.DepositData.hashTreeRoot(deposit.data), deposit.proof, preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1, state.getEth1DepositIndex(), state.getEth1Data().deposit_root)) {
+        return error.InvalidMerkleProof;
+    }
+
+    // deposits must be processed in order
+    state.increaseEth1DepositIndex();
+    applyDeposit(cached_state, .{
+        .phase0 = deposit.data,
+    });
+}
 
 /// Adds a new validator into the registry. Or increase balance if already exist.
 /// Follows applyDeposit() in consensus spec. Will be used by processDeposit() and processDepositRequest()

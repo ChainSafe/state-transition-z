@@ -324,6 +324,12 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn increaseEth1DepositIndex(self: *BeaconStateAllForks) void {
+        switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_deposit_index += 1,
+        }
+    }
+
     pub fn getValidator(self: *const BeaconStateAllForks, index: usize) *Validator {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.validators.items[index],
