@@ -18,6 +18,7 @@ pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
 pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) bool {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
+    const config = cached_state.config.config;
     const voluntary_exit = signed_voluntary_exit.message;
     const validator = state.getValidator(voluntary_exit.validator_index);
     const current_epoch = epoch_cache.epoch;
@@ -30,7 +31,7 @@ pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
             // exits must specify an epoch when they become valid; they are not valid before then
             current_epoch >= voluntary_exit.epoch and
             // verify the validator had been active long enough
-            current_epoch >= validator.activation_epoch + state.config.SHARD_COMMITTEE_PERIOD and
+            current_epoch >= validator.activation_epoch + config.SHARD_COMMITTEE_PERIOD and
             (if (state.isPostElectra()) getPendingBalanceToWithdraw(cached_state, voluntary_exit.validator_index) == 0 else true) and
             // verify signature
             (if (verify_signature orelse true) verifyVoluntaryExitSignature(cached_state, signed_voluntary_exit) else true));
