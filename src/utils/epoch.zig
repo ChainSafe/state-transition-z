@@ -8,6 +8,7 @@ const SyncPeriod = ssz.primitive.SyncPeriod.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const Gwei = ssz.primitive.Gwei.Type;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
+const getConsolidationChurnLimit = @import("../utils/validator.zig").getConsolidationChurnLimit;
 
 pub fn computeEpochAtSlot(slot: Slot) Epoch {
     return @divFloor(slot, preset.SLOTS_PER_EPOCH);
@@ -57,7 +58,33 @@ pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, 
     return state.getEarliestExitEpoch();
 }
 
-// TODO: computeConsolidationEpochAndUpdateChurn
+pub fn computeConsolidationEpochAndUpdateChurn(cached_state: *const CachedBeaconStateAllForks, consolidation_balance: Gwei) u64 {
+    const state = cached_state.state;
+    const epoch_cache = cached_state.epoch_cache;
+
+    var earliest_consolidation_epoch = @max(state.getEarliestConsolidationEpoch(), computeActivationExitEpoch(epoch_cache.epoch));
+    const per_epoch_consolidation_churn = getConsolidationChurnLimit(epoch_cache);
+
+    // New epoch for consolidations
+    var consolidation_balance_to_consume = if (state.getEarliestConsolidationEpoch() < earliest_consolidation_epoch)
+        per_epoch_consolidation_churn
+    else
+        state.getConsolidationBalanceToConsume();
+
+    // Consolidation doesn't fit in the current earliest epoch.
+    if (consolidation_balance > consolidation_balance_to_consume) {
+        const balance_to_process = consolidation_balance - consolidation_balance_to_consume;
+        const additional_epochs = @divFloor(balance_to_process - 1, per_epoch_consolidation_churn) + 1;
+        earliest_consolidation_epoch += additional_epochs;
+        consolidation_balance_to_consume += additional_epochs * per_epoch_consolidation_churn;
+    }
+
+    // Consume the balance and update state variables.
+    state.setConsolidationBalanceToConsume(consolidation_balance_to_consume - consolidation_balance);
+    state.setEarliestConsolidationEpoch(earliest_consolidation_epoch);
+
+    return state.getEarliestConsolidationEpoch();
+}
 
 pub fn getCurrentEpoch(state: BeaconStateAllForks) Epoch {
     return computeEpochAtSlot(state.getSlot());

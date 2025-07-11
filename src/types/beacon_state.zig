@@ -1051,6 +1051,17 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn addPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
+        switch (self.*) {
+            .phase0 => @panic("pending_consolidations is not available in phase0"),
+            .altair => @panic("pending_consolidations is not available in altair"),
+            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
+            .capella => @panic("pending_consolidations is not available in capella"),
+            .deneb => @panic("pending_consolidations is not available in deneb"),
+            .electra => |state| state.pending_consolidations.append(*pending_consolidation),
+        }
+    }
+
     // TODO: implement sliceFrom api for TreeView
     pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation) {
         switch (self.*) {
