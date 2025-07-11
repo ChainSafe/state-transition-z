@@ -83,7 +83,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     }
 
     // Verify the source has been active long enough
-    if (current_epoch < source_validator.activation_epoch + config.config.SHARD_COMMITTEE_PERIOD) {
+    if (current_epoch < source_validator.activation_epoch + config.chain.SHARD_COMMITTEE_PERIOD) {
         return;
     }
 
@@ -96,7 +96,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     // TODO Electra: See if we can get rid of big int
     const exit_epoch = computeConsolidationEpochAndUpdateChurn(cached_state, source_validator.effective_balance);
     source_validator.exit_epoch = exit_epoch;
-    source_validator.withdrawable_epoch = exit_epoch + config.config.MIN_VALIDATOR_WITHDRAWABILITY_DELAY;
+    source_validator.withdrawable_epoch = exit_epoch + config.chain.MIN_VALIDATOR_WITHDRAWABILITY_DELAY;
 
     const pending_consolidation = PendingConsolidation{
         .source_index = source_index,

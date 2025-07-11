@@ -39,7 +39,7 @@ pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeacon
     // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
     //   slots_since_genesis = slot - GENESIS_SLOT
     //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (payload.getTimestamp() != state.getGenesisTime() + state.getSlot() * config.config.SECONDS_PER_SLOT) {
+    if (payload.getTimestamp() != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
         return error.InvalidExecutionPayloadTimestamp;
     }
 

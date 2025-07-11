@@ -63,7 +63,7 @@ pub fn processWithdrawalRequest(cached_state: *CachedBeaconStateAllForks, withdr
     {
         const amount_to_withdraw = @min(validator_balance - preset.MIN_ACTIVATION_BALANCE - pending_balance_to_withdraw, amount);
         const exit_queue_epoch = computeExitEpochAndUpdateChurn(cached_state, amount_to_withdraw);
-        const withdrawable_epoch = exit_queue_epoch + config.config.MIN_VALIDATOR_WITHDRAWABILITY_DELAY;
+        const withdrawable_epoch = exit_queue_epoch + config.chain.MIN_VALIDATOR_WITHDRAWABILITY_DELAY;
 
         const pending_partial_withdrawal = PendingPartialWithdrawal{
             .validator_index = validator_index,
@@ -85,5 +85,5 @@ fn isValidatorEligibleForWithdrawOrExit(validator: Validator, source_address: []
         std.mem.eql(u8, address, source_address) and
         isActiveValidator(Validator, current_epoch) and
         validator.exit_epoch == params.FAR_FUTURE_EPOCH and
-        current_epoch >= validator.activation_epoch + config.config.SHARD_COMMITTEE_PERIOD);
+        current_epoch >= validator.activation_epoch + config.chain.SHARD_COMMITTEE_PERIOD);
 }

@@ -165,7 +165,7 @@ pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, w
         .amount = amount,
     };
 
-    const GENESIS_FORK_VERSION = config.config.GENESIS_FORK_VERSION;
+    const GENESIS_FORK_VERSION = config.chain.GENESIS_FORK_VERSION;
 
     // fork-agnostic domain since deposits are valid across forks
     var domain: Domain = undefined;

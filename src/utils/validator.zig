@@ -55,11 +55,11 @@ pub fn getBalanceChurnLimit(total_active_balance_increments: u64, churn_limit_qu
 }
 
 pub fn getBalanceChurnLimitFromCache(epoch_cache: EpochCache) u64 {
-    return getBalanceChurnLimit(epoch_cache.total_acrive_balance_increments, epoch_cache.config.config.CHURN_LIMIT_QUOTIENT, epoch_cache.config.config.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
+    return getBalanceChurnLimit(epoch_cache.total_acrive_balance_increments, epoch_cache.config.chain.CHURN_LIMIT_QUOTIENT, epoch_cache.config.chain.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
 }
 
 pub fn getActivationExitChurnLimit(epoch_cache: EpochCache) u64 {
-    return @min(epoch_cache.config.config.MAX_PER_EPOCH_ACTIVATION_EXIT_CHURN_LIMIT, getBalanceChurnLimitFromCache(epoch_cache));
+    return @min(epoch_cache.config.chain.MAX_PER_EPOCH_ACTIVATION_EXIT_CHURN_LIMIT, getBalanceChurnLimitFromCache(epoch_cache));
 }
 
 pub fn getConsolidationChurnLimit(epoch_cache: EpochCache) u64 {

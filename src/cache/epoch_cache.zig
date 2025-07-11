@@ -217,7 +217,7 @@ pub const EpochCache = struct {
         }
 
         // Only after altair, compute the indices of the current sync committee
-        const after_altair_fork = current_epoch >= config.config.ALTAIR_FORK_EPOCH;
+        const after_altair_fork = current_epoch >= config.chain.ALTAIR_FORK_EPOCH;
 
         // Values syncParticipantReward, syncProposerReward, baseRewardPerIncrement are only used after altair.
         // However, since they are very cheap to compute they are computed always to simplify upgradeState function.
@@ -381,7 +381,7 @@ pub const EpochCache = struct {
         }
 
         self.total_acrive_balance_increments = epoch_transition_cache.total_active_balance_increments;
-        if (upcoming_epoch >= self.config.config.ALTAIR_FORK_EPOCH) {
+        if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
             self.sync_participant_reward = computeSyncParticipantReward(self.total_acrive_balance_increments);
             self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
             self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_acrive_balance_increments);
@@ -598,6 +598,6 @@ pub const EpochCache = struct {
     }
 
     pub fn isPostElectra(self: *const EpochCache) bool {
-        return self.epoch >= self.config.config.ELECTRA_FORK_EPOCH;
+        return self.epoch >= self.config.chain.ELECTRA_FORK_EPOCH;
     }
 };

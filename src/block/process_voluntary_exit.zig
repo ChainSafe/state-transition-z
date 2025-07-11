@@ -18,7 +18,7 @@ pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
 pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) bool {
     const state = cached_state.state;
     const epoch_cache = cached_state.epoch_cache;
-    const config = cached_state.config.config;
+    const config = cached_state.config.chain;
     const voluntary_exit = signed_voluntary_exit.message;
     const validator = state.getValidator(voluntary_exit.validator_index);
     const current_epoch = epoch_cache.epoch;
