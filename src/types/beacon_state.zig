@@ -336,6 +336,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    // TODO: change to []Validator
     pub fn getValidators(self: *const BeaconStateAllForks) Validators {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators,
@@ -944,6 +945,28 @@ pub const BeaconStateAllForks = union(enum) {
             .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| &state.pending_partial_withdrawals[index],
         };
+    }
+
+    pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []*PendingPartialWithdrawal {
+        return switch (self.*) {
+            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
+            .altair => @panic("pending_partial_withdrawals is not available in altair"),
+            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
+            .capella => @panic("pending_partial_withdrawals is not available in capella"),
+            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
+            .electra => |state| state.pending_partial_withdrawals.items,
+        };
+    }
+
+    pub fn addPendingPartialWithdrawal(self: *BeaconStateAllForks, withdrawal: *const PendingPartialWithdrawal) !void {
+        switch (self.*) {
+            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
+            .altair => @panic("pending_partial_withdrawals is not available in altair"),
+            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
+            .capella => @panic("pending_partial_withdrawals is not available in capella"),
+            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
+            .electra => |state| state.pending_partial_withdrawals.append(*withdrawal),
+        }
     }
 
     pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
