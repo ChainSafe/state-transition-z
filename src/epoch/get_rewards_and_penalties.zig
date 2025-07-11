@@ -8,7 +8,7 @@ const params = @import("../params.zig");
 const constants = @import("../constants.zig");
 
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
-const ForkSeq = @import("../config.zig").ForkSeq;
+const ForkSeq = @import("../types/fork.zig").ForkSeq;
 const INACTIVITY_PENALTY_QUOTIENT_ALTAIR = preset.INACTIVITY_PENALTY_QUOTIENT_ALTAIR;
 const INACTIVITY_PENALTY_QUOTIENT_BELLATRIX = preset.INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
 const PARTICIPATION_FLAG_WEIGHTS = params.PARTICIPATION_FLAG_WEIGHTS;

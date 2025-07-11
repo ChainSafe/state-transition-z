@@ -1,4 +1,4 @@
-const ForkSeq = @import("../config.zig").ForkSeq;
+const ForkSeq = @import("../types/fork.zig").ForkSeq;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("../params.zig");

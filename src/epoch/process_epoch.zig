@@ -1,6 +1,6 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("../config.zig").ForkSeq;
+const ForkSeq = @import("../types/fork.zig").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const processJustificationAndFinalization = @import("./process_justification_and_finalization.zig").processJustificationAndFinalization;
 const processInactivityUpdates = @import("./process_inactivity_updates.zig").processInactivityUpdates;

@@ -1,4 +1,4 @@
-const ForkSeq = @import("../config.zig").ForkSeq;
+const ForkSeq = @import("../types/fork.zig").ForkSeq;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
