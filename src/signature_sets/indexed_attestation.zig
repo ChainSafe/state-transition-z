@@ -42,7 +42,7 @@ pub fn getAttestationWithIndicesSignatureSet(allocator: Allocator, cached_state:
 }
 
 pub fn getIndexedAttestationSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IndexedAttestation) !AggregatedSignatureSet {
-    return try getAttestationWithIndicesSignatureSet(allocator, cached_state, &indexed_attestation.data, indexed_attestation.signature, indexed_attestation.attesting_indices);
+    return try getAttestationWithIndicesSignatureSet(allocator, cached_state, &indexed_attestation.getAttestationData(), indexed_attestation.getSignature(), indexed_attestation.getAttestingIndices());
 }
 
 // TODO: implement getIndexedAttestation in EpochCache

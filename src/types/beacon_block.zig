@@ -4,12 +4,20 @@ const expect = std.testing.expect;
 const ssz = @import("consensus_types");
 const types = @import("../type.zig");
 const Slot = types.Slot;
+const Deposit = ssz.phase0.Deposit.Type;
+const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const ValidatorIndex = types.ValidatorIndex;
+const SignedBLSToExecutionChange = ssz.capella.SignedBLSToExecutionChange.Type;
+const DepositRequest = ssz.electra.DepositRequest.Type;
+const WithdrawalRequest = ssz.electra.WithdrawalRequest.Type;
+const ConsolidationRequest = ssz.electra.ConsolidationRequest.Type;
 const Root = types.Root;
+const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const ProposerSlashings = ssz.phase0.ProposerSlashings.Type;
 const ExecutionPayload = @import("./execution_payload.zig").ExecutionPayload;
 const Attestations = @import("./attestation.zig").Attestations;
 const AttesterSlashings = @import("./attester_slashing.zig").AttesterSlashings;
+const AttesterSlashing = @import("./attester_slashing.zig").AttesterSlashing;
 
 pub const SignedBeaconBlock = union(enum) {
     phase0: *const ssz.phase0.SignedBeaconBlock.Type,
@@ -134,9 +142,9 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getProposerSlashings(self: *const BeaconBlockBody) *const ProposerSlashings {
+    pub fn getProposerSlashings(self: *const BeaconBlockBody) []ProposerSlashing {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.proposer_slashings,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.proposer_slashings.items,
         };
     }
 
@@ -154,15 +162,15 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getDeposits(self: *const BeaconBlockBody) *const ssz.phase0.Deposits.Type {
+    pub fn getDeposits(self: *const BeaconBlockBody) []Deposit {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.deposits,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.deposits.items,
         };
     }
 
-    pub fn getVoluntaryExits(self: *const BeaconBlockBody) *const ssz.phase0.VoluntaryExits.Type {
+    pub fn getVoluntaryExits(self: *const BeaconBlockBody) []SignedVoluntaryExit {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.voluntary_exits,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.voluntary_exits.items,
         };
     }
 
@@ -186,15 +194,15 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // capella fields
-    pub fn getBlsToExecutionChanges(self: *const BeaconBlockBody) *const ssz.capella.SignedBLSToExecutionChanges.Type {
+    pub fn getBlsToExecutionChanges(self: *const BeaconBlockBody) []SignedBLSToExecutionChange {
         return switch (self.*) {
             .phase0,
             => @panic("BlsToExecutionChanges is not available in phase0"),
             .altair => @panic("BlsToExecutionChanges is not available in altair"),
             .bellatrix => @panic("BlsToExecutionChanges is not available in bellatrix"),
-            .capella => |body| &body.bls_to_execution_changes,
-            .deneb => |body| &body.bls_to_execution_changes,
-            .electra => |body| &body.bls_to_execution_changes,
+            .capella => |body| body.bls_to_execution_changes.items,
+            .deneb => |body| body.bls_to_execution_changes.items,
+            .electra => |body| body.bls_to_execution_changes.items,
         };
     }
 
@@ -219,6 +227,39 @@ pub const BeaconBlockBody = union(enum) {
             .capella => @panic("ExecutionRequests is not available in capella"),
             .deneb => @panic("ExecutionRequests is not available in deneb"),
             .electra => |body| &body.execution_requests,
+        };
+    }
+
+    pub fn getDepositRequests(self: *const BeaconBlockBody) []DepositRequest {
+        return switch (self.*) {
+            .phase0 => @panic("DepositRequests is not available in phase0"),
+            .altair => @panic("DepositRequests is not available in altair"),
+            .bellatrix => @panic("DepositRequests is not available in bellatrix"),
+            .capella => @panic("DepositRequests is not available in capella"),
+            .deneb => @panic("DepositRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.deposits.items,
+        };
+    }
+
+    pub fn getWithdrawalRequests(self: *const BeaconBlockBody) []WithdrawalRequest {
+        return switch (self.*) {
+            .phase0 => @panic("WithdrawalRequests is not available in phase0"),
+            .altair => @panic("WithdrawalRequests is not available in altair"),
+            .bellatrix => @panic("WithdrawalRequests is not available in bellatrix"),
+            .capella => @panic("WithdrawalRequests is not available in capella"),
+            .deneb => @panic("WithdrawalRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.withdrawals.items,
+        };
+    }
+
+    pub fn getConsolidationRequests(self: *const BeaconBlockBody) []ConsolidationRequest {
+        return switch (self.*) {
+            .phase0 => @panic("ConsolidationRequests is not available in phase0"),
+            .altair => @panic("ConsolidationRequests is not available in altair"),
+            .bellatrix => @panic("ConsolidationRequests is not available in bellatrix"),
+            .capella => @panic("ConsolidationRequests is not available in capella"),
+            .deneb => @panic("ConsolidationRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.consolidations.items,
         };
     }
 };
@@ -256,12 +297,12 @@ test "electra - sanity" {
     const eth1_data = block_body.getEth1Data();
     try expect(eth1_data.deposit_count == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getGraffity());
-    try expect(block_body.getProposerSlashings().items.len == 0);
+    try expect(block_body.getProposerSlashings().len == 0);
     try expect(block_body.getAttesterSlashings().length() == 0);
     try expect(block_body.getAttestations().length() == 1);
     try expect(block_body.getAttestations().items().electra[0].data.slot == 12345);
-    try expect(block_body.getDeposits().items.len == 0);
-    try expect(block_body.getVoluntaryExits().items.len == 0);
+    try expect(block_body.getDeposits().len == 0);
+    try expect(block_body.getVoluntaryExits().len == 0);
 
     // altair
     const sync_aggregate = block_body.getSyncAggregate();
@@ -272,7 +313,7 @@ test "electra - sanity" {
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
 
     // capella
-    try expect(block_body.getBlsToExecutionChanges().items.len == 0);
+    try expect(block_body.getBlsToExecutionChanges().len == 0);
 
     // deneb
     try expect(block_body.getBlobKzgCommitments().items.len == 0);

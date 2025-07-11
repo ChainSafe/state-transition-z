@@ -13,12 +13,17 @@ pub const AttesterSlashings = union(enum) {
         };
     }
 
-    pub fn items(self: *const AttesterSlashings) []AttesterSlashing {
+    pub fn items(self: *const AttesterSlashings) AttesterSlashingItems {
         return switch (self.*) {
-            .phase0 => |attester_slashings| attester_slashings.items,
-            .electra => |attester_slashings| attester_slashings.items,
+            .phase0 => |attester_slashings| .{ .phase = attester_slashings.items },
+            .electra => |attester_slashings| .{ .electra = attester_slashings.items },
         };
     }
 };
 
-const AttesterSlashing = ssz.phase0.AttesterSlashing;
+pub const AttesterSlashingItems = union(enum) {
+    phase0: []ssz.phase0.AttesterSlashing.Type,
+    electra: []ssz.electra.AttesterSlashing.Type,
+};
+
+pub const AttesterSlashing = ssz.phase0.AttesterSlashing;

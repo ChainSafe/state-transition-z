@@ -2,6 +2,7 @@ const ssz = @import("consensus_types");
 const types = @import("../type.zig");
 const AttestationData = types.AttestationData;
 const BLSSignature = types.BLSSignature;
+const ValidatorIndex = types.ValidatorIndex;
 
 pub const Attestations = union(enum) {
     phase0: *const ssz.phase0.Attestations.Type,
@@ -46,6 +47,13 @@ pub const IndexedAttestation = union(enum) {
         return switch (self.*) {
             .phase0 => |indexed_attestation| indexed_attestation.attestation.signature,
             .electra => |indexed_attestation| indexed_attestation.attestation.signature,
+        };
+    }
+
+    pub fn getAttestingIndices(self: *const IndexedAttestation) []ValidatorIndex {
+        return switch (self.*) {
+            .phase0 => |indexed_attestation| indexed_attestation.attesting_indices,
+            .electra => |indexed_attestation| indexed_attestation.attesting_indices,
         };
     }
 };

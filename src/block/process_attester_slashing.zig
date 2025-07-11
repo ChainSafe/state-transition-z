@@ -8,10 +8,13 @@ const isValidIndexedAttestation = @import("./is_valid_indexed_attestation.zig").
 const isSlashableValidator = @import("../utils/validator.zig").isSlashableValidator;
 const slashValidator = @import("./slash_validator.zig").slashValidator;
 
-pub fn processAttesterSlashing(cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AttesterSlashing, verify_signature: ?bool) !void {
+/// AS is the AttesterSlashing type
+/// - for phase0 it is `ssz.phase0.AttesterSlashing.Type`
+/// - for electra it is `ssz.electra.AttesterSlashing.Type`
+pub fn processAttesterSlashing(comptime AS: type, cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch = cached_state.epoch_cache.epoch;
-    try assertValidAttesterSlashing(cached_state, attester_slashing, verify_signature);
+    try assertValidAttesterSlashing(AS, cached_state, attester_slashing, verify_signature);
 
     const intersecting_indices = try getAttesterSlashableIndices(cached_state.allocator, attester_slashing);
     defer intersecting_indices.deinit();
@@ -31,7 +34,10 @@ pub fn processAttesterSlashing(cached_state: *CachedBeaconStateAllForks, atteste
     }
 }
 
-pub fn assertValidAttesterSlashing(cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AttesterSlashing, verify_signatures: ?bool) !void {
+/// AS is the AttesterSlashing type
+/// - for phase0 it is `ssz.phase0.AttesterSlashing.Type`
+/// - for electra it is `ssz.electra.AttesterSlashing.Type`
+pub fn assertValidAttesterSlashing(comptime AS: type, cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signatures: ?bool) !void {
     const attestations = &.{ attester_slashing.attestation_1, attester_slashing.attestation_2 };
     if (!isSlashableAttestationData(&attestations[0].data, &attestations[1].data)) {
         return error.InvalidAttesterSlashingNotSlashable;
