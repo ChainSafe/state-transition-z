@@ -1,4 +1,4 @@
-const params = @import("../params.zig");
+const params = @import("params");
 const EFFECTIVE_BALANCE_INCREMENT = params.EFFECTIVE_BALANCE_INCREMENT;
 const BASE_REWARD_FACTOR = params.BASE_REWARD_FACTOR;
 

@@ -4,7 +4,7 @@ const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivat
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const isValidatorKnown = @import("../utils/electra.zig").isValidatorKnown;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const isValidDepositSignature = @import("../block/process_deposit.zig").isValidDepositSignature;
 const addValidatorToRegistry = @import("../block/process_deposit.zig").addValidatorToRegistry;
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
@@ -12,7 +12,7 @@ const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
 const types = @import("../type.zig");
 const PendingDeposit = types.PendingDeposit;
-const params = @import("../params.zig");
+const params = @import("params");
 
 pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const epoch_cache = cached_state.epoch_cache;

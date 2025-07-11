@@ -5,19 +5,8 @@ pub const processEth1DataReset = @import("epoch/process_eth1_data_reset.zig").pr
 pub const computeSigningRoot = @import("./utils/signing_root.zig").computeSigningRoot;
 pub const BeaconBlock = @import("./types/beacon_block.zig").BeaconBlock;
 pub const BeaconStateAllForks = @import("./types/beacon_state.zig").BeaconStateAllForks;
+pub const CachedBeaconStateAllForks = @import("./cache/state_cache.zig").CachedBeaconStateAllForks;
 pub const bls = @import("utils/bls.zig");
-
-export fn add(a: i32, b: i32) i32 {
-    return a + b;
-}
-
-// test "process epoch" {
-//     const ssz = @import("consensus_types");
-//     const phase0 = ssz.phase0;
-//     const BeaconState = phase0.BeaconState;
-//     var state = BeaconState.default_value;
-//     processEth1DataReset(&state);
-// }
 
 test {
     testing.refAllDecls(@This());

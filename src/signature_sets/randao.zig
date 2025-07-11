@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-const params = @import("../params.zig");
+const params = @import("params");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 

@@ -1,4 +1,4 @@
-const params = @import("../params.zig");
+const params = @import("params");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const Eth1Data = ssz.phase0.Eth1Data.Type;

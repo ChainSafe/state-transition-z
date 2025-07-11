@@ -20,7 +20,7 @@ const FLAG_PREV_TARGET_ATTESTER = attester_status.FLAG_PREV_TARGET_ATTESTER;
 const FLAG_UNSLASHED = attester_status.FLAG_UNSLASHED;
 const hasMarkers = attester_status.hasMarkers;
 
-const params = @import("../params.zig");
+const params = @import("params");
 const FAR_FUTURE_EPOCH = params.FAR_FUTURE_EPOCH;
 const MIN_ACTIVATION_BALANCE = params.MIN_ACTIVATION_BALANCE;
 

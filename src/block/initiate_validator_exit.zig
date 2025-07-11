@@ -1,8 +1,8 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const ssz = @import("consensus_types");
 const Validator = ssz.phase0.Validator.Type;
-const params = @import("../params.zig");
+const params = @import("params");
 const FAR_FUTURE_EPOCH = params.FAR_FUTURE_EPOCH;
 const computeExitEpochAndUpdateChurn = @import("../utils/epoch.zig").computeExitEpochAndUpdateChurn;
 

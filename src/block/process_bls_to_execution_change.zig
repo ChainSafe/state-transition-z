@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const ssz = @import("consensus_types");
 const Root = ssz.primitive.Root.Type;
 const SignedBLSToExecutionChange = ssz.capella.SignedBLSToExecutionChange.Type;
-const params = @import("../params.zig");
+const params = @import("params");
 const digest = @import("../utils/sha256.zig").digest;
 const verifyBlsToExecutionChangeSignature = @import("../signature_sets/bls_to_execution_change.zig").verifyBlsToExecutionChangeSignature;
 

@@ -1,10 +1,10 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const params = @import("../params.zig");
+const params = @import("params");
 
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;

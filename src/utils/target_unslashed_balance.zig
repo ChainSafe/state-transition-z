@@ -2,7 +2,7 @@ const ssz = @import("consensus_types");
 const Validators = ssz.phase0.Validators.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const preset = ssz.preset;
-const params = @import("../params.zig");
+const params = @import("params");
 const isActiveValidator = @import("./validator.zig").isActiveValidator;
 
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;

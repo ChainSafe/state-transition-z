@@ -3,7 +3,7 @@ const Root = types.Root;
 const Slot = types.Slot;
 const Epoch = types.Epoch;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const params = @import("../params.zig");
+const params = @import("params");
 const SLOTS_PER_HISTORICAL_ROOT = params.SLOTS_PER_HISTORICAL_ROOT;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 

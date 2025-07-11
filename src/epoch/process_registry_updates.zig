@@ -2,7 +2,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const types = @import("../types.zig");
 const Epoch = types.Epoch;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
 const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
 

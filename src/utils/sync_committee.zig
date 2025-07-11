@@ -8,11 +8,11 @@ const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const params = @import("../params.zig");
+const params = @import("params");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
 const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 
 const SyncCommitteeInfo = struct {
     indices: ValidatorIndices,

@@ -17,6 +17,40 @@ pub fn build(b: *std.Build) void {
     const dep_ssz = b.dependency("ssz", .{});
     const dep_blst_z = b.dependency("blst_z", .{});
 
+    const module_ssz = dep_ssz.module("ssz");
+    const module_consensus_types = dep_ssz.module("consensus_types");
+    const module_blst_min_pk = dep_blst_z.module("blst_min_pk");
+
+    const module_params = b.createModule(.{
+        .root_source_file = b.path("src/params/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    module_params.addImport("ssz", module_ssz);
+    module_params.addImport("consensus_types", module_consensus_types);
+    b.modules.put(b.dupe("params"), module_params) catch @panic("OOM");
+
+    const module_config = b.createModule(.{
+        .root_source_file = b.path("src/config/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    module_config.addImport("ssz", module_ssz);
+    module_config.addImport("consensus_types", module_consensus_types);
+    module_config.addImport("params", module_params);
+    b.modules.put(b.dupe("config"), module_config) catch @panic("OOM");
+
+    const module_state_transition = b.createModule(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    module_state_transition.addImport("ssz", module_ssz);
+    module_state_transition.addImport("consensus_types", module_consensus_types);
+    module_state_transition.addImport("blst_min_pk", module_blst_min_pk);
+    module_state_transition.addImport("config", module_config);
+    b.modules.put(b.dupe("state_transition"), module_state_transition) catch @panic("OOM");
+
     const lib = b.addStaticLibrary(.{
         .name = "state-transition",
         // In this case the main source file is merely a path, however, in more
@@ -26,9 +60,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    lib.root_module.addImport("ssz", dep_ssz.module("ssz"));
-    lib.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
-    lib.root_module.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    lib.root_module.addImport("state_transition", module_state_transition);
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
@@ -96,25 +128,37 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    lib_unit_tests.root_module.addImport("ssz", dep_ssz.module("ssz"));
-    lib_unit_tests.root_module.addImport("consensus_types", dep_ssz.module("consensus_types"));
-    lib_unit_tests.root_module.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    lib_unit_tests.root_module.addImport("ssz", module_ssz);
+    lib_unit_tests.root_module.addImport("consensus_types", module_consensus_types);
+    lib_unit_tests.root_module.addImport("blst_min_pk", module_blst_min_pk);
+    lib_unit_tests.root_module.addImport("config", module_config);
+    lib_unit_tests.root_module.addImport("params", module_params);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
-    const exe_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/main.zig"),
+    const module_int = b.createModule(.{
+        .root_source_file = b.path("test/int/root.zig"),
         .target = target,
         .optimize = optimize,
     });
+    module_int.addImport("state_transition", module_state_transition);
+    module_int.addImport("ssz", dep_ssz.module("ssz"));
+    module_int.addImport("consensus_types", module_consensus_types);
+    module_int.addImport("blst_min_pk", module_blst_min_pk);
 
-    const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
+    const test_int = b.addTest(.{
+        .name = "int",
+        .root_module = module_int,
+        .filters = &[_][]const u8{},
+    });
+
+    const run_test_int = b.addRunArtifact(test_int);
 
     // Similar to creating the run step earlier, this exposes a `test` step to
     // the `zig build --help` menu, providing a way for the user to request
     // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
-    test_step.dependOn(&run_exe_unit_tests.step);
     test_step.dependOn(&run_shared_lib_unit_tests.step);
+    test_step.dependOn(&run_test_int.step);
 }

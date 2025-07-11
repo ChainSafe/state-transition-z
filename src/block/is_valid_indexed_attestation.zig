@@ -1,6 +1,6 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ValidatorIndex = @import("../type.zig").ValidatorIndex;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;

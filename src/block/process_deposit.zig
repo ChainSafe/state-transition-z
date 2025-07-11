@@ -1,4 +1,4 @@
-const BeaconConfig = @import("../config.zig").BeaconConfig;
+const BeaconConfig = @import("config").BeaconConfig;
 const types = @import("../type.zig");
 const BLSPubkey = types.BLSPubkey;
 const WithdrawalCredentials = types.WithdrawalCredentials;
@@ -9,7 +9,7 @@ const Root = types.Root;
 const PendingDeposit = types.PendingDeposit;
 const Phase0Deposit = types.Phase0Deposit;
 const ssz = @import("consensus_types");
-const params = @import("../params.zig");
+const params = @import("params");
 const preset = ssz.preset;
 const DOMAIN_DEPOSIT = params.DOMAIN_DEPOSIT;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;

@@ -1,7 +1,13 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
 const preset_str = @import("build_options").preset;
+
+pub const preset = ssz.preset;
+const fork_defs = @import("./fork.zig");
+pub const ForkSeq = fork_defs.ForkInfo;
+pub const getForkSeqByForkName = fork_defs.getForkSeqByForkName;
+pub const ForkInfo = fork_defs.ForkInfo;
+pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
 
 // TODO: currently preset is imported from ssz, consider redefining it here
 // Misc

@@ -1,5 +1,5 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const ForkSeq = @import("params").ForkSeq;
 const ssz = @import("consensus_types");
 const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const isSlashableValidator = @import("../utils/validator.zig").isSlashableValidator;

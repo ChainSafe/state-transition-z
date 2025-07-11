@@ -1,5 +1,5 @@
 const std = @import("std");
-const params = @import("../params.zig");
+const params = @import("params");
 const COMPOUNDING_WITHDRAWAL_PREFIX = params.COMPOUNDING_WITHDRAWAL_PREFIX;
 const MIN_ACTIVATION_BALANCE = params.MIN_ACTIVATION_BALANCE;
 const types = @import("../type.zig");

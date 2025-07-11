@@ -1,6 +1,6 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const params = @import("../params.zig");
+const params = @import("params");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const ConsolidationRequest = ssz.electra.ConsolidationRequest.Type;

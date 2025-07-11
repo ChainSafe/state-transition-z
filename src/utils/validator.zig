@@ -7,8 +7,8 @@ const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
-const BeaconConfig = @import("../config.zig").BeaconConfig;
-const ForkSeq = @import("../types/fork.zig").ForkSeq;
+const BeaconConfig = @import("config").BeaconConfig;
+const ForkSeq = @import("params").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
 const hasCompoundingWithdrawalCredential = @import("./electra.zig").hasCompoundingWithdrawalCredential;
 

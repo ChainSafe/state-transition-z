@@ -1,5 +1,5 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const params = @import("../params.zig");
+const params = @import("params");
 const MIN_EPOCHS_TO_INACTIVITY_PENALTY = params.MIN_EPOCHS_TO_INACTIVITY_PENALTY;
 
 pub fn getFinalityDelay(cached_state: CachedBeaconStateAllForks) u64 {

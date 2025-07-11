@@ -4,7 +4,7 @@ const ssz = @import("consensus_types");
 const DepositRequest = ssz.electra.DepositRequest.Type;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const Root = ssz.primitive.Root.Type;
-const params = @import("../params.zig");
+const params = @import("params");
 
 pub fn processDepositRequest(cached_state: *CachedBeaconStateAllForks, deposit_request: *const DepositRequest) !void {
     const state = cached_state.state;

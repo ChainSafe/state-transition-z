@@ -28,7 +28,6 @@ pub const Withdrawal = ssz.capella.Withdrawal.Type;
 pub const ExecutionPayload = ssz.capella.ExecutionPayload.Type;
 
 pub const PendingDeposit = ssz.electra.PendingDeposit.Type;
-pub const ForkSeq = @import("./config.zig").ForkSeq;
 
 pub fn cloneValidatorIndices(allocator: std.mem.Allocator, indices: ValidatorIndices) !ValidatorIndices {
     var cloned = try ValidatorIndices.initCapacity(allocator, indices.items.len);
