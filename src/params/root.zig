@@ -1,7 +1,9 @@
 const std = @import("std");
+const testing = std.testing;
 const ssz = @import("consensus_types");
 const preset_str = @import("build_options").preset;
 
+// TODO: currently preset is imported from ssz, consider redefining it here
 pub const preset = ssz.preset;
 const fork_defs = @import("./fork.zig");
 pub const ForkSeq = fork_defs.ForkInfo;
@@ -9,17 +11,18 @@ pub const getForkSeqByForkName = fork_defs.getForkSeqByForkName;
 pub const ForkInfo = fork_defs.ForkInfo;
 pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
 
-// TODO: currently preset is imported from ssz, consider redefining it here
+pub const Preset = @import("./preset.zig").Preset;
+
 // Misc
 
 pub const GENESIS_SLOT = 0;
 pub const GENESIS_EPOCH = 0;
-pub const FAR_FUTURE_EPOCH = std.math.inf(u64);
+pub const FAR_FUTURE_EPOCH = std.math.maxInt(u64);
 pub const BASE_REWARDS_PER_EPOCH = 4;
-pub const DEPOSIT_CONTRACT_TREE_DEPTH = 2 ** 5; // 32
+pub const DEPOSIT_CONTRACT_TREE_DEPTH = std.math.pow(usize, 2, 5); // 32
 pub const JUSTIFICATION_BITS_LENGTH = 4;
 pub const ZERO_HASH = [_]u8{0} ** 32;
-pub const ZERO_HASH_HEX = "0x" + "00".repeat(32);
+pub const ZERO_HASH_HEX = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 // Withdrawal prefixes
 // Since the prefixes are just 1 byte, we define and use them as number
@@ -74,7 +77,7 @@ pub const EPOCHS_PER_RANDOM_SUBNET_SUBSCRIPTION = 256;
 pub const ATTESTATION_SUBNET_COUNT = 64;
 pub const SUBNETS_PER_NODE = 2;
 pub const NODE_ID_BITS = 256;
-pub const ATTESTATION_SUBNET_PREFIX_BITS = std.math.Log2Int(ATTESTATION_SUBNET_COUNT);
+pub const ATTESTATION_SUBNET_PREFIX_BITS = std.math.log2_int(usize, ATTESTATION_SUBNET_COUNT);
 pub const EPOCHS_PER_SUBNET_SUBSCRIPTION = 256;
 
 // altair validator
@@ -83,8 +86,8 @@ pub const TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE = 16;
 pub const SYNC_COMMITTEE_SUBNET_COUNT = 4;
 pub const SYNC_COMMITTEE_SUBNET_SIZE = @divFloor(preset.SYNC_COMMITTEE_SIZE, SYNC_COMMITTEE_SUBNET_COUNT);
 
-pub const MAX_REQUEST_BLOCKS = 2 ** 10; // 1024
-pub const MAX_REQUEST_BLOCKS_DENEB = 2 ** 7; // 128
+pub const MAX_REQUEST_BLOCKS = std.math.pow(usize, 2, 10);
+pub const MAX_REQUEST_BLOCKS_DENEB = std.math.pow(usize, 2, 7);
 
 // Lightclient pre-computed
 pub const FINALIZED_ROOT_GINDEX = 105;
@@ -110,14 +113,15 @@ pub const BLOB_TX_TYPE = 0x03;
 pub const VERSIONED_HASH_VERSION_KZG = 0x01;
 
 // ssz.deneb.BeaconBlockBody.getPathInfo(['blobKzgCommitments',0]).gindex
+// the same to ssz-z
 pub const KZG_COMMITMENT_GINDEX0 = if (std.mem.eql(u8, preset_str, "minimal")) 1728 else 221184;
-pub const KZG_COMMITMENT_SUBTREE_INDEX0 = KZG_COMMITMENT_GINDEX0 - 2 ** preset.KZG_COMMITMENT_INCLUSION_PROOF_DEPTH;
+pub const KZG_COMMITMENT_SUBTREE_INDEX0 = KZG_COMMITMENT_GINDEX0 - std.math.pow(usize, 2, preset.KZG_COMMITMENT_INCLUSION_PROOF_DEPTH);
 
 // ssz.deneb.BlobSidecars.elementType.fixedSize
 pub const BLOBSIDECAR_FIXED_SIZE = if (std.mem.eql(u8, preset_str, "minimal")) 131704 else 131928;
 
 // Electra Misc
-pub const UNSET_DEPOSIT_REQUESTS_START_INDEX = 2 ** 64 - 1;
+pub const UNSET_DEPOSIT_REQUESTS_START_INDEX = std.math.maxInt(u64);
 pub const FULL_EXIT_REQUEST_AMOUNT = 0;
 pub const FINALIZED_ROOT_GINDEX_ELECTRA = 169;
 pub const FINALIZED_ROOT_DEPTH_ELECTRA = 7;
@@ -136,8 +140,12 @@ pub const CELLS_PER_EXT_BLOB = preset.FIELD_ELEMENTS_PER_EXT_BLOB / preset.FIELD
 
 // ssz.fulu.BeaconBlockBody.getPathInfo(['blobKzgCommitments']).gindex
 pub const KZG_COMMITMENTS_GINDEX = 27;
-pub const KZG_COMMITMENTS_SUBTREE_INDEX = KZG_COMMITMENTS_GINDEX - 2 ** preset.KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH;
+pub const KZG_COMMITMENTS_SUBTREE_INDEX = KZG_COMMITMENTS_GINDEX - std.math.pow(usize, 2, preset.KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH);
 
 pub const MAX_REQUEST_DATA_COLUMN_SIDECARS = MAX_REQUEST_BLOCKS_DENEB * NUMBER_OF_COLUMNS; // 16384
 pub const DATA_COLUMN_SIDECAR_SUBNET_COUNT = 128;
 pub const NUMBER_OF_CUSTODY_GROUPS = 128;
+
+test {
+    testing.refAllDecls(@This());
+}

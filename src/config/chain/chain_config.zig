@@ -1,11 +1,11 @@
 const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
+const Preset = @import("params").Preset;
 
 /// Run-time chain configuration
 /// This starts with ChainConfig, similar to typescript version
 pub const ChainConfig = struct {
-    // TODO: should this be enum
-    PRESET_BASE: []const u8,
+    PRESET_BASE: Preset,
     CONFIG_NAME: []const u8,
 
     // Transition
@@ -87,7 +87,7 @@ pub const ChainConfig = struct {
     BLOB_SCHEDULE: []BlobScheduleEntry,
 };
 
-const BlobScheduleEntry = struct {
+pub const BlobScheduleEntry = struct {
     EPOCH: Epoch,
     MAX_BLOBS_PER_BLOCK: u64,
 };
