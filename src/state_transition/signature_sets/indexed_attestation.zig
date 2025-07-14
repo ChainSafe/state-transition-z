@@ -29,7 +29,7 @@ pub fn getAttestationDataSigningRoot(cached_state: *const CachedBeaconStateAllFo
 
 /// Consumer need to free the returned pubkeys array
 pub fn getAttestationWithIndicesSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, data: *const AttestationData, signature: BLSSignature, attesting_indices: []usize) !AggregatedSignatureSet {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     const pubkeys = try allocator.alloc(*const PublicKey, attesting_indices.len);
     for (0..attesting_indices.len) |i| {
@@ -47,7 +47,7 @@ pub fn getIndexedAttestationSignatureSet(allocator: Allocator, cached_state: *co
 }
 
 pub fn getAttestationsSignatureSets(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(AggregatedSignatureSet)) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const attestation_items = signed_block.getBeaconBlock().getBeaconBlockBody().getAttestations().items();
 
     switch (attestation_items) {

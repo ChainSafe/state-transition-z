@@ -51,8 +51,10 @@ const Phase0IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
 const ElectraIndexedAttestation = ssz.electra.IndexedAttestation.Type;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
 
+const getReferenceCount = @import("../utils/reference_count.zig").getReferenceCount;
+
 pub const EpochCacheImmutableData = struct {
-    config: *BeaconConfig,
+    config: *const BeaconConfig,
     pubkey_to_index: PubkeyIndexMap,
     index_to_pubkey: Index2PubkeyCache,
 };
@@ -64,10 +66,15 @@ pub const EpochCacheOpts = struct {
 
 pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOMINATOR - params.PROPOSER_WEIGHT);
 
+/// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
+/// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
+/// and decrease the reference count when it is deinitialized
+pub const EpochCacheRc = getReferenceCount(EpochCache);
+
 pub const EpochCache = struct {
     allocator: Allocator,
 
-    config: *BeaconConfig,
+    config: *const BeaconConfig,
 
     // this is shared across applications, EpochCache does not own this field so should not deinit()
     pubkey_to_index: PubkeyIndexMap,
@@ -310,8 +317,9 @@ pub const EpochCache = struct {
         self.next_sync_committee_indexed.release();
     }
 
-    pub fn clone(self: *const EpochCache) EpochCache {
-        return .EpochCache{
+    /// TODO: state_transition when calling this function needs to decrease EpochCache rc before using a new one
+    pub fn clone(self: *const EpochCache, allocator: Allocator) !*EpochCache {
+        const epoch_cache = .EpochCache{
             .allocator = self.allocator,
             .config = self.config,
             // Common append-only structures shared with all states, no need to clone
@@ -345,6 +353,10 @@ pub const EpochCache = struct {
             .epoch = self.epoch,
             .next_epoch = self.next_epoch,
         };
+
+        const epoch_cache_ptr = try allocator.create(EpochCache);
+        epoch_cache_ptr.* = epoch_cache;
+        return epoch_cache_ptr;
     }
 
     pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {

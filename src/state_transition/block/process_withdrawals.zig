@@ -86,7 +86,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *CachedBeaconS
         return error.InvalidForkSequence;
     }
 
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     const epoch = epoch_cache.epoch;
     var withdrawal_index = state.getNextWithdrawalIndex();

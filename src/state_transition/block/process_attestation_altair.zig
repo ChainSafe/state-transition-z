@@ -30,7 +30,7 @@ const SLOTS_PER_EPOCH_SQRT = std.math.sqrt(preset.SLOTS_PER_EPOCH);
 /// for electra it's `ssz.electra.Attestation.Type`
 pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: ?bool) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const effective_balance_increments = epoch_cache.effective_balance_increment;
     const state_slot = state.getSlot();
     const current_epoch = epoch_cache.epoch;

@@ -13,7 +13,7 @@ pub fn verifyRandaoSignature(state: *const CachedBeaconStateAllForks, block: *co
 }
 
 pub fn getRandaoRevealSignatureSet(cached_state: *const CachedBeaconStateAllForks, block: *const BeaconBlock) SingleSignatureSet {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const config = cached_state.config;
 

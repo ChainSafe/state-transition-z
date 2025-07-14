@@ -12,7 +12,7 @@ const aggregateSerializedPublicKeys = @import("../utils/bls.zig").aggregateSeria
 
 pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const next_epoch = epoch_cache.epoch + 1;
     if (next_epoch % preset.EPOCHS_PER_SYNC_COMMITTEE_PERIOD == 0) {
         // borrow from EpochShuffling so no need to deinit it

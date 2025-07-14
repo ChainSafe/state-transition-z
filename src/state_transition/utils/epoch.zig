@@ -36,7 +36,7 @@ pub fn computeActivationExitEpoch(epoch: Epoch) Epoch {
 
 pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, exit_balance: Gwei) u64 {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     var earliest_exit_epoch = @max(state.getEarliestExitEpoch(), computeActivationExitEpoch(epoch_cache.epoch));
     const per_epoch_churn = getActivationExitChurnLimit(epoch_cache);
 
@@ -60,7 +60,7 @@ pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, 
 
 pub fn computeConsolidationEpochAndUpdateChurn(cached_state: *const CachedBeaconStateAllForks, consolidation_balance: Gwei) u64 {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     var earliest_consolidation_epoch = @max(state.getEarliestConsolidationEpoch(), computeActivationExitEpoch(epoch_cache.epoch));
     const per_epoch_consolidation_churn = getConsolidationChurnLimit(epoch_cache);

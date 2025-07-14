@@ -19,7 +19,7 @@ pub fn verifyVoluntaryExitSignature(cached_state: *const CachedBeaconStateAllFor
 pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     const slot = computeStartSlotAtEpoch(signed_voluntary_exit.message.epoch);
     const domain = config.getDomainForVoluntaryExit(state.getSlot(), slot);

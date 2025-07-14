@@ -11,7 +11,7 @@ const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
 pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !usize {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const validators = state.getValidators();
     const effective_balance_increments = epoch_cache.effective_balance_increment;
     var next_epoch_total_active_balance_by_increment: u64 = 0;

@@ -27,7 +27,7 @@ const computeExitEpochAndUpdateChurn = @import("../utils/epoch.zig").computeExit
 ///
 pub fn initiateValidatorExit(cached_state: *const CachedBeaconStateAllForks, validator: *Validator) !void {
     const config = cached_state.config.chain;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
 
     // return if validator already initiated exit

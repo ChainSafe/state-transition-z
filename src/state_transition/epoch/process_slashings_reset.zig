@@ -9,7 +9,7 @@ const preset = ssz.preset;
 /// PERF: Almost no (constant) cost
 pub fn processSlashingsReset(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const next_epoch = cache.epoch + 1;
 
     // reset slashings

@@ -13,7 +13,7 @@ const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
 pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const slot = state.getSlot();
     const data = attestation.data;
 
@@ -47,7 +47,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
 
 /// AT could be either Phase0Attestation or ElectraAttestation
 pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const slot = state.getSlot();
     const data = attestation.data;

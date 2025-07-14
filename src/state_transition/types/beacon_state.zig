@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const ssz = @import("consensus_types");
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
@@ -48,6 +49,37 @@ pub const BeaconStateAllForks = union(enum) {
             .deneb => |state| try ssz.deneb.BeaconState.hashTreeRoot(allocator, state, out),
             .electra => |state| try ssz.electra.BeaconState.hashTreeRoot(allocator, state, out),
         };
+    }
+
+    pub fn deinit(self: *BeaconStateAllForks, allocator: Allocator) void {
+        switch (self.*) {
+            .phase0 => |state| {
+                state.historical_roots.deinit(allocator);
+                state.eth1_data_votes.deinit(allocator);
+                state.validators.deinit(allocator);
+                state.balances.deinit(allocator);
+                state.previous_epoch_attestations.deinit(allocator);
+                state.current_epoch_attestations.deinit(allocator);
+            },
+            inline .altair, .bellatrix, .capella, .deneb => |state| {
+                state.historical_roots.deinit(allocator);
+                state.eth1_data_votes.deinit(allocator);
+                state.validators.deinit(allocator);
+                state.balances.deinit(allocator);
+                state.previous_epoch_participation.deinit(allocator);
+                state.current_epoch_participation.deinit(allocator);
+            },
+            .electra => |state| {
+                state.historical_roots.deinit(allocator);
+                state.eth1_data_votes.deinit(allocator);
+                state.validators.deinit(allocator);
+                state.balances.deinit(allocator);
+                state.previous_epoch_participation.deinit(allocator);
+                state.current_epoch_participation.deinit(allocator);
+                state.pending_partial_withdrawals.deinit(allocator);
+                state.pending_consolidations.deinit(allocator);
+            },
+        }
     }
 
     pub fn getForkSeq(self: *const BeaconStateAllForks) ForkSeq {

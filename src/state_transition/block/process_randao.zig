@@ -13,7 +13,7 @@ const digest = @import("../utils/sha256.zig").digest;
 
 pub fn processRandao(cached_state: *const CachedBeaconStateAllForks, block: *const BeaconBlock, verify_signature: ?bool) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const epoch = epoch_cache.epoch;
     const randao_reveal = block.getBeaconBlockBody().getRandaoReveal();
 

@@ -11,7 +11,7 @@ const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 // TODO: BlindedBeaconBlock
 pub fn processBlockHeader(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, block: *const BeaconBlock) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const slot = state.getSlot();
 
     // verify that the slots match

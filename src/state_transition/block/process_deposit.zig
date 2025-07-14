@@ -75,7 +75,7 @@ pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const 
 pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
     const config = cached_state.config;
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const pubkey = deposit.getPubkey();
     const withdrawal_credentials = deposit.getWithdrawalCredentials();
     const amount = deposit.getAmount();
@@ -115,7 +115,7 @@ pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const De
 }
 
 pub fn addValidatorToRegistry(cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const validators = state.validators;
     // add validator and balance entries

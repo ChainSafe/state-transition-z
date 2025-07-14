@@ -61,7 +61,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: CachedBe
     defer reward_penalty_item_cache.deinit();
 
     const config = cached_state.config;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const fork = config.getForkSeq(state.getSlot());
 
     const inactivity_penality_multiplier =

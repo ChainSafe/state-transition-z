@@ -7,7 +7,7 @@ const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivati
 const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
 
 pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
 
     // Get the validators sub tree once for all the loop

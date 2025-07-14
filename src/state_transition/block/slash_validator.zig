@@ -12,7 +12,7 @@ const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateV
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
 pub fn slashValidator(cached_state: *CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const epoch = epoch_cache.epoch;
     const effective_balance_increments = epoch_cache.effective_balance_increment;

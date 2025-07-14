@@ -6,7 +6,7 @@ const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 
 pub fn processPendingConsolidations(cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
     var next_pending_consolidation: usize = 0;

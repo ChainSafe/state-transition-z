@@ -20,7 +20,7 @@ const isActiveValidator = validator_utils.isActiveValidator;
 // TODO Electra: Clean up necessary as there is a lot of overlap with isValidSwitchToCompoundRequest
 pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
 
     const source_pubkey = consolidation.source_pubkey;
@@ -107,7 +107,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
 
 fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) bool {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     // this check is mainly to make the compiler happy, pubkey is checked by the consumer already
     const source_index = epoch_cache.pubkey_to_index.get(consolidation.source_pubkey) orelse return false;

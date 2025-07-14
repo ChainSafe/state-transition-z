@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const blst = @import("blst_min_pk");
 const ssz = @import("consensus_types");
 const PublicKey = blst.PublicKey;
@@ -11,20 +12,29 @@ const ValidatorList = std.ArrayListUnmanaged(Validator);
 // so need to convert PublicKey to *const PublicKey
 pub const Index2PubkeyCache = std.ArrayList(*const PublicKey);
 
+/// consumers should deinit each item inside Index2PubkeyCache
 pub fn syncPubkeys(
+    allocator: Allocator,
     validators: ValidatorList,
-    pubkey_to_index: PubkeyIndexMap,
-    index_to_pubkey: Index2PubkeyCache,
+    pubkey_to_index: *PubkeyIndexMap,
+    index_to_pubkey: *Index2PubkeyCache,
 ) !void {
     if (pubkey_to_index.size() != index_to_pubkey.items.len) {
         return error.InvalidCacheSize;
     }
 
+    try index_to_pubkey.ensureTotalCapacity(validators.items.len);
+    index_to_pubkey.expandToCapacity();
+
     const new_count = validators.items.len;
     for (index_to_pubkey.items.len..new_count) |i| {
         const pubkey = validators.items[i].pubkey;
-        try pubkey_to_index.set(pubkey[0..], i);
-        index_to_pubkey[i] = try PublicKey.fromBytes(pubkey);
+        // TODO: make pubkey_to_index generic: accept both usize and u32
+        try pubkey_to_index.set(&pubkey, @intCast(i));
+        const pk = try PublicKey.fromBytes(&pubkey);
+        const pk_ptr = try allocator.create(PublicKey);
+        pk_ptr.* = pk;
+        index_to_pubkey.items[i] = pk_ptr;
     }
 }
 

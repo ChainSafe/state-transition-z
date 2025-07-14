@@ -22,7 +22,7 @@ pub fn processSlashings(
         return;
     }
     const config = cached_state.config;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
 
     const total_balance_by_increment = cache.total_active_stake_by_increment;

@@ -15,7 +15,7 @@ const computeExitEpochAndUpdateChurn = @import("../utils/epoch.zig").computeExit
 
 pub fn processWithdrawalRequest(cached_state: *CachedBeaconStateAllForks, withdrawal_request: *const WithdrawalRequest) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
 
     const amount = withdrawal_request.amount;

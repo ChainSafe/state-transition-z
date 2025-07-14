@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 
 pub fn getReferenceCount(comptime T: type) type {
     return struct {
@@ -11,6 +12,11 @@ pub fn getReferenceCount(comptime T: type) type {
                 .ref_count = 1,
                 .instance = instance,
             };
+        }
+
+        pub fn clone(allocator: Allocator, instance: *T) !*@This() {
+            const cloned = try instance.clone(allocator);
+            return @This().init(cloned);
         }
 
         pub fn get(self: *@This()) *T {

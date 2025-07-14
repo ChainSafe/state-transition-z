@@ -17,7 +17,7 @@ const decreaseBalance = balance_utils.decreaseBalance;
 
 pub fn processSyncAggregate(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, block: *const BeaconBlock, verify_signatures: ?bool) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const committee_indices = epoch_cache.current_sync_committee_indexed.getConst().getValidatorIndices();
 
     // different from the spec but not sure how to get through signature verification for default/empty SyncAggregate in the spec test
@@ -71,7 +71,7 @@ pub fn processSyncAggregate(allocator: Allocator, cached_state: *CachedBeaconSta
 /// Consumers should deinit the returned pubkeys
 pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: CachedBeaconStateAllForks, block: *const BeaconBlock, participant_indices: ?[]usize) !?AggregatedSignatureSet {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const config = cached_state.config;
 
     const sync_aggregate = block.getBeaconBlockBody().getSyncAggregate();

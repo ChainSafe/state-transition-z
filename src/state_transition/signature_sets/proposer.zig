@@ -19,7 +19,7 @@ pub fn verifyProposerSignature(cached_state: *const CachedBeaconStateAllForks, s
 pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock) SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const domain = config.getDomain(state.getSlot(), params.DOMAIN_BEACON_PROPOSER, signed_block.getBeaconBlock().getSlot());
     var signing_root: Root = undefined;
     const beacon_block = signed_block.getBeaconBlock();
@@ -35,7 +35,7 @@ pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *const C
 pub fn getBlockHeaderProposerSignatureSet(cached_state: *const CachedBeaconStateAllForks, signed_block_header: *const ssz.phase0.SignedBeaconBlockHeader.Type) SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     const domain = config.getDomain(state.getSlot(), params.DOMAIN_BEACON_PROPOSER, signed_block_header.message.slot);
     var signing_root: Root = undefined;

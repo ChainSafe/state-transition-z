@@ -15,7 +15,7 @@ const PendingDeposit = types.PendingDeposit;
 const params = @import("params");
 
 pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
     const available_for_processing = state.getDepositBalanceToConsume() + getActivationExitChurnLimit(epoch_cache);
@@ -101,7 +101,7 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
 }
 
 fn applyPendingDeposit(cached_state: *CachedBeaconStateAllForks, deposit: PendingDeposit, cache: *const EpochTransitionCache) !void {
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey);
     const pubkey = deposit.pubkey;

@@ -15,7 +15,7 @@ const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 // TODO: support BlindedBeaconBlockBody
 pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, body: BeaconBlockBody, external_data: ExecutionPayloadStatus) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
     const payload = body.getExecutionPayload();
     // Verify consistency of the parent hash, block number, base fee per gas and gas limit

@@ -15,7 +15,7 @@ pub fn processProposerSlashing(cached_state: *CachedBeaconStateAllForks, propose
 
 pub fn assertValidProposerSlashing(cached_state: *CachedBeaconStateAllForks, proposer_slashing: *const ProposerSlashing, verify_signature: ?bool) !void {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
     const header_1 = proposer_slashing.signed_header_1.message;
     const header_2 = proposer_slashing.signed_header_2.message;
 

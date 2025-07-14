@@ -46,7 +46,7 @@ pub const RewardsPenaltiesArray = struct {
 /// consumer should deinit `rewards` and `penalties` arrays
 pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) RewardsPenaltiesArray {
     const state = cached_state.state;
-    const epoch_cache = cached_state.epoch_cache;
+    const epoch_cache = cached_state.getEpochCache();
 
     const flags = cache.flags;
     const proposer_indices = cache.proposer_indices;
