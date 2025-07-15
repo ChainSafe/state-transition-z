@@ -90,7 +90,7 @@ pub const EpochTransitionCache = struct {
     // TODO: no need EpochTransitionCacheOpts for zig version
     pub fn beforeProcessEpoch(allocator: Allocator, state_cache: *const CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache) !EpochTransitionCache {
         const config = state_cache.config;
-        const epoch_cache = state_cache.epoch_cache;
+        const epoch_cache = state_cache.getEpochCache();
         const state = state_cache.state;
         const fork_seq = config.getForkSeq(state.getSlot());
         const current_epoch = epoch_cache.epoch;

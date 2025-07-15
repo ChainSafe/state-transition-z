@@ -32,8 +32,39 @@ pub const ForkSeq = enum(u8) {
         };
     }
 
-    pub fn isForkPostElectra(fork: ForkSeq) bool {
-        return fork >= ForkSeq.electra;
+    pub fn isPostAltair(self: ForkSeq) bool {
+        return switch (self) {
+            inline .phase0 => false,
+            else => true,
+        };
+    }
+
+    pub fn isPostBellatrix(self: ForkSeq) bool {
+        return switch (self) {
+            inline .phase0, .altair => false,
+            else => true,
+        };
+    }
+
+    pub fn isPostCapella(self: ForkSeq) bool {
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix => false,
+            else => true,
+        };
+    }
+
+    pub fn isPostDeneb(self: ForkSeq) bool {
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix, .capella => false,
+            else => true,
+        };
+    }
+
+    pub fn isPostElectra(self: ForkSeq) bool {
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb => false,
+            else => true,
+        };
     }
 };
 

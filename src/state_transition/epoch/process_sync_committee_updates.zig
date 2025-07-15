@@ -37,6 +37,7 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
         });
 
         // Rotate syncCommittee cache
+        // next_sync_committee_indices ownership is transferred to epoch_cache
         epoch_cache.rotateSyncCommitteeIndexed(next_sync_committee_indices);
     }
 }

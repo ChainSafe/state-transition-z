@@ -15,23 +15,24 @@ pub const Index2PubkeyCache = std.ArrayList(*const PublicKey);
 /// consumers should deinit each item inside Index2PubkeyCache
 pub fn syncPubkeys(
     allocator: Allocator,
-    validators: ValidatorList,
+    validators: []Validator,
     pubkey_to_index: *PubkeyIndexMap,
     index_to_pubkey: *Index2PubkeyCache,
 ) !void {
     if (pubkey_to_index.size() != index_to_pubkey.items.len) {
-        return error.InvalidCacheSize;
+        return error.InvalidPubkeyIndexMap;
     }
 
-    try index_to_pubkey.ensureTotalCapacity(validators.items.len);
-    index_to_pubkey.expandToCapacity();
+    const old_len = index_to_pubkey.items.len;
+    try index_to_pubkey.resize(validators.len);
 
-    const new_count = validators.items.len;
-    for (index_to_pubkey.items.len..new_count) |i| {
-        const pubkey = validators.items[i].pubkey;
+    const new_count = validators.len;
+    for (old_len..new_count) |i| {
+        const pubkey = validators[i].pubkey;
         // TODO: make pubkey_to_index generic: accept both usize and u32
         try pubkey_to_index.set(&pubkey, @intCast(i));
         const pk = try PublicKey.fromBytes(&pubkey);
+        // index_to_pubkey deinit() consumer should also deinit this
         const pk_ptr = try allocator.create(PublicKey);
         pk_ptr.* = pk;
         index_to_pubkey.items[i] = pk_ptr;

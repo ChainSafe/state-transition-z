@@ -28,9 +28,3 @@ pub const Withdrawal = ssz.capella.Withdrawal.Type;
 pub const ExecutionPayload = ssz.capella.ExecutionPayload.Type;
 
 pub const PendingDeposit = ssz.electra.PendingDeposit.Type;
-
-pub fn cloneValidatorIndices(allocator: std.mem.Allocator, indices: ValidatorIndices) !ValidatorIndices {
-    var cloned = try ValidatorIndices.initCapacity(allocator, indices.items.len);
-    try cloned.appendSlice(indices.items);
-    return cloned;
-}

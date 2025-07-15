@@ -55,7 +55,7 @@ pub fn queueExcessActiveBalance(cached_state: *CachedBeaconStateAllForks, index:
 }
 
 pub fn isPubkeyKnown(state: *const CachedBeaconStateAllForks, pubkey: BLSPubkey) bool {
-    return isValidatorKnown(state, state.epoch_cache.getValidatorIndex(pubkey));
+    return isValidatorKnown(state, state.getEpochCache().getValidatorIndex(pubkey));
 }
 
 pub fn isValidatorKnown(state: *const CachedBeaconStateAllForks, index: ?ValidatorIndex) bool {

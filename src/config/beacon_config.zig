@@ -8,7 +8,6 @@ const Slot = ssz.primitive.Slot.Type;
 const Version = ssz.primitive.Version.Type;
 const Root = ssz.primitive.Root.Type;
 const DomainType = ssz.primitive.DomainType.Type;
-const ChainConfig = @import("./chain/chain_config.zig").ChainConfig;
 const params = @import("params");
 const DOMAIN_VOLUNTARY_EXIT = params.DOMAIN_VOLUNTARY_EXIT;
 const ForkSeq = params.ForkSeq;
@@ -18,6 +17,8 @@ const getForkSeqByForkName = params.getForkSeqByForkName;
 
 const DomainByTypeHashMap = std.AutoHashMap([]const u8, []const u8);
 const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);
+
+pub const ChainConfig = @import("./chain/chain_config.zig").ChainConfig;
 
 pub const BeaconConfig = struct {
     allocator: Allocator,
@@ -92,25 +93,16 @@ pub const BeaconConfig = struct {
             altair,
             phase0,
         };
-        const forks = [_]ForkInfo{
-            phase0,
-            altair,
-            bellatrix,
-            capella,
-            deneb,
-            electra,
-        };
 
-        const domain_cache = DomainByTypeByFork.init(allocator);
+        var domain_cache = DomainByTypeByFork.init(allocator);
         for (0..TOTAL_FORKS) |_| {
-            domain_cache.append(DomainByTypeHashMap.init(allocator));
+            try domain_cache.append(DomainByTypeHashMap.init(allocator));
         }
 
         const beacon_config = try allocator.create(BeaconConfig);
         beacon_config.* = BeaconConfig{
             .allocator = allocator,
             .chain = chain_config,
-            .forks = forks,
             .forks_ascending_epoch_order = forks_ascending_epoch_order,
             .forks_descending_epoch_order = forks_descending_epoch_order,
             .genesis_validator_root = genesis_validator_root,
@@ -142,7 +134,7 @@ pub const BeaconConfig = struct {
         }
 
         // phase0
-        return self.forks_ascending_epoch_order[ForkSeq.phase0];
+        return self.forks_ascending_epoch_order[@intFromEnum(ForkSeq.phase0)];
     }
 
     pub fn getForkName(self: *const BeaconConfig, slot: Slot) []const u8 {
@@ -199,10 +191,10 @@ pub const BeaconConfig = struct {
     pub fn getDomainByForkSeq(self: *BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
         if (fork_seq >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
 
-        const domain_by_type = self.domain_cache.items[fork_seq];
+        const domain_by_type = self.domain_cache.items[@intFromEnum(fork_seq)];
         const domain = domain_by_type.get(domain_type) orelse {
             const out = try self.allocator.create([32]u8);
-            const fork_info = self.forks_ascending_epoch_order[fork_seq];
+            const fork_info = self.forks_ascending_epoch_order[@intFromEnum(fork_seq)];
             computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
             try domain_by_type.put(domain_type, out);
             return out;

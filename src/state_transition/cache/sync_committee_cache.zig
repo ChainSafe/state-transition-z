@@ -18,7 +18,7 @@ pub const SyncCommitteeCacheRc = getReferenceCount(SyncCommitteeCacheAllForks);
 /// instead of that, we count on reference counting to deallocate the memory, see getReferenceCount() utility
 pub const SyncCommitteeCacheAllForks = union(enum) {
     phase0: void,
-    altair: SyncCommitteeCache,
+    altair: *SyncCommitteeCache,
 
     pub fn getValidatorIndices(self: *const SyncCommitteeCacheAllForks) ValidatorIndices {
         return switch (self) {
@@ -38,7 +38,7 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
         return SyncCommitteeCacheAllForks{ .phase0 = {} };
     }
 
-    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: SyncCommittee, pubkey_to_index: PubkeyIndexMap) !SyncCommitteeCacheAllForks {
+    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !SyncCommitteeCacheAllForks {
         const cache = try SyncCommitteeCache.computeSyncCommitteeCache(allocator, sync_committee, pubkey_to_index);
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
@@ -49,9 +49,9 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
     }
 
     pub fn deinit(self: *SyncCommitteeCacheAllForks) void {
-        switch (self) {
+        switch (self.*) {
             .phase0 => {},
-            .altair => self.altair.deinit(),
+            .altair => |sync_committee_cache| sync_committee_cache.deinit(),
         }
     }
 };
@@ -60,59 +60,67 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
 const SyncCommitteeCache = struct {
     allocator: Allocator,
 
-    validator_indices: ValidatorIndices,
+    // this takes ownership of validator_indices, consumer needs to transfer ownership to this cache
+    validator_indices: []ValidatorIndex,
 
-    validator_index_map: SyncComitteeValidatorIndexMap,
+    validator_index_map: *SyncComitteeValidatorIndexMap,
 
-    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: SyncCommittee, pubkey_to_index: PubkeyIndexMap) !SyncCommitteeCache {
-        const validator_indices = try computeSyncCommitteeIndices(allocator, sync_committee, pubkey_to_index);
+    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !*SyncCommitteeCache {
+        const validator_indices = try allocator.alloc(ValidatorIndex, sync_committee.pubkeys.len);
+        try computeSyncCommitteeIndices(sync_committee, pubkey_to_index, validator_indices);
         return SyncCommitteeCache.getSyncCommitteeCache(allocator, validator_indices);
     }
 
-    pub fn getSyncCommitteeCache(allocator: Allocator, indices: ValidatorIndices) !SyncCommitteeCache {
-        const validator_indices = try cloneValidatorIndices(allocator, indices);
+    pub fn getSyncCommitteeCache(allocator: Allocator, validator_indices: []ValidatorIndex) !*SyncCommitteeCache {
         const validator_index_map = try computeSyncCommitteeMap(allocator, validator_indices);
-        return SyncCommitteeCache{
+        const cache_ptr = try allocator.create(SyncCommitteeCache);
+        cache_ptr.* = SyncCommitteeCache{
             .allocator = allocator,
             .validator_indices = validator_indices,
             .validator_index_map = validator_index_map,
         };
+        return cache_ptr;
     }
 
     pub fn deinit(self: *SyncCommitteeCache) void {
-        self.validator_indices.deinit();
-        self.allocator.destroy(self.validator_indices);
-
-        for (self.validator_index_map.valueIterator()) |value| {
+        self.allocator.free(self.validator_indices);
+        var value_iterator = self.validator_index_map.valueIterator();
+        while (value_iterator.next()) |value| {
             value.deinit();
         }
         self.validator_index_map.deinit();
+        self.allocator.destroy(self.validator_index_map);
         self.allocator.destroy(self);
     }
 };
 
 /// consumer should deinit each of the internal item inside SyncComitteeValidatorIndexMap
-fn computeSyncCommitteeMap(allocator: Allocator, sync_committee_indices: *const ValidatorIndices) !SyncComitteeValidatorIndexMap {
-    const map = SyncComitteeValidatorIndexMap.init(sync_committee_indices.allocator);
-    for (sync_committee_indices.items, 0..) |validator_index, i| {
-        const indices = try map.get(validator_index) orelse {
-            return try SyncCommitteeIndices.init(allocator);
-        };
-        try indices.append(@intCast(i));
+fn computeSyncCommitteeMap(allocator: Allocator, sync_committee_indices: []ValidatorIndex) !*SyncComitteeValidatorIndexMap {
+    var map = SyncComitteeValidatorIndexMap.init(allocator);
+    for (sync_committee_indices, 0..) |validator_index, i| {
+        var indices = map.get(validator_index);
+        if (indices == null) {
+            indices = SyncCommitteeIndices.init(allocator);
+            try map.put(validator_index, indices.?);
+        }
+        try indices.?.append(@intCast(i));
     }
-    return map;
+
+    const map_ptr = try allocator.create(SyncComitteeValidatorIndexMap);
+    map_ptr.* = map;
+    return map_ptr;
 }
 
-// consumer should destroy the created SyncCommitteeCache
-// also deinit() before destroying
-fn computeSyncCommitteeIndices(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !ValidatorIndices {
-    const pubkeys = sync_committee.pubkeys;
-    const validator_indices = ValidatorIndices.init(allocator);
-    for (pubkeys) |pubkey| {
-        const index = pubkey_to_index.get(pubkey[0..]) orelse return error.PubkeyNotFound;
-        try validator_indices.append(@intCast(index));
+fn computeSyncCommitteeIndices(sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap, out: []ValidatorIndex) !void {
+    if (out.len != sync_committee.pubkeys.len) {
+        return error.InvalidLength;
     }
-    return validator_indices;
+
+    const pubkeys = sync_committee.pubkeys;
+    for (pubkeys, 0..) |pubkey, i| {
+        const index = pubkey_to_index.get(&pubkey) orelse return error.PubkeyNotFound;
+        out[i] = @intCast(index);
+    }
 }
 
 // TODO: unit tests

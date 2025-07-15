@@ -12,27 +12,27 @@ pub const EffectiveBalanceIncrementsRc = getReferenceCount(EffectiveBalanceIncre
 // TODO: implement reference counting strategy
 
 pub fn getEffectiveBalanceIncrementsZeroed(allocator: Allocator, len: usize) !EffectiveBalanceIncrements {
-    var increments = EffectiveBalanceIncrements.init(allocator);
-    try increments.ensureTotalCapacity(len);
-    for (0..len) |_| {
-        try increments.append(0);
+    var increments = try EffectiveBalanceIncrements.initCapacity(allocator, len);
+    try increments.resize(len);
+    for (0..len) |i| {
+        increments.items[i] = 0;
     }
     return increments;
 }
 
 pub fn getEffectiveBalanceIncrementsWithLen(allocator: Allocator, validator_count: usize) !EffectiveBalanceIncrements {
-    const len = 1024 * @divFloor(validator_count, 1024);
+    const len = 1024 * @divFloor(validator_count + 1024, 1024);
     return getEffectiveBalanceIncrementsZeroed(allocator, len);
 }
 
 pub fn getEffectiveBalanceIncrements(allocator: Allocator, state: BeaconStateAllForks) !EffectiveBalanceIncrements {
-    var increments = EffectiveBalanceIncrements.init(allocator);
     const validator_count = state.getValidatorsCount();
-    increments.ensureTotalCapacity(validator_count);
+    var increments = try EffectiveBalanceIncrements.initCapacity(allocator, validator_count);
+    try increments.resize(validator_count);
 
     for (0..validator_count) |i| {
         const validator = state.getValidator(i);
-        try increments.append(@divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
+        increments.items[i] = @divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
     }
 }
 

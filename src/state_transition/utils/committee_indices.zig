@@ -132,6 +132,7 @@ pub fn computeProposerIndexElectra(allocator: Allocator, seed: []const u8, activ
     return out[0];
 }
 
+// TODO: accept comptime u32 or u64 as the 1st param
 pub fn computeProposerIndex(allocator: Allocator, seed: []const u8, active_indices: []u32, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !u32 {
     var out = [_]u32{0};
     try getCommitteeIndices(allocator, seed, active_indices, effective_balance_increments, rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..]);

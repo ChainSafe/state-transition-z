@@ -64,6 +64,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("consensus_types", module_consensus_types);
     module_state_transition.addImport("blst_min_pk", module_blst_min_pk);
     module_state_transition.addImport("config", module_config);
+    module_state_transition.addImport("params", module_params);
     b.modules.put(b.dupe("state_transition"), module_state_transition) catch @panic("OOM");
 
     const lib = b.addStaticLibrary(.{
@@ -180,6 +181,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    module_int.addImport("config", module_config);
     module_int.addImport("state_transition", module_state_transition);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
     module_int.addImport("consensus_types", module_consensus_types);

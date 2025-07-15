@@ -51,5 +51,8 @@ pub fn computeSyncParticipantReward(total_active_balance_increments: u64) u64 {
 }
 
 pub fn computeBaseRewardPerIncrement(total_active_stake_by_increment: u64) u64 {
-    return @divFloor((preset.EFFECTIVE_BALANCE_INCREMENT * preset.BASE_REWARD_FACTOR), @sqrt(total_active_stake_by_increment * preset.EFFECTIVE_BALANCE_INCREMENT));
+    const total_active_stake: f64 = @floatFromInt(total_active_stake_by_increment * preset.EFFECTIVE_BALANCE_INCREMENT);
+    const total_active_stake_sqrt_f64: f64 = @sqrt(total_active_stake);
+    const total_active_stake_sqrt: u64 = @intFromFloat(total_active_stake_sqrt_f64);
+    return @divFloor((preset.EFFECTIVE_BALANCE_INCREMENT * preset.BASE_REWARD_FACTOR), total_active_stake_sqrt);
 }

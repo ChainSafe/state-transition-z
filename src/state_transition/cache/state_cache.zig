@@ -14,7 +14,7 @@ pub const CachedBeaconStateAllForks = struct {
     config: *const BeaconConfig,
     /// only a reference to the shared EpochCache instance
     /// TODO: before an epoch transition, need to release() epoch_cache before using a new one
-    epoch_cache: EpochCacheRc,
+    epoch_cache_ref: *EpochCacheRc,
     /// this takes ownership of the state, it is expected to be deinitialized by this struct
     state: *BeaconStateAllForks,
 
@@ -24,24 +24,24 @@ pub const CachedBeaconStateAllForks = struct {
     /// This class takes ownership of state after this function and has responsibility to deinit it
     pub fn createCachedBeaconState(allocator: Allocator, state: *BeaconStateAllForks, immutable_data: EpochCacheImmutableData, option: ?EpochCacheOpts) !*CachedBeaconStateAllForks {
         const epoch_cache = try EpochCache.createFromState(allocator, state, immutable_data, option);
-        const epoch_cache_ref = EpochCacheRc.init(epoch_cache);
+        const epoch_cache_ref = try EpochCacheRc.init(allocator, epoch_cache);
         const cached_state = try allocator.create(CachedBeaconStateAllForks);
         cached_state.* = .{
             .allocator = allocator,
             .config = immutable_data.config,
-            .epoch_cache = epoch_cache_ref,
+            .epoch_cache_ref = epoch_cache_ref,
             .state = state,
         };
-        cached_state;
+        return cached_state;
     }
 
-    pub fn getEpochCache(self: *const CachedBeaconStateAllForks) *EpochCache {
-        return self.epoch_cache.get();
+    pub fn getEpochCache(self: *const CachedBeaconStateAllForks) *const EpochCache {
+        return self.epoch_cache_ref.get();
     }
 
-    pub fn deinit(allocator: Allocator, self: *CachedBeaconStateAllForks) void {
+    pub fn deinit(self: *CachedBeaconStateAllForks, allocator: Allocator) void {
         // should not deinit config since we don't take ownership of it, it's singleton across applications
-        self.epoch_cache.release();
+        self.epoch_cache_ref.release();
         self.state.deinit(allocator);
         self.allocator.destroy(self.state);
     }

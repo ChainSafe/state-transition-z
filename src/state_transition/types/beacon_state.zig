@@ -60,6 +60,7 @@ pub const BeaconStateAllForks = union(enum) {
                 state.balances.deinit(allocator);
                 state.previous_epoch_attestations.deinit(allocator);
                 state.current_epoch_attestations.deinit(allocator);
+                allocator.destroy(state);
             },
             inline .altair, .bellatrix, .capella, .deneb => |state| {
                 state.historical_roots.deinit(allocator);
@@ -68,6 +69,7 @@ pub const BeaconStateAllForks = union(enum) {
                 state.balances.deinit(allocator);
                 state.previous_epoch_participation.deinit(allocator);
                 state.current_epoch_participation.deinit(allocator);
+                allocator.destroy(state);
             },
             .electra => |state| {
                 state.historical_roots.deinit(allocator);
@@ -78,6 +80,7 @@ pub const BeaconStateAllForks = union(enum) {
                 state.current_epoch_participation.deinit(allocator);
                 state.pending_partial_withdrawals.deinit(allocator);
                 state.pending_consolidations.deinit(allocator);
+                allocator.destroy(state);
             },
         }
     }
@@ -413,25 +416,25 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getValidatorsCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.len,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.items.len,
         };
     }
 
     pub fn getRanDaoMix(self: *const BeaconStateAllForks, index: usize) Bytes32 {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.randao_mixes.items[index],
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.randao_mixes[index],
         };
     }
 
     pub fn setRandaoMix(self: *BeaconStateAllForks, index: usize, mix: Bytes32) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.randao_mixes.items[index] = mix,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.randao_mixes[index] = mix,
         }
     }
 
     pub fn getSlashing(self: *const BeaconStateAllForks, index: usize) u64 {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.slashings.items[index],
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.slashings[index],
         };
     }
 
@@ -443,7 +446,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setSlashing(self: *BeaconStateAllForks, index: usize, slashing: u64) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.slashings.items[index] = slashing,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.slashings[index] = slashing,
         }
     }
 
@@ -511,22 +514,22 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn getPreviousEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            else => |state| state.previous_epoch_participation.items[index],
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation.items[index],
         };
     }
 
     // from altair
-    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) std.ArrayListUnmanaged(u8) {
+    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            else => |state| state.previous_epoch_participation.items,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation.items,
         };
     }
 
     pub fn addPreviousEpochParticipation(self: *BeaconStateAllForks, participation: u8) void {
         switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            else => |state| state.previous_epoch_participation.append(participation),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation.append(participation),
         }
     }
 
@@ -534,42 +537,42 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn setPreviousEpochParticipation(self: *BeaconStateAllForks, index: usize, participation: u8) void {
         switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            else => |state| state.previous_epoch_participation.items[index] = participation,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation.items[index] = participation,
         }
     }
 
     pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
         return switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            else => |state| state.current_epoch_participation.items,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_epoch_participation.items,
         };
     }
 
     pub fn getCurrentEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
         return switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            else => |state| state.current_epoch_participation.items[index],
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_epoch_participation.items[index],
         };
     }
 
     pub fn setPreviousEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
         switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            else => |state| state.previous_epoch_participation = participations,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation = participations,
         }
     }
 
     pub fn addCurrentEpochParticipation(self: *BeaconStateAllForks, participation: u8) void {
         switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            else => |state| state.current_epoch_participation.append(participation),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_epoch_participation.append(participation),
         }
     }
 
     pub fn setCurrentEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
         switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            else => |state| state.current_epoch_participation = participations,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_epoch_participation = participations,
         }
     }
 
@@ -645,28 +648,28 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn getCurrentSyncCommittee(self: *const BeaconStateAllForks) *const SyncCommittee {
         return switch (self.*) {
             .phase0 => @panic("current_sync_committee is not available in phase0"),
-            else => |state| &state.current_sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.current_sync_committee,
         };
     }
 
     pub fn setCurrentSyncCommittee(self: *BeaconStateAllForks, sync_committee: *const SyncCommittee) void {
         switch (self.*) {
             .phase0 => @panic("current_sync_committee is not available in phase0"),
-            else => |state| state.current_sync_committee = *sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_sync_committee = *sync_committee,
         }
     }
 
     pub fn getNextSyncCommittee(self: *const BeaconStateAllForks) *const SyncCommittee {
         return switch (self.*) {
             .phase0 => @panic("next_sync_committee is not available in phase0"),
-            else => |state| &state.next_sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.next_sync_committee,
         };
     }
 
     pub fn setNextSyncCommittee(self: *BeaconStateAllForks, sync_committee: *const SyncCommittee) void {
         switch (self.*) {
             .phase0 => @panic("next_sync_committee is not available in phase0"),
-            else => |state| state.next_sync_committee = *sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.next_sync_committee = *sync_committee,
         }
     }
 
@@ -695,7 +698,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("next_withdrawal_index is not available in phase0"),
             .altair => @panic("next_withdrawal_index is not available in altair"),
             .bellatrix => @panic("next_withdrawal_index is not available in bellatrix"),
-            else => |state| state.next_withdrawal_index,
+            inline .capella, .deneb, .electra => |state| state.next_withdrawal_index,
         };
     }
 
@@ -704,7 +707,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("next_withdrawal_index is not available in phase0"),
             .altair => @panic("next_withdrawal_index is not available in altair"),
             .bellatrix => @panic("next_withdrawal_index is not available in bellatrix"),
-            else => |state| state.next_withdrawal_index = index,
+            inline .capella, .deneb, .electra => |state| state.next_withdrawal_index = index,
         }
     }
 
@@ -713,7 +716,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("next_withdrawal_validator_index is not available in phase0"),
             .altair => @panic("next_withdrawal_validator_index is not available in altair"),
             .bellatrix => @panic("next_withdrawal_validator_index is not available in bellatrix"),
-            else => |state| state.next_withdrawal_validator_index,
+            inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index,
         };
     }
 
@@ -722,7 +725,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("next_withdrawal_validator_index is not available in phase0"),
             .altair => @panic("next_withdrawal_validator_index is not available in altair"),
             .bellatrix => @panic("next_withdrawal_validator_index is not available in bellatrix"),
-            else => |state| state.next_withdrawal_validator_index = index,
+            inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index = index,
         }
     }
 
@@ -731,7 +734,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("historical_summary is not available in phase0"),
             .altair => @panic("historical_summary is not available in altair"),
             .bellatrix => @panic("historical_summary is not available in bellatrix"),
-            else => |state| &state.historical_summaries.items[index],
+            inline .capella, .deneb, .electra => |state| &state.historical_summaries.items[index],
         };
     }
 
@@ -740,7 +743,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("historical_summary is not available in phase0"),
             .altair => @panic("historical_summary is not available in altair"),
             .bellatrix => @panic("historical_summary is not available in bellatrix"),
-            else => |state| state.historical_summaries.items[index] = *summary,
+            inline .capella, .deneb, .electra => |state| state.historical_summaries.items[index] = *summary,
         }
     }
 
@@ -749,7 +752,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("historical_summary is not available in phase0"),
             .altair => @panic("historical_summary is not available in altair"),
             .bellatrix => @panic("historical_summary is not available in bellatrix"),
-            else => |state| state.historical_summaries.append(*summary),
+            inline .capella, .deneb, .electra => |state| state.historical_summaries.append(*summary),
         }
     }
 

@@ -1,0 +1,93 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const mainnet_chain_config = @import("config").mainnet_chain_config;
+const ssz = @import("consensus_types");
+const ElectraBeaconState = ssz.electra.BeaconState.Type;
+const preset = ssz.preset;
+const BeaconConfig = @import("config").BeaconConfig;
+const ChainConfig = @import("config").ChainConfig;
+const state_transition = @import("state_transition");
+const CachedBeaconStateAllForks = state_transition.CachedBeaconStateAllForks;
+const BeaconStateAllForks = state_transition.BeaconStateAllForks;
+const PubkeyIndexMap = state_transition.PubkeyIndexMap;
+const Index2PubkeyCache = state_transition.Index2PubkeyCache;
+const syncPubkeys = state_transition.syncPubkeys;
+const interopPubkeysCached = @import("./interop_pubkeys.zig").interopPubkeysCached;
+
+/// Generates a cached Electra state with the given allocator and config.
+/// Consumer should deinit this global data:
+///   - config
+///   - pubkey_to_index (include each item)
+///   - index_to_pubkey
+/// also it has to deinit the returned CachedBeaconStateAllForks instance.
+pub fn generateCachedElectraState(allocator: Allocator, chain_config: ChainConfig, validator_count: usize, pubkey_index_map: *PubkeyIndexMap, index_pubkey_cache: *Index2PubkeyCache) !*CachedBeaconStateAllForks {
+    const state = try generateElectraState(allocator, chain_config, validator_count);
+    const config = try BeaconConfig.init(allocator, chain_config, state.getGenesisValidatorsRoot());
+
+    try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, index_pubkey_cache);
+
+    const immutable_data = state_transition.EpochCacheImmutableData{
+        .config = config,
+        .index_to_pubkey = index_pubkey_cache,
+        .pubkey_to_index = pubkey_index_map,
+    };
+    return CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
+        .skip_sync_committee_cache = false,
+        .skip_sync_pubkeys = false,
+    });
+}
+
+/// generate, allocate BeaconStateAllForks
+/// consumer has responsibility to deinit it
+/// TODO: may move to test folder so that perf test can use this too
+fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, validator_count: usize) !*BeaconStateAllForks {
+    const beacon_state_ptr = try allocator.create(ElectraBeaconState);
+    beacon_state_ptr.* = ssz.electra.BeaconState.default_value;
+    // set the slot to be ready for the next epoch transition
+    beacon_state_ptr.slot = chain_config.ELECTRA_FORK_EPOCH * preset.SLOTS_PER_EPOCH + 2025 * preset.SLOTS_PER_EPOCH - 1;
+    const pubkeys = try interopPubkeysCached(allocator, validator_count);
+    defer pubkeys.deinit();
+    for (0..validator_count) |i| {
+        const validator = ssz.phase0.Validator.Type{
+            .pubkey = pubkeys.items[i],
+            .withdrawal_credentials = [_]u8{0} ** 32,
+            .effective_balance = 32e9,
+            .slashed = false,
+            .activation_eligibility_epoch = 0,
+            .activation_epoch = 0,
+            .exit_epoch = 0xFFFFFFFFFFFFFFFF,
+            .withdrawable_epoch = 0xFFFFFFFFFFFFFFFF,
+        };
+        try beacon_state_ptr.validators.append(allocator, validator);
+        try beacon_state_ptr.balances.append(allocator, 32e9);
+        try beacon_state_ptr.inactivity_scores.append(allocator, 0);
+        try beacon_state_ptr.previous_epoch_participation.append(allocator, 0b11111111);
+        try beacon_state_ptr.current_epoch_participation.append(allocator, 0b11111111);
+    }
+    for (0..preset.SYNC_COMMITTEE_SIZE) |i| {
+        const pubkey = pubkeys.items[i % validator_count];
+        beacon_state_ptr.current_sync_committee.pubkeys[i] = pubkey;
+        beacon_state_ptr.next_sync_committee.pubkeys[i] = pubkey;
+    }
+    const cached_beacon_state_ptr = try allocator.create(BeaconStateAllForks);
+    cached_beacon_state_ptr.* = .{ .electra = beacon_state_ptr };
+    return cached_beacon_state_ptr;
+}
+
+// TODO: got memory leak in sync_committee_cache so need to add a unit test for that cache first then revisit
+// test "generateCachedElectraState" {
+//     const allocator = std.testing.allocator;
+//     const pubkey_index_map = try PubkeyIndexMap.init(allocator);
+//     var index_pubkey_cache = Index2PubkeyCache.init(allocator);
+//     const cached_state = try generateCachedElectraState(allocator, mainnet_chain_config, 256, pubkey_index_map, &index_pubkey_cache);
+//     defer {
+//         allocator.destroy(cached_state.config);
+//         for (index_pubkey_cache.items) |item| {
+//             allocator.destroy(item);
+//         }
+//         pubkey_index_map.deinit();
+//         index_pubkey_cache.deinit();
+//         cached_state.deinit(allocator);
+//         allocator.destroy(cached_state);
+//     }
+// }

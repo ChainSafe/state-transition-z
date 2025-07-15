@@ -51,12 +51,14 @@ const Phase0IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
 const ElectraIndexedAttestation = ssz.electra.IndexedAttestation.Type;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
 
+const syncPubkeys = @import("./pubkey_cache.zig").syncPubkeys;
+
 const getReferenceCount = @import("../utils/reference_count.zig").getReferenceCount;
 
 pub const EpochCacheImmutableData = struct {
     config: *const BeaconConfig,
-    pubkey_to_index: PubkeyIndexMap,
-    index_to_pubkey: Index2PubkeyCache,
+    pubkey_to_index: *PubkeyIndexMap,
+    index_to_pubkey: *Index2PubkeyCache,
 };
 
 pub const EpochCacheOpts = struct {
@@ -69,7 +71,7 @@ pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOM
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
 /// and decrease the reference count when it is deinitialized
-pub const EpochCacheRc = getReferenceCount(EpochCache);
+pub const EpochCacheRc = getReferenceCount(*EpochCache);
 
 pub const EpochCache = struct {
     allocator: Allocator,
@@ -77,11 +79,12 @@ pub const EpochCache = struct {
     config: *const BeaconConfig,
 
     // this is shared across applications, EpochCache does not own this field so should not deinit()
-    pubkey_to_index: PubkeyIndexMap,
+    pubkey_to_index: *PubkeyIndexMap,
 
     // this is shared across applications, EpochCache does not own this field so should not deinit()
-    index_to_pubkey: Index2PubkeyCache,
+    index_to_pubkey: *Index2PubkeyCache,
 
+    // TODO: should be ValidatorIndex or usize
     proposers: [preset.SLOTS_PER_EPOCH]u32,
 
     proposer_prev_epoch: ?[preset.SLOTS_PER_EPOCH]u32,
@@ -94,17 +97,17 @@ pub const EpochCache = struct {
     // next_decision_root
 
     // EpochCache does not take ownership of EpochShuffling, it is shared across EpochCache instances
-    previous_shuffling: EpochShufflingRc,
+    previous_shuffling: *EpochShufflingRc,
 
-    current_shuffling: EpochShufflingRc,
+    current_shuffling: *EpochShufflingRc,
 
-    next_shuffling: EpochShufflingRc,
+    next_shuffling: *EpochShufflingRc,
 
     // TODO: not needed, maybe just get from the next shuffling?
     // next_active_indices
 
     // EpochCache does not take ownership of EffectiveBalanceIncrements, it is shared across EpochCache instances
-    effective_balance_increment: EffectiveBalanceIncrementsRc,
+    effective_balance_increment: *EffectiveBalanceIncrementsRc,
 
     total_slashings_by_increment: u64,
 
@@ -129,9 +132,9 @@ pub const EpochCache = struct {
     previous_target_unslashed_balance_increments: u64,
 
     // EpochCache does not take ownership of SyncCommitteeCache, it is shared across EpochCache instances
-    current_sync_committee_indexed: SyncCommitteeCacheRc,
+    current_sync_committee_indexed: *SyncCommitteeCacheRc,
 
-    next_sync_committee_indexed: SyncCommitteeCacheRc,
+    next_sync_committee_indexed: *SyncCommitteeCacheRc,
 
     sync_period: SyncPeriod,
 
@@ -153,43 +156,45 @@ pub const EpochCache = struct {
         var exit_queue_epoch = computeActivationExitEpoch(current_epoch);
         var exit_queue_churn: u64 = 0;
 
-        const validators = state.getValidators();
-        const validator_count = state.getValidatorCount();
+        const validators = state.getValidators().items;
+        const validator_count = state.getValidatorsCount();
 
         // syncPubkeys here to ensure EpochCacheImmutableData is popualted before computing the rest of caches
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
         const skip_sync_pubkeys = if (option) |opt| opt.skip_sync_pubkeys else false;
         if (!skip_sync_pubkeys) {
-            // TODO: implement this
-            pubkey_to_index.ensureSyncPubkeys(allocator, state, config);
+            try syncPubkeys(allocator, validators, pubkey_to_index, index_to_pubkey);
         }
 
-        const effective_balance_increment = getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
+        const effective_balance_increment = try getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
         const total_slashings_by_increment = getTotalSlashingsByIncrement(state);
-        const previous_active_indices_as_number_array = ValidatorIndices.init(allocator);
-        previous_active_indices_as_number_array.ensureTotalCapacity(validator_count);
-        const current_active_indices_as_number_array = ValidatorIndices.init(allocator);
-        current_active_indices_as_number_array.ensureTotalCapacity(validator_count);
-        const next_active_indices_as_number_array = ValidatorIndices.init(allocator);
-        next_active_indices_as_number_array.ensureTotalCapacity(validator_count);
+        var previous_active_indices_array_list = ValidatorIndices.init(allocator);
+        defer previous_active_indices_array_list.deinit();
+        try previous_active_indices_array_list.ensureTotalCapacity(validator_count);
+        var current_active_indices_array_list = ValidatorIndices.init(allocator);
+        defer current_active_indices_array_list.deinit();
+        try current_active_indices_array_list.ensureTotalCapacity(validator_count);
+        var next_active_indices_array_list = ValidatorIndices.init(allocator);
+        defer next_active_indices_array_list.deinit();
+        try next_active_indices_array_list.ensureTotalCapacity(validator_count);
 
         for (0..validator_count) |i| {
             const validator = state.getValidator(i);
 
             // Note: Not usable for fork-choice balances since in-active validators are not zero'ed
-            effective_balance_increment.items[i] = @divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
+            effective_balance_increment.items[i] = @intCast(@divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
 
             if (isActiveValidator(validator, previous_epoch)) {
-                try previous_active_indices_as_number_array.append(i);
+                try previous_active_indices_array_list.append(i);
             }
 
             if (isActiveValidator(validator, current_epoch)) {
-                try current_active_indices_as_number_array.append(i);
+                try current_active_indices_array_list.append(i);
                 total_active_balance_increments += effective_balance_increment.items[i];
             }
 
             if (isActiveValidator(validator, next_epoch)) {
-                try next_active_indices_as_number_array.append(i);
+                try next_active_indices_array_list.append(i);
             }
 
             const exit_epoch = validator.exit_epoch;
@@ -209,18 +214,28 @@ pub const EpochCache = struct {
             total_active_balance_increments = 1;
         }
 
-        const previous_shuffling: EpochShuffling = try computeEpochShuffling(allocator, state, previous_active_indices_as_number_array, previous_epoch);
-        const current_shuffling: EpochShuffling = try computeEpochShuffling(allocator, state, current_active_indices_as_number_array, current_epoch);
-        const next_shuffling: EpochShuffling = try computeEpochShuffling(allocator, state, next_active_indices_as_number_array, next_epoch);
+        // ownership of the active indices is transferred to EpochShuffling
+        const previous_active_indices = try allocator.alloc(ValidatorIndex, previous_active_indices_array_list.items.len);
+        std.mem.copyForwards(ValidatorIndex, previous_active_indices, previous_active_indices_array_list.items);
+        const previous_shuffling: *EpochShuffling = try computeEpochShuffling(allocator, state, previous_active_indices, previous_epoch);
+
+        // ownership of the active indices is transferred to EpochShuffling
+        const current_active_indices = try allocator.alloc(ValidatorIndex, current_active_indices_array_list.items.len);
+        std.mem.copyForwards(ValidatorIndex, current_active_indices, current_active_indices_array_list.items);
+        const current_shuffling: *EpochShuffling = try computeEpochShuffling(allocator, state, current_active_indices, current_epoch);
+
+        // ownership of the active indices is transferred to EpochShuffling
+        const next_active_indices = try allocator.alloc(ValidatorIndex, next_active_indices_array_list.items.len);
+        std.mem.copyForwards(ValidatorIndex, next_active_indices, next_active_indices_array_list.items);
+        const next_shuffling: *EpochShuffling = try computeEpochShuffling(allocator, state, next_active_indices, next_epoch);
 
         // TODO: implement proposerLookahead in fulu
-        const fork = config.getForkInfoAtEpoch(current_epoch);
+        const fork_seq = config.getForkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
         try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
-        const proposers = std.ArrayList(u32).init(allocator);
+        var proposers = [_]u32{0} ** preset.SLOTS_PER_EPOCH;
         if (current_shuffling.active_indices.len > 0) {
-            try proposers.resize(preset.SLOTS_PER_EPOCH);
-            try computeProposers(allocator, fork, current_proposer_seed, current_epoch, current_shuffling.active_indices, effective_balance_increment, proposers.items);
+            try computeProposers(allocator, fork_seq, current_proposer_seed, current_epoch, current_shuffling.active_indices, effective_balance_increment, &proposers);
         }
 
         // Only after altair, compute the indices of the current sync committee
@@ -229,7 +244,7 @@ pub const EpochCache = struct {
         // Values syncParticipantReward, syncProposerReward, baseRewardPerIncrement are only used after altair.
         // However, since they are very cheap to compute they are computed always to simplify upgradeState function.
         const sync_participant_reward = computeSyncParticipantReward(total_active_balance_increments);
-        const sync_proposer_reward = @divFloor(sync_participant_reward, PROPOSER_WEIGHT_FACTOR);
+        const sync_proposer_reward = sync_participant_reward * PROPOSER_WEIGHT_FACTOR;
         const base_reward_pre_increment = computeBaseRewardPerIncrement(total_active_balance_increments);
         const skip_sync_committee_cache = if (option) |opt| opt.skip_sync_committee_cache else !after_altair_fork;
         const current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.computeSyncCommitteeCache(allocator, state.getCurrentSyncCommittee(), pubkey_to_index);
@@ -250,7 +265,6 @@ pub const EpochCache = struct {
         // the first block of the epoch process_block() call. So churnLimit must be computed at the end of the before epoch
         // transition and the result is valid until the end of the next epoch transition
         const churn_limit = getChurnLimit(config, current_shuffling.active_indices.len);
-        const fork_seq = config.getForkSeq(state.getSlot());
         const activation_churn_limit = getActivationChurnLimit(config, fork_seq, current_shuffling.active_indices.len);
         if (exit_queue_churn >= churn_limit) {
             exit_queue_epoch += 1;
@@ -259,10 +273,10 @@ pub const EpochCache = struct {
 
         // TODO: describe issue. Compute progressive target balances
         // Compute balances from zero, note this state could be mid-epoch so target balances != 0
-        var previous_target_unslashed_balance_increments = 0;
-        var current_target_unslashed_balance_increments = 0;
+        var previous_target_unslashed_balance_increments: u64 = 0;
+        var current_target_unslashed_balance_increments: u64 = 0;
 
-        if (fork_seq >= ForkSeq.altair) {
+        if (fork_seq.isPostAltair()) {
             const previous_epoch_participation = state.getPreviousEpochParticipations();
             const current_epoch_participation = state.getCurrentEpochParticipations();
 
@@ -270,18 +284,20 @@ pub const EpochCache = struct {
             current_target_unslashed_balance_increments = sumTargetUnslashedBalanceIncrements(current_epoch_participation, current_epoch, validators);
         }
 
-        return .{
+        const epoch_cache_ptr = try allocator.create(EpochCache);
+
+        epoch_cache_ptr.* = .{
             .allocator = allocator,
             .config = config,
             .pubkey_to_index = pubkey_to_index,
             .index_to_pubkey = index_to_pubkey,
-            .proposers = proposers.items,
+            .proposers = proposers,
             // On first epoch, set to null to prevent unnecessary work since this is only used for metrics
             .proposer_prev_epoch = null,
-            .previous_shuffling = EpochShufflingRc.init(previous_shuffling),
-            .current_shuffling = EpochShufflingRc.init(current_shuffling),
-            .next_shuffling = EpochShufflingRc.init(next_shuffling),
-            .effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increment),
+            .previous_shuffling = try EpochShufflingRc.init(allocator, previous_shuffling),
+            .current_shuffling = try EpochShufflingRc.init(allocator, current_shuffling),
+            .next_shuffling = try EpochShufflingRc.init(allocator, next_shuffling),
+            .effective_balance_increment = try EffectiveBalanceIncrementsRc.init(allocator, effective_balance_increment),
             .total_slashings_by_increment = total_slashings_by_increment,
             .sync_participant_reward = sync_participant_reward,
             .sync_proposer_reward = sync_proposer_reward,
@@ -293,12 +309,14 @@ pub const EpochCache = struct {
             .exit_queue_churn = exit_queue_churn,
             .current_target_unslashed_balance_increments = current_target_unslashed_balance_increments,
             .previous_target_unslashed_balance_increments = previous_target_unslashed_balance_increments,
-            .current_sync_committee_indexed = SyncCommitteeCacheRc.init(current_sync_committee_indexed),
-            .next_sync_committee_indexed = SyncCommitteeCacheRc.init(next_sync_committee_indexed),
+            .current_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, current_sync_committee_indexed),
+            .next_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, next_sync_committee_indexed),
             .sync_period = computeSyncPeriodAtEpoch(current_epoch),
             .epoch = current_epoch,
             .next_epoch = next_epoch,
         };
+
+        return epoch_cache_ptr;
     }
 
     pub fn deinit(self: *EpochCache) void {
