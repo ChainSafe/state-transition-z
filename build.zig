@@ -195,13 +195,14 @@ pub fn build(b: *std.Build) void {
 
     const run_test_int = b.addRunArtifact(test_int);
 
-    // Similar to creating the run step earlier, this exposes a `test` step to
-    // the `zig build --help` menu, providing a way for the user to request
-    // running the unit tests.
-    const test_step = b.step("test", "Run unit tests");
+    // trigger via `zig build test:unit`
+    const test_step = b.step("test:unit", "Run unit tests");
     test_step.dependOn(&run_params_unit_tests.step);
     test_step.dependOn(&run_config_unit_tests.step);
     test_step.dependOn(&run_state_transition_unit_tests.step);
     test_step.dependOn(&run_shared_lib_unit_tests.step);
-    test_step.dependOn(&run_test_int.step);
+
+    // trigger via `zig build test:int`
+    const test_step_int = b.step("test:int", "Run int tests");
+    test_step_int.dependOn(&run_test_int.step);
 }
