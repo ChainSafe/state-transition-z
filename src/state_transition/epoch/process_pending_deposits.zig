@@ -86,17 +86,22 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
             // Regardless of how the deposit was handled, we move on in the queue.
             next_deposit_index += 1;
         }
+    }
 
-        const remaining_pending_deposits = try state.sliceFromPendingDeposits(next_deposit_index);
-        state.setPendingDeposits(remaining_pending_deposits);
+    const remaining_pending_deposits = try state.sliceFromPendingDeposits(next_deposit_index);
+    state.setPendingDeposits(remaining_pending_deposits);
 
-        // no need to append to pending_deposits again because we did that in the for loop above already
-        // Accumulate churn only if the churn limit has been hit.
-        if (is_churn_limit_reached) {
-            state.setDepositBalanceToConsume(available_for_processing - processed_amount);
-        } else {
-            state.setDepositBalanceToConsume(0);
-        }
+    // TODO: consider doing this for TreeView
+    //   for (const deposit of depositsToPostpone) {
+    //   state.pendingDeposits.push(deposit);
+    // }
+
+    // no need to append to pending_deposits again because we did that in the for loop above already
+    // Accumulate churn only if the churn limit has been hit.
+    if (is_churn_limit_reached) {
+        state.setDepositBalanceToConsume(available_for_processing - processed_amount);
+    } else {
+        state.setDepositBalanceToConsume(0);
     }
 }
 
