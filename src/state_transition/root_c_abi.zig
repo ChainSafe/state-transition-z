@@ -4,7 +4,8 @@ pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
 const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
 const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
 const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
-const committee_indices = @import("utils/committee_indices.zig");
+const committee_indices = @import("utils/committee_indices.zig").ComputeIndexUtils(u32);
+const ByteCount = @import("utils/committee_indices.zig").ByteCount;
 
 pub const ErrorCode = struct {
     pub const Success: c_uint = 0;
@@ -280,7 +281,7 @@ export fn computeProposerIndexElectra(seed: [*c]u8, seed_len: usize, active_indi
     return proposer_index;
 }
 
-export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
+export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
     const proposer_index = committee_indices.computeProposerIndex(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return ERROR_INDEX;
@@ -293,7 +294,7 @@ export fn computeSyncCommitteeIndicesElectra(seed: [*c]u8, seed_len: usize, acti
     return ErrorCode.Success;
 }
 
-export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
     committee_indices.computeSyncCommitteeIndices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
