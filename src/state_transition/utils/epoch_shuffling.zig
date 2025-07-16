@@ -8,14 +8,14 @@ const getSeed = @import("./seed.zig").getSeed;
 const params = @import("params");
 const innerShuffleList = @import("./shuffle.zig").innerShuffleList;
 const Epoch = ssz.primitive.Epoch.Type;
-const getReferenceCount = @import("./reference_count.zig").getReferenceCount;
+const ReferenceCount = @import("./reference_count.zig").ReferenceCount;
 const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 
-pub const EpochShufflingRc = getReferenceCount(*EpochShuffling);
+pub const EpochShufflingRc = ReferenceCount(*EpochShuffling);
 
 /// EpochCache is the only consumer of this cache but an instance of EpochShuffling is shared across EpochCache instances
 /// no EpochCache instance takes the ownership of shuffling
-/// instead of that, we count on reference counting to deallocate the memory, see getReferenceCount() utility
+/// instead of that, we count on reference counting to deallocate the memory, see ReferenceCount() utility
 pub const EpochShuffling = struct {
     allocator: Allocator,
 
