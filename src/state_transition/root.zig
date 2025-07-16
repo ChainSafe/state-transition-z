@@ -17,8 +17,10 @@ pub const syncPubkeys = @import("./cache/pubkey_cache.zig").syncPubkeys;
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
+const EpochShuffling = @import("./utils/epoch_shuffling.zig");
 
 test {
     testing.refAllDecls(@This());
     testing.refAllDecls(seed);
+    testing.refAllDecls(EpochShuffling);
 }

@@ -80,13 +80,14 @@ const ShufflingManager = struct {
 ///  - `list_size == 0`
 ///  - `list_size > 2**24`
 ///  - `list_size > usize::MAX / 2`
-pub fn innerShuffleList(input: []u32, seed: []const u8, rounds: u8, forwards: bool) !void {
+/// T should be u32 for Bun binding and ValidatorIndex/u64 for zig application
+pub fn innerShuffleList(comptime T: type, out: []T, seed: []const u8, rounds: u8, forwards: bool) !void {
     if (rounds == 0) {
         // no shuffling rounds
         return;
     }
 
-    const list_size = input.len;
+    const list_size = out.len;
 
     if (list_size <= 1) {
         // nothing to (un)shuffle
@@ -131,9 +132,9 @@ pub fn innerShuffleList(input: []u32, seed: []const u8, rounds: u8, forwards: bo
 
             if (bit_v == 1) {
                 // swap
-                const tmp = input[i];
-                input[i] = input[j];
-                input[j] = tmp;
+                const tmp = out[i];
+                out[i] = out[j];
+                out[j] = tmp;
             }
         }
 
@@ -162,9 +163,9 @@ pub fn innerShuffleList(input: []u32, seed: []const u8, rounds: u8, forwards: bo
 
             if (bit_v == 1) {
                 // swap
-                const tmp = input[i];
-                input[i] = input[j];
-                input[j] = tmp;
+                const tmp = out[i];
+                out[i] = out[j];
+                out[j] = tmp;
             }
         }
 
@@ -191,7 +192,7 @@ test "innerShuffleList" {
     const forwards = false;
 
     const shuffled_input = input[0..];
-    try innerShuffleList(shuffled_input, seed[0..], rounds, forwards);
+    try innerShuffleList(u32, shuffled_input, seed[0..], rounds, forwards);
 
     // Check that the input is shuffled
     try std.testing.expect(shuffled_input.len == input.len);
@@ -201,7 +202,7 @@ test "innerShuffleList" {
 
     // shuffle back
     const backwards = true;
-    try innerShuffleList(shuffled_input, seed[0..], rounds, backwards);
+    try innerShuffleList(u32, shuffled_input, seed[0..], rounds, backwards);
 
     // Check that the input is back to original
     const expected_input = [_]u32{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };

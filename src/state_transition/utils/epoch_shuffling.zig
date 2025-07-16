@@ -13,6 +13,10 @@ const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 
 pub const EpochShufflingRc = ReferenceCount(*EpochShuffling);
 
+const Committee = []const ValidatorIndex;
+const SlotCommittees = []const Committee;
+const EpochCommittees = [preset.SLOTS_PER_EPOCH]SlotCommittees;
+
 /// EpochCache is the only consumer of this cache but an instance of EpochShuffling is shared across EpochCache instances
 /// no EpochCache instance takes the ownership of shuffling
 /// instead of that, we count on reference counting to deallocate the memory, see ReferenceCount() utility
@@ -21,22 +25,18 @@ pub const EpochShuffling = struct {
 
     epoch: Epoch,
     // EpochShuffling takes ownership of all properties below
-    active_indices: []ValidatorIndex,
+    active_indices: []const ValidatorIndex,
 
-    shuffling: []const u32,
+    shuffling: []const ValidatorIndex,
 
     /// the internal last-level committee shared the same data with `shuffling` so don't need to free it
-    committees: []const []const []const u32,
+    committees: EpochCommittees,
 
     committees_per_slot: usize,
 
-    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex) !*EpochShuffling {
-        const shuffling = try allocator.alloc(u32, active_indices.len);
-        // TODO: unshuffleList should support a comptime parameter for the type of indices
-        // std.mem.copyForwards(u32, shuffling, active_indices.items);
-        for (active_indices, 0..) |validator_index, i| {
-            shuffling[i] = @intCast(validator_index);
-        }
+    pub fn init(allocator: Allocator, seed: [32]u8, epoch: Epoch, active_indices: []const ValidatorIndex) !*EpochShuffling {
+        const shuffling = try allocator.alloc(ValidatorIndex, active_indices.len);
+        std.mem.copyForwards(ValidatorIndex, shuffling, active_indices);
         try unshuffleList(shuffling, seed[0..], preset.SHUFFLE_ROUND_COUNT);
         const committees = try buildCommitteesFromShuffling(allocator, shuffling);
 
@@ -60,29 +60,46 @@ pub const EpochShuffling = struct {
         }
         self.allocator.free(self.active_indices);
         self.allocator.free(self.shuffling);
-        self.allocator.free(self.committees);
+        // no need to free `commitees` because it's stack allocation
+        self.allocator.destroy(self);
     }
 
-    fn buildCommitteesFromShuffling(allocator: Allocator, shuffling: []const u32) ![]const []const []const u32 {
+    fn buildCommitteesFromShuffling(allocator: Allocator, shuffling: []const ValidatorIndex) !EpochCommittees {
         const active_validator_count = shuffling.len;
         const committees_per_slot = computeCommitteeCount(active_validator_count);
         const committee_count = committees_per_slot * preset.SLOTS_PER_EPOCH;
 
-        const committees = try allocator.alloc([]const []const u32, committee_count);
+        var epoch_committees: [preset.SLOTS_PER_EPOCH]SlotCommittees = undefined;
         for (0..preset.SLOTS_PER_EPOCH) |slot| {
-            const slot_committees = try allocator.alloc([]const u32, committees_per_slot);
+            const slot_committees = try allocator.alloc(Committee, committees_per_slot);
             for (0..committees_per_slot) |committee_index| {
                 const index = slot * committees_per_slot + committee_index;
                 const start_offset = @divFloor(active_validator_count * index, committee_count);
                 const end_offset = @divFloor(active_validator_count * (index + 1), committee_count);
                 slot_committees[committee_index] = shuffling[start_offset..end_offset];
             }
-            committees[slot] = slot_committees;
+            epoch_committees[slot] = slot_committees;
         }
 
-        return committees;
+        return epoch_committees;
     }
 };
+
+test EpochShuffling {
+    const validator_count_arr = comptime [_]usize{ 256, 2_000_000 };
+    inline for (validator_count_arr) |validator_count| {
+        const allocator = std.testing.allocator;
+        const seed: [32]u8 = [_]u8{0} ** 32;
+        const active_indices = try allocator.alloc(ValidatorIndex, validator_count);
+        // active_indices is transferred to EpochShuffling so no need to free it here
+        for (0..validator_count) |i| {
+            active_indices[i] = @intCast(i);
+        }
+
+        var epoch_shuffling = try EpochShuffling.init(allocator, seed, 0, active_indices);
+        defer epoch_shuffling.deinit();
+    }
+}
 
 /// active_indices is allocated at consumer side and transfer ownership to EpochShuffling
 pub fn computeEpochShuffling(allocator: Allocator, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, epoch: Epoch) !*EpochShuffling {
@@ -92,9 +109,16 @@ pub fn computeEpochShuffling(allocator: Allocator, state: *const BeaconStateAllF
 }
 
 /// unshuffle the `active_indices` array in place synchronously
-fn unshuffleList(active_indices: []u32, seed: []const u8, rounds: u8) !void {
+fn unshuffleList(active_indices_to_shuffle: []ValidatorIndex, seed: []const u8, rounds: u8) !void {
     const forwards = false;
-    return innerShuffleList(active_indices, seed, rounds, forwards);
+    return innerShuffleList(ValidatorIndex, active_indices_to_shuffle, seed, rounds, forwards);
+}
+
+test unshuffleList {
+    var active_indices: [5]ValidatorIndex = .{ 0, 1, 2, 3, 4 };
+    const seed: [32]u8 = [_]u8{0} ** 32;
+
+    try unshuffleList(&active_indices, &seed, 32);
 }
 
 fn computeCommitteeCount(active_validator_count: usize) usize {
@@ -103,4 +127,7 @@ fn computeCommitteeCount(active_validator_count: usize) usize {
     return @max(1, @min(preset.MAX_COMMITTEES_PER_SLOT, committees_per_slot));
 }
 
-// TODO: unit tests to make sure init/deinit works correctly
+test computeCommitteeCount {
+    const committee_count = computeCommitteeCount(2_000_000);
+    try std.testing.expectEqual(64, committee_count);
+}

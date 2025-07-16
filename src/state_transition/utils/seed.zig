@@ -21,7 +21,7 @@ const computeSyncCommitteeIndices = ComputeIndexUtils.computeSyncCommitteeIndice
 const computeEpochAtSlot = @import("./epoch.zig").computeEpochAtSlot;
 const ByteCount = @import("./committee_indices.zig").ByteCount;
 
-pub fn computeProposers(allocator: Allocator, fork_seq: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []ValidatorIndex) !void {
+pub fn computeProposers(allocator: Allocator, fork_seq: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []const ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []ValidatorIndex) !void {
     const start_slot = computeStartSlotAtEpoch(epoch);
     for (start_slot..start_slot + preset.SLOTS_PER_EPOCH, 0..) |slot, i| {
         var slot_buf: [8]u8 = undefined;

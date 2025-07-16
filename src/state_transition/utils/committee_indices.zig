@@ -132,19 +132,19 @@ fn ComputeShuffledIndex(comptime T: type) type {
 /// T should be u32 for Bun or ValidatorIndex for zig consumer
 pub fn ComputeIndexUtils(comptime T: type) type {
     return struct {
-        pub fn computeProposerIndexElectra(allocator: Allocator, seed: []const u8, active_indices: []T, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) !T {
+        pub fn computeProposerIndexElectra(allocator: Allocator, seed: []const u8, active_indices: []const T, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) !T {
             var out = [_]u32{0};
             try getCommitteeIndices(T, allocator, seed, active_indices, effective_balance_increments, ByteCount.Two, max_effective_balance_electra, effective_balance_increment, rounds, out[0..]);
             return out[0];
         }
 
-        pub fn computeProposerIndex(allocator: Allocator, seed: []const u8, active_indices: []T, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !T {
+        pub fn computeProposerIndex(allocator: Allocator, seed: []const u8, active_indices: []const T, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) !T {
             var out = [_]T{0};
             try getCommitteeIndices(T, allocator, seed, active_indices, effective_balance_increments, rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..]);
             return out[0];
         }
 
-        pub fn computeSyncCommitteeIndicesElectra(allocator: Allocator, seed: []const u8, active_indices: []T, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []T) !void {
+        pub fn computeSyncCommitteeIndicesElectra(allocator: Allocator, seed: []const u8, active_indices: []const T, effective_balance_increments: []u16, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []T) !void {
             try getCommitteeIndices(
                 T,
                 allocator,
@@ -159,7 +159,7 @@ pub fn ComputeIndexUtils(comptime T: type) type {
             );
         }
 
-        pub fn computeSyncCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: []T, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []T) !void {
+        pub fn computeSyncCommitteeIndices(allocator: Allocator, seed: []const u8, active_indices: []const T, effective_balance_increments: []u16, rand_byte_count: ByteCount, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: []T) !void {
             try getCommitteeIndices(
                 T,
                 allocator,

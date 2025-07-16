@@ -191,6 +191,7 @@ fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, s
     const thread = std.Thread.spawn(.{}, struct {
         pub fn run(_active_indices: [*c]u32, _len: usize, _seed: [*c]const u8, _seed_len: usize, _rounds: u8, _forwards: bool, _result: *AsyncResult) void {
             innerShuffleList(
+                u32,
                 _active_indices[0.._len],
                 _seed[0.._seed_len],
                 _rounds,
@@ -266,6 +267,7 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
     }
 
     innerShuffleList(
+        u32,
         active_indices[0..len],
         seed[0..seed_len],
         rounds,
