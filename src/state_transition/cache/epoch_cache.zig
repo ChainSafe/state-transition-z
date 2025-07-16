@@ -84,10 +84,9 @@ pub const EpochCache = struct {
     // this is shared across applications, EpochCache does not own this field so should not deinit()
     index_to_pubkey: *Index2PubkeyCache,
 
-    // TODO: should be ValidatorIndex or usize
-    proposers: [preset.SLOTS_PER_EPOCH]u32,
+    proposers: [preset.SLOTS_PER_EPOCH]ValidatorIndex,
 
-    proposer_prev_epoch: ?[preset.SLOTS_PER_EPOCH]u32,
+    proposer_prev_epoch: ?[preset.SLOTS_PER_EPOCH]ValidatorIndex,
 
     // TODO: may not need this
     // proposers_next_epoch: not needed after EIP-7917
@@ -233,7 +232,7 @@ pub const EpochCache = struct {
         const fork_seq = config.getForkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
         try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
-        var proposers = [_]u32{0} ** preset.SLOTS_PER_EPOCH;
+        var proposers = [_]ValidatorIndex{0} ** preset.SLOTS_PER_EPOCH;
         if (current_shuffling.active_indices.len > 0) {
             try computeProposers(allocator, fork_seq, current_proposer_seed, current_epoch, current_shuffling.active_indices, effective_balance_increment, &proposers);
         }

@@ -15,19 +15,14 @@ const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const ValidatorIndex = @import("../type.zig").ValidatorIndex;
 const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
-const computeProposerIndex = @import("./committee_indices.zig").computeProposerIndex;
-const computeSyncCommitteeIndices = @import("./committee_indices.zig").computeSyncCommitteeIndices;
+const ComputeIndexUtils = @import("./committee_indices.zig").ComputeIndexUtils(ValidatorIndex);
+const computeProposerIndex = ComputeIndexUtils.computeProposerIndex;
+const computeSyncCommitteeIndices = ComputeIndexUtils.computeSyncCommitteeIndices;
 const computeEpochAtSlot = @import("./epoch.zig").computeEpochAtSlot;
 const ByteCount = @import("./committee_indices.zig").ByteCount;
 
-pub fn computeProposers(allocator: Allocator, fork_seq: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
+pub fn computeProposers(allocator: Allocator, fork_seq: ForkSeq, epoch_seed: [32]u8, epoch: Epoch, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []ValidatorIndex) !void {
     const start_slot = computeStartSlotAtEpoch(epoch);
-    // TODO: generalize computeProposerIndex to handle both u32 and u64
-    const active_indices_u32 = try allocator.alloc(u32, active_indices.len);
-    defer allocator.free(active_indices_u32);
-    for (active_indices, 0..) |validator_index, i| {
-        active_indices_u32[i] = @intCast(validator_index);
-    }
     for (start_slot..start_slot + preset.SLOTS_PER_EPOCH, 0..) |slot, i| {
         var slot_buf: [8]u8 = undefined;
         std.mem.writeInt(u64, &slot_buf, slot, .little);
@@ -40,19 +35,33 @@ pub fn computeProposers(allocator: Allocator, fork_seq: ForkSeq, epoch_seed: [32
 
         const rand_byte_count: ByteCount = if (fork_seq.isPostElectra()) ByteCount.Two else ByteCount.One;
         const max_effective_balance: u64 = if (fork_seq.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
-        // TODO: use active_indices directly
-        out[i] = try computeProposerIndex(allocator, &seed, active_indices_u32, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT);
+        out[i] = try computeProposerIndex(allocator, &seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT);
     }
 }
 
-pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []u32) !void {
-    const rand_byte_count = if (state.isPostElectra()) 2 else 1;
-    const max_effective_balance = if (state.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_PRE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
+test "computeProposers - sanity" {
+    const allocator = std.testing.allocator;
+    const epoch_seed: [32]u8 = [_]u8{0} ** 32;
+    var active_indices: [5]ValidatorIndex = .{ 0, 1, 2, 3, 4 };
+    var effective_balance_increments = EffectiveBalanceIncrements.init(allocator);
+    defer effective_balance_increments.deinit();
+    for (0..active_indices.len) |_| {
+        try effective_balance_increments.append(32);
+    }
+    var out: [preset.SLOTS_PER_EPOCH]ValidatorIndex = undefined;
+
+    try computeProposers(allocator, ForkSeq.phase0, epoch_seed, 0, active_indices[0..], effective_balance_increments, &out);
+    try computeProposers(allocator, ForkSeq.electra, epoch_seed, 0, active_indices[0..], effective_balance_increments, &out);
+}
+
+pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconStateAllForks, active_indices: []ValidatorIndex, effective_balance_increments: EffectiveBalanceIncrements, out: []ValidatorIndex) !void {
+    const rand_byte_count: ByteCount = if (state.isPostElectra()) ByteCount.Two else ByteCount.One;
+    const max_effective_balance: u64 = if (state.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
 
     const epoch = computeEpochAtSlot(state.getSlot() + 1);
     var seed: [32]u8 = undefined;
     try getSeed(state, epoch, params.DOMAIN_SYNC_COMMITTEE, &seed);
-    try computeSyncCommitteeIndices(allocator, seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT, out);
+    try computeSyncCommitteeIndices(allocator, &seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT, out);
 }
 
 pub fn getRandaoMix(state: *const BeaconStateAllForks, epoch: Epoch) Bytes32 {

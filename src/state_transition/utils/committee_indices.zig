@@ -96,7 +96,7 @@ fn ComputeShuffledIndex(comptime T: type) type {
 
                 const flip = (pivot.? + self.index_count - permuted) % self.index_count;
                 const position = @max(permuted, flip);
-                const position_div: T = position / 256;
+                const position_div: u32 = @intCast(position / 256);
 
                 var source_by_position = self.source_by_position_by_index[@intCast(i)];
                 if (source_by_position == null) {
@@ -110,7 +110,7 @@ fn ComputeShuffledIndex(comptime T: type) type {
                 var source = source_by_position.?.get(position_div);
                 if (source == null) {
                     self.source_buffer[SEED_SIZE] = @intCast(i % 256);
-                    const u32Slice = std.mem.bytesAsSlice(T, self.source_buffer[SEED_SIZE + 1 ..]);
+                    const u32Slice = std.mem.bytesAsSlice(u32, self.source_buffer[SEED_SIZE + 1 ..]);
                     u32Slice[0] = if (native_endian == .big) @byteSwap(position_div) else position_div;
 
                     var _source: [32]u8 = undefined;
@@ -193,7 +193,7 @@ fn getCommitteeIndices(comptime T: type, allocator: Allocator, seed: []const u8,
     defer allocator.free(shuffled_result);
     @memset(shuffled_result, null);
 
-    var i: T = 0;
+    var i: u32 = 0;
     var cached_hash_input = [_]u8{0} ** (32 + 8);
     // seed should have 32 bytes as checked in ComputeShuffledIndex.init
     @memcpy(cached_hash_input[0..32], seed);
