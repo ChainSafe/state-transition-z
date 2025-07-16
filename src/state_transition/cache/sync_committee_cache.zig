@@ -1,9 +1,11 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
+const preset = ssz.preset;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap;
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);
@@ -20,10 +22,10 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
     phase0: void,
     altair: *SyncCommitteeCache,
 
-    pub fn getValidatorIndices(self: *const SyncCommitteeCacheAllForks) ValidatorIndices {
-        return switch (self) {
+    pub fn getValidatorIndices(self: *const SyncCommitteeCacheAllForks) []ValidatorIndex {
+        return switch (self.*) {
             .phase0 => @panic("phase0 does not have sync_committee"),
-            .altair => self.altair.validator_indices,
+            .altair => |sync_committee| sync_committee.validator_indices,
         };
     }
 
@@ -38,13 +40,15 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
         return SyncCommitteeCacheAllForks{ .phase0 = {} };
     }
 
-    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !SyncCommitteeCacheAllForks {
-        const cache = try SyncCommitteeCache.computeSyncCommitteeCache(allocator, sync_committee, pubkey_to_index);
+    pub fn initSyncCommittee(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !SyncCommitteeCacheAllForks {
+        const cache = try SyncCommitteeCache.initSyncCommittee(allocator, sync_committee, pubkey_to_index);
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
 
-    pub fn getSyncCommitteeCache(allocator: Allocator, indices: ValidatorIndices) !SyncCommitteeCacheAllForks {
-        const cache = try SyncCommitteeCache.getSyncCommitteeCache(allocator, indices);
+    pub fn initValidatorIndices(allocator: Allocator, indices: []ValidatorIndex) !SyncCommitteeCacheAllForks {
+        const cloned_indices = try allocator.alloc(ValidatorIndex, indices.len);
+        try std.mem.copyForwards(ValidatorIndex, cloned_indices, indices);
+        const cache = try SyncCommitteeCache.initValidatorIndices(allocator, cloned_indices);
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
 
@@ -65,14 +69,16 @@ const SyncCommitteeCache = struct {
 
     validator_index_map: *SyncComitteeValidatorIndexMap,
 
-    pub fn computeSyncCommitteeCache(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !*SyncCommitteeCache {
+    pub fn initSyncCommittee(allocator: Allocator, sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap) !*SyncCommitteeCache {
         const validator_indices = try allocator.alloc(ValidatorIndex, sync_committee.pubkeys.len);
         try computeSyncCommitteeIndices(sync_committee, pubkey_to_index, validator_indices);
-        return SyncCommitteeCache.getSyncCommitteeCache(allocator, validator_indices);
+        return SyncCommitteeCache.initValidatorIndices(allocator, validator_indices);
     }
 
-    pub fn getSyncCommitteeCache(allocator: Allocator, validator_indices: []ValidatorIndex) !*SyncCommitteeCache {
-        const validator_index_map = try computeSyncCommitteeMap(allocator, validator_indices);
+    pub fn initValidatorIndices(allocator: Allocator, validator_indices: []ValidatorIndex) !*SyncCommitteeCache {
+        const validator_index_map = try allocator.create(SyncComitteeValidatorIndexMap);
+        validator_index_map.* = SyncComitteeValidatorIndexMap.init(allocator);
+        try computeSyncCommitteeMap(allocator, validator_indices, validator_index_map);
         const cache_ptr = try allocator.create(SyncCommitteeCache);
         cache_ptr.* = SyncCommitteeCache{
             .allocator = allocator,
@@ -94,21 +100,63 @@ const SyncCommitteeCache = struct {
     }
 };
 
-/// consumer should deinit each of the internal item inside SyncComitteeValidatorIndexMap
-fn computeSyncCommitteeMap(allocator: Allocator, sync_committee_indices: []ValidatorIndex) !*SyncComitteeValidatorIndexMap {
-    var map = SyncComitteeValidatorIndexMap.init(allocator);
+test "initSyncCommittee - sanity" {
+    const allocator = std.testing.allocator;
+    var sync_committee = SyncCommittee{
+        .pubkeys = [_]BLSPubkey{
+            [_]u8{1} ** 48,
+        } ** preset.SYNC_COMMITTEE_SIZE,
+        .aggregate_pubkey = [_]u8{2} ** 48,
+    };
+
+    const pubkey_index_map = try PubkeyIndexMap.init(allocator);
+    defer pubkey_index_map.deinit();
+    try pubkey_index_map.set(&sync_committee.pubkeys[0], 1000);
+
+    var cache = try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, &sync_committee, pubkey_index_map);
+    defer cache.deinit();
+
+    try std.testing.expectEqualSlices(
+        ValidatorIndex,
+        &[_]ValidatorIndex{1000} ** preset.SYNC_COMMITTEE_SIZE,
+        cache.getValidatorIndices(),
+    );
+}
+
+fn computeSyncCommitteeMap(allocator: Allocator, sync_committee_indices: []const ValidatorIndex, out: *SyncComitteeValidatorIndexMap) !void {
     for (sync_committee_indices, 0..) |validator_index, i| {
-        var indices = map.get(validator_index);
+        var indices = out.getPtr(validator_index);
         if (indices == null) {
-            indices = SyncCommitteeIndices.init(allocator);
-            try map.put(validator_index, indices.?);
+            try out.put(validator_index, SyncCommitteeIndices.init(allocator));
+            indices = out.getPtr(validator_index) orelse unreachable;
         }
+
         try indices.?.append(@intCast(i));
     }
+}
 
-    const map_ptr = try allocator.create(SyncComitteeValidatorIndexMap);
-    map_ptr.* = map;
-    return map_ptr;
+test computeSyncCommitteeMap {
+    const allocator = std.testing.allocator;
+    var map = try allocator.create(SyncComitteeValidatorIndexMap);
+    map.* = SyncComitteeValidatorIndexMap.init(allocator);
+    const indices = [_]ValidatorIndex{ 0, 0, 2, 2, 4, 5 };
+    try computeSyncCommitteeMap(allocator, &indices, map);
+
+    try std.testing.expectEqual(@as(u32, 4), map.count());
+    try std.testing.expectEqualSlices(u32, &[_]u32{ 0, 1 }, map.get(0).?.items);
+    try std.testing.expectEqualSlices(u32, &[_]u32{ 2, 3 }, map.get(2).?.items);
+    try std.testing.expectEqualSlices(u32, &[_]u32{4}, map.get(4).?.items);
+    try std.testing.expectEqualSlices(u32, &[_]u32{5}, map.get(5).?.items);
+
+    defer {
+        //deinit the map
+        var value_iterator = map.valueIterator();
+        while (value_iterator.next()) |value| {
+            value.deinit();
+        }
+        map.deinit();
+        allocator.destroy(map);
+    }
 }
 
 fn computeSyncCommitteeIndices(sync_committee: *const SyncCommittee, pubkey_to_index: *const PubkeyIndexMap, out: []ValidatorIndex) !void {
@@ -123,4 +171,24 @@ fn computeSyncCommitteeIndices(sync_committee: *const SyncCommittee, pubkey_to_i
     }
 }
 
-// TODO: unit tests
+test computeSyncCommitteeIndices {
+    var sync_committee = SyncCommittee{
+        .pubkeys = [_]BLSPubkey{
+            [_]u8{1} ** 48,
+        } ** preset.SYNC_COMMITTEE_SIZE,
+        .aggregate_pubkey = [_]u8{2} ** 48,
+    };
+
+    const allocator = std.testing.allocator;
+    const pubkey_index_map = try PubkeyIndexMap.init(allocator);
+    defer pubkey_index_map.deinit();
+    try pubkey_index_map.set(&sync_committee.pubkeys[0], 1000);
+
+    var out: [preset.SYNC_COMMITTEE_SIZE]ValidatorIndex = undefined;
+    try computeSyncCommitteeIndices(&sync_committee, pubkey_index_map, &out);
+    try std.testing.expectEqualSlices(
+        ValidatorIndex,
+        &[_]ValidatorIndex{1000} ** preset.SYNC_COMMITTEE_SIZE,
+        &out,
+    );
+}

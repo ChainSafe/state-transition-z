@@ -247,8 +247,8 @@ pub const EpochCache = struct {
         const sync_proposer_reward = sync_participant_reward * PROPOSER_WEIGHT_FACTOR;
         const base_reward_pre_increment = computeBaseRewardPerIncrement(total_active_balance_increments);
         const skip_sync_committee_cache = if (option) |opt| opt.skip_sync_committee_cache else !after_altair_fork;
-        const current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.computeSyncCommitteeCache(allocator, state.getCurrentSyncCommittee(), pubkey_to_index);
-        const next_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.computeSyncCommitteeCache(allocator, state.getNextSyncCommittee(), pubkey_to_index);
+        const current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.getCurrentSyncCommittee(), pubkey_to_index);
+        const next_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.getNextSyncCommittee(), pubkey_to_index);
 
         // Precompute churnLimit for efficient initiateValidatorExit() during block proposing MUST be recompute everytime the
         // active validator indices set changes in size. Validators change active status only when:
@@ -605,13 +605,13 @@ pub const EpochCache = struct {
         // this is the transfer of reference count
         // should not do an release() then acquire() here as it may trigger a deinit()
         self.current_sync_committee_indexed = self.next_sync_committee_indexed;
-        self.next_sync_committee_indexed = SyncCommitteeCacheRc.acquire(try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices));
+        self.next_sync_committee_indexed = SyncCommitteeCacheRc.acquire(try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices.items));
     }
 
     // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead
     // TODO: also increase reference count
     // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
-    //     self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.getSyncCommitteeCache(self.allocator, next_sync_committee_indices);
+    //     self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices);
     //     self.current_sync_committee_indexed = self.next_sync_committee_indexed;
     // }
 
