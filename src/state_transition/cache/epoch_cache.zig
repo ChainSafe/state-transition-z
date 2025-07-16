@@ -333,6 +333,7 @@ pub const EpochCache = struct {
         // unref the sync committee caches
         self.current_sync_committee_indexed.release();
         self.next_sync_committee_indexed.release();
+        self.allocator.destroy(self);
     }
 
     /// TODO: state_transition when calling this function needs to decrease EpochCache rc before using a new one

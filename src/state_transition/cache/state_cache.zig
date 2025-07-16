@@ -7,7 +7,6 @@ const EpochCacheImmutableData = @import("./epoch_cache.zig").EpochCacheImmutable
 const EpochCacheOpts = @import("./epoch_cache.zig").EpochCacheOpts;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 
-// TODO: create a generic struct with state type if needed
 pub const CachedBeaconStateAllForks = struct {
     allocator: Allocator,
     /// only a reference to the singleton BeaconConfig

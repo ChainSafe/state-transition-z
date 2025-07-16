@@ -14,33 +14,10 @@ const Index2PubkeyCache = state_transition.Index2PubkeyCache;
 const syncPubkeys = state_transition.syncPubkeys;
 const interopPubkeysCached = @import("./interop_pubkeys.zig").interopPubkeysCached;
 
-/// Generates a cached Electra state with the given allocator and config.
-/// Consumer should deinit this global data:
-///   - config
-///   - pubkey_to_index (include each item)
-///   - index_to_pubkey
-/// also it has to deinit the returned CachedBeaconStateAllForks instance.
-pub fn generateCachedElectraState(allocator: Allocator, chain_config: ChainConfig, validator_count: usize, pubkey_index_map: *PubkeyIndexMap, index_pubkey_cache: *Index2PubkeyCache) !*CachedBeaconStateAllForks {
-    const state = try generateElectraState(allocator, chain_config, validator_count);
-    const config = try BeaconConfig.init(allocator, chain_config, state.getGenesisValidatorsRoot());
-
-    try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, index_pubkey_cache);
-
-    const immutable_data = state_transition.EpochCacheImmutableData{
-        .config = config,
-        .index_to_pubkey = index_pubkey_cache,
-        .pubkey_to_index = pubkey_index_map,
-    };
-    return CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
-        .skip_sync_committee_cache = false,
-        .skip_sync_pubkeys = false,
-    });
-}
-
 /// generate, allocate BeaconStateAllForks
 /// consumer has responsibility to deinit it
 /// TODO: may move to test folder so that perf test can use this too
-fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, validator_count: usize) !*BeaconStateAllForks {
+pub fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, validator_count: usize) !*BeaconStateAllForks {
     const beacon_state_ptr = try allocator.create(ElectraBeaconState);
     beacon_state_ptr.* = ssz.electra.BeaconState.default_value;
     // set the slot to be ready for the next epoch transition
@@ -74,20 +51,34 @@ fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, validat
     return cached_beacon_state_ptr;
 }
 
-// TODO: got memory leak in sync_committee_cache so need to add a unit test for that cache first then revisit
-// test "generateCachedElectraState" {
-//     const allocator = std.testing.allocator;
-//     const pubkey_index_map = try PubkeyIndexMap.init(allocator);
-//     var index_pubkey_cache = Index2PubkeyCache.init(allocator);
-//     const cached_state = try generateCachedElectraState(allocator, mainnet_chain_config, 256, pubkey_index_map, &index_pubkey_cache);
-//     defer {
-//         allocator.destroy(cached_state.config);
-//         for (index_pubkey_cache.items) |item| {
-//             allocator.destroy(item);
-//         }
-//         pubkey_index_map.deinit();
-//         index_pubkey_cache.deinit();
-//         cached_state.deinit(allocator);
-//         allocator.destroy(cached_state);
-//     }
-// }
+test "createCachedBeaconState" {
+    const allocator = std.testing.allocator;
+    const pubkey_index_map = try PubkeyIndexMap.init(allocator);
+    var index_pubkey_cache = Index2PubkeyCache.init(allocator);
+    const validator_count = 256;
+    const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
+    const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.getGenesisValidatorsRoot());
+
+    try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, &index_pubkey_cache);
+
+    const immutable_data = state_transition.EpochCacheImmutableData{
+        .config = config,
+        .index_to_pubkey = &index_pubkey_cache,
+        .pubkey_to_index = pubkey_index_map,
+    };
+    var cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
+        .skip_sync_committee_cache = false,
+        .skip_sync_pubkeys = false,
+    });
+
+    defer {
+        config.deinit();
+        for (index_pubkey_cache.items) |item| {
+            allocator.destroy(item);
+        }
+        pubkey_index_map.deinit();
+        index_pubkey_cache.deinit();
+        cached_state.deinit(allocator);
+        allocator.destroy(cached_state);
+    }
+}

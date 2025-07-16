@@ -69,6 +69,7 @@ pub const BeaconStateAllForks = union(enum) {
                 state.balances.deinit(allocator);
                 state.previous_epoch_participation.deinit(allocator);
                 state.current_epoch_participation.deinit(allocator);
+                state.inactivity_scores.deinit(allocator);
                 allocator.destroy(state);
             },
             .electra => |state| {
@@ -78,6 +79,7 @@ pub const BeaconStateAllForks = union(enum) {
                 state.balances.deinit(allocator);
                 state.previous_epoch_participation.deinit(allocator);
                 state.current_epoch_participation.deinit(allocator);
+                state.inactivity_scores.deinit(allocator);
                 state.pending_partial_withdrawals.deinit(allocator);
                 state.pending_consolidations.deinit(allocator);
                 allocator.destroy(state);
