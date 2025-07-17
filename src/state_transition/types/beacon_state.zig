@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
+const panic = std.debug.panic;
 const ssz = @import("consensus_types");
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
 const BeaconStateAltair = ssz.altair.BeaconState.Type;
@@ -39,6 +40,19 @@ pub const BeaconStateAllForks = union(enum) {
     capella: *BeaconStateCapella,
     deneb: *BeaconStateDeneb,
     electra: *BeaconStateElectra,
+
+    pub fn format(
+        self: BeaconStateAllForks,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        writer: anytype,
+    ) !void {
+        _ = fmt;
+        _ = options;
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => try writer.print("{s}", .{@tagName(self)}),
+        };
+    }
 
     pub fn hashTreeRoot(self: *const BeaconStateAllForks, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
@@ -677,8 +691,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getLatestExecutionPayloadHeader(self: *const BeaconStateAllForks) *const ExecutionPayloadHeader {
         return switch (self.*) {
-            .phase0 => @panic("latest_execution_payload_header is not available in phase0"),
-            .altair => @panic("latest_execution_payload_header is not available in altair"),
+            .phase0, .altair => panic("latest_execution_payload_header is not available in {}", .{self}),
             .bellatrix => |state| &.{ .bellatrix = state.latest_execution_payload_header },
             .capella => |state| &.{ .capella = state.latest_execution_payload_header },
             .deneb, .electra => |state| &.{ .deneb = state.latest_execution_payload_header },
@@ -687,8 +700,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setLatestExecutionPayloadHeader(self: *BeaconStateAllForks, header: *const ExecutionPayloadHeader) void {
         switch (self.*) {
-            .phase0 => @panic("latest_execution_payload_header is not available in phase0"),
-            .altair => @panic("latest_execution_payload_header is not available in altair"),
+            .phase0, .altair => panic("latest_execution_payload_header is not available in {}", .{self}),
             .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
             .capella => |state| state.latest_execution_payload_header = header.*.capella,
             .deneb, .electra => |state| state.latest_execution_payload_header = header.*.deneb,
@@ -697,433 +709,291 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getNextWithdrawalIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
-            .phase0 => @panic("next_withdrawal_index is not available in phase0"),
-            .altair => @panic("next_withdrawal_index is not available in altair"),
-            .bellatrix => @panic("next_withdrawal_index is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("next_withdrawal_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_index,
         };
     }
 
     pub fn setNextWithdrawalIndex(self: *BeaconStateAllForks, index: u64) void {
         switch (self.*) {
-            .phase0 => @panic("next_withdrawal_index is not available in phase0"),
-            .altair => @panic("next_withdrawal_index is not available in altair"),
-            .bellatrix => @panic("next_withdrawal_index is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("next_withdrawal_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_index = index,
         }
     }
 
     pub fn getNextWithdrawalValidatorIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
-            .phase0 => @panic("next_withdrawal_validator_index is not available in phase0"),
-            .altair => @panic("next_withdrawal_validator_index is not available in altair"),
-            .bellatrix => @panic("next_withdrawal_validator_index is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("next_withdrawal_validator_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index,
         };
     }
 
     pub fn setNextWithdrawalValidatorIndex(self: *BeaconStateAllForks, index: u64) void {
         switch (self.*) {
-            .phase0 => @panic("next_withdrawal_validator_index is not available in phase0"),
-            .altair => @panic("next_withdrawal_validator_index is not available in altair"),
-            .bellatrix => @panic("next_withdrawal_validator_index is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("next_withdrawal_validator_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index = index,
         }
     }
 
     pub fn getHistoricalSummary(self: *const BeaconStateAllForks, index: usize) *const HistoricalSummary {
         return switch (self.*) {
-            .phase0 => @panic("historical_summary is not available in phase0"),
-            .altair => @panic("historical_summary is not available in altair"),
-            .bellatrix => @panic("historical_summary is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| &state.historical_summaries.items[index],
         };
     }
 
     pub fn setHistoricalSummary(self: *BeaconStateAllForks, index: usize, summary: *const HistoricalSummary) void {
         switch (self.*) {
-            .phase0 => @panic("historical_summary is not available in phase0"),
-            .altair => @panic("historical_summary is not available in altair"),
-            .bellatrix => @panic("historical_summary is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.historical_summaries.items[index] = *summary,
         }
     }
 
     pub fn addHistoricalSummary(self: *BeaconStateAllForks, summary: *const HistoricalSummary) void {
         switch (self.*) {
-            .phase0 => @panic("historical_summary is not available in phase0"),
-            .altair => @panic("historical_summary is not available in altair"),
-            .bellatrix => @panic("historical_summary is not available in bellatrix"),
+            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.historical_summaries.append(*summary),
         }
     }
 
     pub fn getDepositRequestsStartIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
-            .phase0 => @panic("deposit_requests_start_index is not available in phase0"),
-            .altair => @panic("deposit_requests_start_index is not available in altair"),
-            .bellatrix => @panic("deposit_requests_start_index is not available in bellatrix"),
-            .capella => @panic("deposit_requests_start_index is not available in capella"),
-            .deneb => @panic("deposit_requests_start_index is not available in deneb"),
             .electra => |state| state.deposit_requests_start_index,
+            else => panic("deposit_requests_start_index is not available in {}", .{self}),
         };
     }
 
     pub fn setDepositRequestsStartIndex(self: *BeaconStateAllForks, index: u64) void {
         switch (self.*) {
-            .phase0 => @panic("deposit_requests_start_index is not available in phase0"),
-            .altair => @panic("deposit_requests_start_index is not available in altair"),
-            .bellatrix => @panic("deposit_requests_start_index is not available in bellatrix"),
-            .capella => @panic("deposit_requests_start_index is not available in capella"),
-            .deneb => @panic("deposit_requests_start_index is not available in deneb"),
             .electra => |state| state.deposit_requests_start_index = index,
+            else => panic("deposit_requests_start_index is not available in {}", .{self}),
         }
     }
 
     pub fn getDepositBalanceToConsume(self: *const BeaconStateAllForks) Gwei {
         return switch (self.*) {
-            .phase0 => @panic("deposit_balance_to_consume is not available in phase0"),
-            .altair => @panic("deposit_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("deposit_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("deposit_balance_to_consume is not available in capella"),
-            .deneb => @panic("deposit_balance_to_consume is not available in deneb"),
             .electra => |state| state.deposit_balance_to_consume,
+            else => panic("deposit_balance_to_consume is not available in {}", .{self}),
         };
     }
 
     pub fn setDepositBalanceToConsume(self: *BeaconStateAllForks, amount: Gwei) void {
         switch (self.*) {
-            .phase0 => @panic("deposit_balance_to_consume is not available in phase0"),
-            .altair => @panic("deposit_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("deposit_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("deposit_balance_to_consume is not available in capella"),
-            .deneb => @panic("deposit_balance_to_consume is not available in deneb"),
             .electra => |state| state.deposit_balance_to_consume = amount,
+            else => panic("deposit_balance_to_consume is not available in {}", .{self}),
         }
     }
 
     pub fn getExitBalanceToConsume(self: *const BeaconStateAllForks) Gwei {
         return switch (self.*) {
-            .phase0 => @panic("exit_balance_to_consume is not available in phase0"),
-            .altair => @panic("exit_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("exit_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("exit_balance_to_consume is not available in capella"),
-            .deneb => @panic("exit_balance_to_consume is not available in deneb"),
             .electra => |state| state.exit_balance_to_consume,
+            else => panic("exit_balance_to_consume is not available in {}", .{self}),
         };
     }
 
     pub fn setExitBalanceToConsume(self: *BeaconStateAllForks, amount: Gwei) void {
         switch (self.*) {
-            .phase0 => @panic("exit_balance_to_consume is not available in phase0"),
-            .altair => @panic("exit_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("exit_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("exit_balance_to_consume is not available in capella"),
-            .deneb => @panic("exit_balance_to_consume is not available in deneb"),
             .electra => |state| state.exit_balance_to_consume = amount,
+            else => panic("exit_balance_to_consume is not available in {}", .{self}),
         }
     }
 
     pub fn getEarliestExitEpoch(self: *const BeaconStateAllForks) Epoch {
         return switch (self.*) {
-            .phase0 => @panic("earliest_exit_epoch is not available in phase0"),
-            .altair => @panic("earliest_exit_epoch is not available in altair"),
-            .bellatrix => @panic("earliest_exit_epoch is not available in bellatrix"),
-            .capella => @panic("earliest_exit_epoch is not available in capella"),
-            .deneb => @panic("earliest_exit_epoch is not available in deneb"),
             .electra => |state| state.earliest_exit_epoch,
+            else => panic("earliest_exit_epoch is not available in {}", .{self}),
         };
     }
 
     pub fn setEarliestExitEpoch(self: *BeaconStateAllForks, epoch: Epoch) void {
         switch (self.*) {
-            .phase0 => @panic("earliest_exit_epoch is not available in phase0"),
-            .altair => @panic("earliest_exit_epoch is not available in altair"),
-            .bellatrix => @panic("earliest_exit_epoch is not available in bellatrix"),
-            .capella => @panic("earliest_exit_epoch is not available in capella"),
-            .deneb => @panic("earliest_exit_epoch is not available in deneb"),
             .electra => |state| state.earliest_exit_epoch = epoch,
+            else => panic("earliest_exit_epoch is not available in {}", .{self}),
         }
     }
 
     pub fn getConsolidationBalanceToConsume(self: *const BeaconStateAllForks) Gwei {
         return switch (self.*) {
-            .phase0 => @panic("consolidation_balance_to_consume is not available in phase0"),
-            .altair => @panic("consolidation_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("consolidation_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("consolidation_balance_to_consume is not available in capella"),
-            .deneb => @panic("consolidation_balance_to_consume is not available in deneb"),
             .electra => |state| state.consolidation_balance_to_consume,
+            else => panic("consolidation_balance_to_consume is not available in {}", .{self}),
         };
     }
 
     pub fn setConsolidationBalanceToConsume(self: *BeaconStateAllForks, amount: Gwei) void {
         switch (self.*) {
-            .phase0 => @panic("consolidation_balance_to_consume is not available in phase0"),
-            .altair => @panic("consolidation_balance_to_consume is not available in altair"),
-            .bellatrix => @panic("consolidation_balance_to_consume is not available in bellatrix"),
-            .capella => @panic("consolidation_balance_to_consume is not available in capella"),
-            .deneb => @panic("consolidation_balance_to_consume is not available in deneb"),
             .electra => |state| state.consolidation_balance_to_consume = amount,
+            else => panic("consolidation_balance_to_consume is not available in {}", .{self}),
         }
     }
 
     pub fn getEarliestConsolidationEpoch(self: *const BeaconStateAllForks) Epoch {
         return switch (self.*) {
-            .phase0 => @panic("earliest_consolidation_epoch is not available in phase0"),
-            .altair => @panic("earliest_consolidation_epoch is not available in altair"),
-            .bellatrix => @panic("earliest_consolidation_epoch is not available in bellatrix"),
-            .capella => @panic("earliest_consolidation_epoch is not available in capella"),
-            .deneb => @panic("earliest_consolidation_epoch is not available in deneb"),
             .electra => |state| state.earliest_consolidation_epoch,
+            else => panic("earliest_consolidation_epoch is not available in {}", .{self}),
         };
     }
 
     pub fn setEarliestConsolidationEpoch(self: *BeaconStateAllForks, epoch: Epoch) void {
         switch (self.*) {
-            .phase0 => @panic("earliest_consolidation_epoch is not available in phase0"),
-            .altair => @panic("earliest_consolidation_epoch is not available in altair"),
-            .bellatrix => @panic("earliest_consolidation_epoch is not available in bellatrix"),
-            .capella => @panic("earliest_consolidation_epoch is not available in capella"),
-            .deneb => @panic("earliest_consolidation_epoch is not available in deneb"),
             .electra => |state| state.earliest_consolidation_epoch = epoch,
+            else => panic("earliest_consolidation_epoch is not available in {}", .{self}),
         }
     }
 
     pub fn getPendingDeposit(self: *const BeaconStateAllForks, index: usize) *const PendingDeposit {
         return switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| &state.pending_deposits[index],
+            else => panic("pending_deposits is not available in {}", .{self}),
         };
     }
 
     pub fn getPendingDeposits(self: *const BeaconStateAllForks) []const PendingDeposit {
         return switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| state.pending_deposits.items,
+            else => panic("pending_deposits is not available in {}", .{self}),
         };
     }
 
     pub fn getPendingDepositCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
-            .electra => |state| state.pending_deposits.len,
+            .electra => |state| state.pending_deposits.items.len,
+            else => panic("pending_deposits is not available in {}", .{self}),
         };
     }
 
     pub fn setPendingDeposit(self: *BeaconStateAllForks, index: usize, deposit: *const PendingDeposit) void {
         switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| state.pending_deposits[index] = *deposit,
+            else => panic("pending_deposits is not available in {}", .{self}),
         }
     }
 
     pub fn addPendingDeposit(self: *BeaconStateAllForks, pending_deposit: *const PendingDeposit) !void {
         switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| state.pending_deposits.append(*pending_deposit),
+            else => panic("pending_deposits is not available in {}", .{self}),
         }
     }
 
     // TODO(ssz): implement sliceFrom api for TreeView
     pub fn sliceFromPendingDeposits(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingDeposit) {
         switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| {
                 if (start_index >= state.pending_deposits.len) return error.IndexOutOfBounds;
                 const new_array = try std.ArrayListUnmanaged(ssz.electra.PendingDeposit).initCapacity(state.pending_deposits.items.len - start_index);
                 try new_array.appendSlice(state.pending_deposits.items[start_index..]);
                 return new_array;
             },
+            else => panic("pending_deposits is not available in {}", .{self}),
         }
     }
 
     pub fn setPendingDeposits(self: *BeaconStateAllForks, deposits: std.ArrayListUnmanaged(ssz.electra.PendingDeposit)) void {
         switch (self.*) {
-            .phase0 => @panic("pending_deposits is not available in phase0"),
-            .altair => @panic("pending_deposits is not available in altair"),
-            .bellatrix => @panic("pending_deposits is not available in bellatrix"),
-            .capella => @panic("pending_deposits is not available in capella"),
-            .deneb => @panic("pending_deposits is not available in deneb"),
             .electra => |state| state.pending_deposits = deposits,
+            else => panic("pending_deposits is not available in {}", .{self}),
         }
     }
 
     pub fn getPendingPartialWithdrawal(self: *const BeaconStateAllForks, index: usize) *const PendingPartialWithdrawal {
         return switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| &state.pending_partial_withdrawals[index],
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
 
     pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []*PendingPartialWithdrawal {
         return switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals.items,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
 
     pub fn addPendingPartialWithdrawal(self: *BeaconStateAllForks, withdrawal: *const PendingPartialWithdrawal) !void {
         switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals.append(*withdrawal),
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         }
     }
 
     pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| {
                 if (start_index >= state.pending_partial_withdrawals.len) return error.IndexOutOfBounds;
                 const new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(state.pending_partial_withdrawals.items.len - start_index);
                 try new_array.appendSlice(state.pending_partial_withdrawals.items[start_index..]);
                 return new_array;
             },
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         }
     }
 
     pub fn getPendingPartialWithdrawalCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals.len,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
 
     pub fn setPendingPartialWithdrawal(self: *BeaconStateAllForks, index: usize, withdrawal: *const PendingPartialWithdrawal) void {
         switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals[index] = *withdrawal,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         }
     }
 
     pub fn setPendingPartialWithdrawals(self: *BeaconStateAllForks, withdrawals: std.ArrayListUnmanaged(PendingPartialWithdrawal)) void {
         switch (self.*) {
-            .phase0 => @panic("pending_partial_withdrawals is not available in phase0"),
-            .altair => @panic("pending_partial_withdrawals is not available in altair"),
-            .bellatrix => @panic("pending_partial_withdrawals is not available in bellatrix"),
-            .capella => @panic("pending_partial_withdrawals is not available in capella"),
-            .deneb => @panic("pending_partial_withdrawals is not available in deneb"),
             .electra => |state| state.pending_partial_withdrawals = withdrawals,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         }
     }
 
     pub fn getPendingConsolidation(self: *const BeaconStateAllForks, index: usize) *const PendingConsolidation {
         return switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| &state.pending_consolidations[index],
+            else => panic("pending_consolidations is not available in {}", .{self}),
         };
     }
 
     pub fn getPendingConsolidations(self: *const BeaconStateAllForks) []const PendingConsolidation {
         return switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| state.pending_consolidations.items,
+            else => panic("pending_consolidations is not available in {}", .{self}),
         };
     }
 
     pub fn setPendingConsolidation(self: *BeaconStateAllForks, index: usize, consolidation: *const PendingConsolidation) void {
         switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| state.pending_consolidations[index] = *consolidation,
+            else => panic("pending_consolidations is not available in {}", .{self}),
         }
     }
 
     pub fn addPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
         switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| state.pending_consolidations.append(*pending_consolidation),
+            else => panic("pending_consolidations is not available in {}", .{self}),
         }
     }
 
     // TODO: implement sliceFrom api for TreeView
     pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation) {
         switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| {
-                if (start_index >= state.pending_consolidations.ites.len) return error.IndexOutOfBounds;
+                if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
                 const new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation).initCapacity(state.pending_consolidations.items.len - start_index);
                 try new_array.appendSlice(state.pending_consolidations.items[start_index..]);
                 return new_array;
             },
+            else => panic("pending_consolidations is not available in {}", .{self}),
         }
     }
 
     pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation)) void {
         switch (self.*) {
-            .phase0 => @panic("pending_consolidations is not available in phase0"),
-            .altair => @panic("pending_consolidations is not available in altair"),
-            .bellatrix => @panic("pending_consolidations is not available in bellatrix"),
-            .capella => @panic("pending_consolidations is not available in capella"),
-            .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| state.pending_consolidations = consolidations,
+            else => panic("pending_consolidations is not available in {}", .{self}),
         }
     }
 };

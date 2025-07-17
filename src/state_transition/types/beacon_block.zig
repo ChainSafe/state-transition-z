@@ -1,4 +1,6 @@
 const std = @import("std");
+
+const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const ssz = @import("consensus_types");
@@ -59,6 +61,18 @@ pub const BeaconBlock = union(enum) {
             .electra => |block| try ssz.electra.BeaconBlock.hashTreeRoot(allocator, block, out),
         }
     }
+    pub fn format(
+        self: BeaconBlock,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        writer: anytype,
+    ) !void {
+        _ = fmt;
+        _ = options;
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => try writer.print("{s}", .{@tagName(self)}),
+        };
+    }
 
     pub fn getSlot(self: *const BeaconBlock) Slot {
         return switch (self.*) {
@@ -103,6 +117,19 @@ pub const BeaconBlockBody = union(enum) {
     capella: *const ssz.capella.BeaconBlockBody.Type,
     deneb: *const ssz.deneb.BeaconBlockBody.Type,
     electra: *const ssz.electra.BeaconBlockBody.Type,
+
+    pub fn format(
+        self: BeaconBlockBody,
+        comptime fmt: []const u8,
+        options: std.fmt.FormatOptions,
+        writer: anytype,
+    ) !void {
+        _ = fmt;
+        _ = options;
+        return switch (self) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => try writer.print("{s}", .{@tagName(self)}),
+        };
+    }
 
     pub fn hashTreeRoot(self: *const BeaconBlockBody, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
@@ -185,81 +212,59 @@ pub const BeaconBlockBody = union(enum) {
     // bellatrix fields
     pub fn getExecutionPayload(self: *const BeaconBlockBody) ExecutionPayload {
         return switch (self.*) {
-            inline .phase0, .altair => @panic("ExecutionPayload is not available in phase0 or altair"),
             .bellatrix => |body| .{ .bellatrix = &body.execution_payload },
             .capella => |body| .{ .capella = &body.execution_payload },
             .deneb => |body| .{ .deneb = &body.execution_payload },
             .electra => |body| .{ .electra = &body.execution_payload },
+            .phase0, .altair => panic("ExecutionPayload is not available in {}", .{self}),
         };
     }
 
     // capella fields
     pub fn getBlsToExecutionChanges(self: *const BeaconBlockBody) []SignedBLSToExecutionChange {
         return switch (self.*) {
-            .phase0,
-            => @panic("BlsToExecutionChanges is not available in phase0"),
-            .altair => @panic("BlsToExecutionChanges is not available in altair"),
-            .bellatrix => @panic("BlsToExecutionChanges is not available in bellatrix"),
             .capella => |body| body.bls_to_execution_changes.items,
             .deneb => |body| body.bls_to_execution_changes.items,
             .electra => |body| body.bls_to_execution_changes.items,
+            .phase0, .altair, .bellatrix => panic("BlsToExecutionChanges is not available in {}", .{self}),
         };
     }
 
     // deneb fields
     pub fn getBlobKzgCommitments(self: *const BeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
         return switch (self.*) {
-            .phase0 => @panic("BlobKzgCommitments is not available in phase0"),
-            .altair => @panic("BlobKzgCommitments is not available in altair"),
-            .bellatrix => @panic("BlobKzgCommitments is not available in bellatrix"),
-            .capella => @panic("BlobKzgCommitments is not available in capella"),
             .deneb => |body| &body.blob_kzg_commitments,
             .electra => |body| &body.blob_kzg_commitments,
+            .phase0, .altair, .bellatrix, .capella => panic("BlobKzgCommitments is not available in {}", .{self}),
         };
     }
 
     // electra fields
     pub fn getExecutionRequests(self: *const BeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
         return switch (self.*) {
-            .phase0 => @panic("ExecutionRequests is not available in phase0"),
-            .altair => @panic("ExecutionRequests is not available in altair"),
-            .bellatrix => @panic("ExecutionRequests is not available in bellatrix"),
-            .capella => @panic("ExecutionRequests is not available in capella"),
-            .deneb => @panic("ExecutionRequests is not available in deneb"),
             .electra => |body| &body.execution_requests,
+            else => panic("ExecutionRequests is not available in {}", .{self}),
         };
     }
 
     pub fn getDepositRequests(self: *const BeaconBlockBody) []DepositRequest {
         return switch (self.*) {
-            .phase0 => @panic("DepositRequests is not available in phase0"),
-            .altair => @panic("DepositRequests is not available in altair"),
-            .bellatrix => @panic("DepositRequests is not available in bellatrix"),
-            .capella => @panic("DepositRequests is not available in capella"),
-            .deneb => @panic("DepositRequests is not available in deneb"),
             .electra => |body| body.execution_requests.deposits.items,
+            else => panic("DepositRequests is not available in {}", .{self}),
         };
     }
 
     pub fn getWithdrawalRequests(self: *const BeaconBlockBody) []WithdrawalRequest {
         return switch (self.*) {
-            .phase0 => @panic("WithdrawalRequests is not available in phase0"),
-            .altair => @panic("WithdrawalRequests is not available in altair"),
-            .bellatrix => @panic("WithdrawalRequests is not available in bellatrix"),
-            .capella => @panic("WithdrawalRequests is not available in capella"),
-            .deneb => @panic("WithdrawalRequests is not available in deneb"),
             .electra => |body| body.execution_requests.withdrawals.items,
+            else => panic("WithdrawalRequests is not available in {}", .{self}),
         };
     }
 
     pub fn getConsolidationRequests(self: *const BeaconBlockBody) []ConsolidationRequest {
         return switch (self.*) {
-            .phase0 => @panic("ConsolidationRequests is not available in phase0"),
-            .altair => @panic("ConsolidationRequests is not available in altair"),
-            .bellatrix => @panic("ConsolidationRequests is not available in bellatrix"),
-            .capella => @panic("ConsolidationRequests is not available in capella"),
-            .deneb => @panic("ConsolidationRequests is not available in deneb"),
             .electra => |body| body.execution_requests.consolidations.items,
+            else => panic("ConsolidationRequests is not available in {}", .{self}),
         };
     }
 };
