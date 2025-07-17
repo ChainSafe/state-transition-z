@@ -17,6 +17,7 @@ const Root = types.Root;
 const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const ProposerSlashings = ssz.phase0.ProposerSlashings.Type;
 const ExecutionPayload = @import("./execution_payload.zig").ExecutionPayload;
+const ExecutionPayloadHeader = @import("./execution_payload.zig").ExecutionPayloadHeader;
 const Attestations = @import("./attestation.zig").Attestations;
 const AttesterSlashings = @import("./attester_slashing.zig").AttesterSlashings;
 const AttesterSlashing = @import("./attester_slashing.zig").AttesterSlashing;
@@ -34,6 +35,20 @@ pub const SignedBeaconBlock = union(enum) {
             .phase0 => |block| .{ .phase0 = &block.message },
             .altair => |block| .{ .altair = &block.message },
             .bellatrix => |block| .{ .bellatrix = &block.message },
+            .capella => |block| .{ .capella = &block.message },
+            .deneb => |block| .{ .deneb = &block.message },
+            .electra => |block| .{ .electra = &block.message },
+        };
+    }
+};
+
+pub const SignedBlindedBeaconBlock = union(enum) {
+    capella: *const ssz.capella.SignedBlindedBeaconBlock.Type,
+    deneb: *const ssz.deneb.SignedBlindedBeaconBlock.Type,
+    electra: *const ssz.electra.SignedBlindedBeaconBlock.Type,
+
+    pub fn getBeaconBlock(self: *const SignedBlindedBeaconBlock) BlindedBeaconBlock {
+        return switch (self.*) {
             .capella => |block| .{ .capella = &block.message },
             .deneb => |block| .{ .deneb = &block.message },
             .electra => |block| .{ .electra = &block.message },
@@ -108,6 +123,54 @@ pub const BeaconBlock = union(enum) {
             .capella => |block| .{ .capella = &block.body },
             .deneb => |block| .{ .deneb = &block.body },
             .electra => |block| .{ .electra = &block.body },
+        };
+    }
+};
+
+pub const BlindedBeaconBlock = union(enum) {
+    capella: *const ssz.capella.BlindedBeaconBlock.Type,
+    deneb: *const ssz.deneb.BlindedBeaconBlock.Type,
+    electra: *const ssz.electra.BlindedBeaconBlock.Type,
+
+    const Self = @This();
+
+    pub fn getBeaconBlockBody(self: *const Self) BlindedBeaconBlockBody {
+        return switch (self.*) {
+            .capella => |block| .{ .capella = &block.body },
+            .deneb => |block| .{ .deneb = &block.body },
+            .electra => |block| .{ .electra = &block.body },
+        };
+    }
+
+    pub fn hashTreeRoot(self: *const Self, allocator: std.mem.Allocator, out: *[32]u8) !void {
+        switch (self.*) {
+            .capella => |block| try ssz.capella.BlindedBeaconBlock.hashTreeRoot(allocator, block, out),
+            .deneb => |block| try ssz.deneb.BlindedBeaconBlock.hashTreeRoot(allocator, block, out),
+            .electra => |block| try ssz.electra.BlindedBeaconBlock.hashTreeRoot(allocator, block, out),
+        }
+    }
+
+    pub fn getSlot(self: *const Self) Slot {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |block| block.slot,
+        };
+    }
+
+    pub fn getProposerIndex(self: *const Self) ValidatorIndex {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |block| block.proposer_index,
+        };
+    }
+
+    pub fn getParentRoot(self: *const Self) Root {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |block| block.parent_root,
+        };
+    }
+
+    pub fn getStateRoot(self: *const Self) Root {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |block| block.state_root,
         };
     }
 };
@@ -271,9 +334,152 @@ pub const BeaconBlockBody = union(enum) {
     }
 };
 
-test "electra - sanity" {
+pub const BlindedBeaconBlockBody = union(enum) {
+    capella: *const ssz.capella.BlindedBeaconBlockBody.Type,
+    deneb: *const ssz.deneb.BlindedBeaconBlockBody.Type,
+    electra: *const ssz.electra.BlindedBeaconBlockBody.Type,
+
+    pub fn hashTreeRoot(self: *const BlindedBeaconBlockBody, allocator: std.mem.Allocator, out: *[32]u8) !void {
+        return switch (self.*) {
+            .capella => |body| try ssz.capella.BlindedBeaconBlockBody.hashTreeRoot(allocator, body, out),
+            .deneb => |body| try ssz.deneb.BlindedBeaconBlockBody.hashTreeRoot(allocator, body, out),
+            .electra => |body| try ssz.electra.BlindedBeaconBlockBody.hashTreeRoot(allocator, body, out),
+        };
+    }
+
+    pub fn isExecutionType(self: *const BlindedBeaconBlockBody) bool {
+        return switch (self.*) {
+            .phase0, .altair => false,
+            else => true,
+        };
+    }
+
+    // phase0 fields
+    pub fn getRandaoReveal(self: *const BlindedBeaconBlockBody) ssz.primitive.BLSSignature.Type {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| body.randao_reveal,
+        };
+    }
+
+    pub fn getEth1Data(self: *const BlindedBeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| &body.eth1_data,
+        };
+    }
+
+    pub fn getGraffity(self: *const BlindedBeaconBlockBody) ssz.primitive.Bytes32.Type {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| body.graffiti,
+        };
+    }
+
+    pub fn getProposerSlashings(self: *const BlindedBeaconBlockBody) []ProposerSlashing {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| body.proposer_slashings.items,
+        };
+    }
+
+    pub fn getAttesterSlashings(self: *const BlindedBeaconBlockBody) AttesterSlashings {
+        return switch (self.*) {
+            .electra => |body| .{ .electra = body.attester_slashings },
+            inline .capella, .deneb => |body| .{ .phase0 = body.attester_slashings },
+        };
+    }
+
+    pub fn getAttestations(self: *const BlindedBeaconBlockBody) Attestations {
+        return switch (self.*) {
+            inline .capella, .deneb => |body| .{ .phase0 = &body.attestations },
+            .electra => |body| .{ .electra = &body.attestations },
+        };
+    }
+
+    pub fn getDeposits(self: *const BlindedBeaconBlockBody) []Deposit {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| body.deposits.items,
+        };
+    }
+
+    pub fn getVoluntaryExits(self: *const BlindedBeaconBlockBody) []SignedVoluntaryExit {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| body.voluntary_exits.items,
+        };
+    }
+
+    // altair fields
+    pub fn getSyncAggregate(self: *const BlindedBeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |body| &body.sync_aggregate,
+        };
+    }
+
+    // bellatrix fields
+    pub fn getExecutionPayloadHeader(self: *const BlindedBeaconBlockBody) ExecutionPayloadHeader {
+        return switch (self.*) {
+            .capella => |body| .{ .capella = body.execution_payload_header },
+            .deneb => |body| .{ .deneb = body.execution_payload_header },
+            .electra => |body| .{ .electra = body.execution_payload_header },
+        };
+    }
+
+    // capella fields
+    pub fn getBlsToExecutionChanges(self: *const BlindedBeaconBlockBody) []SignedBLSToExecutionChange {
+        return switch (self.*) {
+            .capella => |body| body.bls_to_execution_changes.items,
+            .deneb => |body| body.bls_to_execution_changes.items,
+            .electra => |body| body.bls_to_execution_changes.items,
+        };
+    }
+
+    // deneb fields
+    pub fn getBlobKzgCommitments(self: *const BlindedBeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
+        return switch (self.*) {
+            .capella => @panic("BlobKzgCommitments is not available in capella"),
+            .deneb => |body| &body.blob_kzg_commitments,
+            .electra => |body| &body.blob_kzg_commitments,
+        };
+    }
+
+    // electra fields
+    pub fn getExecutionRequests(self: *const BlindedBeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
+        return switch (self.*) {
+            .capella => @panic("ExecutionRequests is not available in capella"),
+            .deneb => @panic("ExecutionRequests is not available in deneb"),
+            .electra => |body| &body.execution_requests,
+        };
+    }
+
+    pub fn getDepositRequests(self: *const BlindedBeaconBlockBody) []DepositRequest {
+        return switch (self.*) {
+            .capella => @panic("DepositRequests is not available in capella"),
+            .deneb => @panic("DepositRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.deposits.items,
+        };
+    }
+
+    pub fn getWithdrawalRequests(self: *const BlindedBeaconBlockBody) []WithdrawalRequest {
+        return switch (self.*) {
+            .capella => @panic("WithdrawalRequests is not available in capella"),
+            .deneb => @panic("WithdrawalRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.withdrawals.items,
+        };
+    }
+
+    pub fn getConsolidationRequests(self: *const BlindedBeaconBlockBody) []ConsolidationRequest {
+        return switch (self.*) {
+            .capella => @panic("ConsolidationRequests is not available in capella"),
+            .deneb => @panic("ConsolidationRequests is not available in deneb"),
+            .electra => |body| body.execution_requests.consolidations.items,
+        };
+    }
+};
+
+fn testBlockSanity(Block: type) !void {
     const allocator = std.testing.allocator;
-    var electra_block = ssz.electra.BeaconBlock.default_value;
+
+    const is_blinded = Block == BlindedBeaconBlock;
+    const ssz_block = if (is_blinded) ssz.electra.BlindedBeaconBlock else ssz.electra.BeaconBlock;
+    var electra_block = ssz_block.default_value;
+
     electra_block.slot = 12345;
     electra_block.proposer_index = 1;
     electra_block.body.randao_reveal = [_]u8{1} ** 96;
@@ -284,7 +490,8 @@ test "electra - sanity" {
     try attestations.append(allocator, attestation0);
     electra_block.body.attestations = attestations;
     try expect(electra_block.body.attestations.items[0].data.slot == 12345);
-    const beacon_block = BeaconBlock{ .electra = &electra_block };
+
+    const beacon_block = Block{ .electra = &electra_block };
 
     try expect(beacon_block.getSlot() == 12345);
     try expect(beacon_block.getProposerIndex() == 1);
@@ -315,9 +522,17 @@ test "electra - sanity" {
     const sync_aggregate = block_body.getSyncAggregate();
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 96, &sync_aggregate.sync_committee_signature);
 
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().electra.parent_hash);
-    // another way to access the parent_hash
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
+    if (!is_blinded) {
+        // Blinded blocks do not have the execution payload in plain
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().electra.parent_hash);
+        // another way to access the parent_hash
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
+    } else {
+        // Blinded blocks do not have the execution payload in plain
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().electra.parent_hash);
+        // another way to access the parent_hash
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().getParentHash());
+    }
 
     // capella
     try expect(block_body.getBlsToExecutionChanges().len == 0);
@@ -330,4 +545,9 @@ test "electra - sanity" {
     try expect(execution_request.deposits.items.len == 0);
     try expect(execution_request.withdrawals.items.len == 0);
     try expect(execution_request.consolidations.items.len == 0);
+}
+
+test "electra - sanity" {
+    try testBlockSanity(BeaconBlock);
+    try testBlockSanity(BlindedBeaconBlock);
 }
