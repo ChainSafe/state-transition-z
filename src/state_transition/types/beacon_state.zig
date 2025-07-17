@@ -1,7 +1,7 @@
 const std = @import("std");
+const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
-const panic = std.debug.panic;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
@@ -301,7 +301,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setBlockRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots.items[index] = root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots[index] = root,
         }
     }
 
@@ -319,7 +319,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setStateRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.state_roots.items[index] = root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.state_roots[index] = root,
         }
     }
 

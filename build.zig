@@ -161,12 +161,14 @@ pub fn build(b: *std.Build) void {
 
     const run_config_unit_tests = b.addRunArtifact(config_unit_tests);
 
+    const filters = b.option([]const []const u8, "filters", "Test filters");
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
     const state_transition_unit_tests = b.addTest(.{
         .root_source_file = b.path("src/state_transition/root.zig"),
         .target = target,
         .optimize = optimize,
+        .filters = filters orelse &.{},
     });
     state_transition_unit_tests.root_module.addImport("ssz", module_ssz);
     state_transition_unit_tests.root_module.addImport("consensus_types", module_consensus_types);
@@ -210,7 +212,7 @@ pub fn build(b: *std.Build) void {
     const test_int_tests = b.addTest(.{
         .name = "int",
         .root_module = module_test_int,
-        .filters = &[_][]const u8{},
+        .filters = filters orelse &.{},
     });
 
     const run_test_int_tests = b.addRunArtifact(test_int_tests);

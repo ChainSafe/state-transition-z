@@ -36,10 +36,12 @@ pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
+pub const state_transition = @import("./state_transition.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");
 
 test {
     testing.refAllDecls(@This());
     testing.refAllDecls(seed);
+    testing.refAllDecls(state_transition);
     testing.refAllDecls(EpochShuffling);
 }
