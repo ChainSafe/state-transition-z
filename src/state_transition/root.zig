@@ -15,6 +15,9 @@ pub const PubkeyIndexMap = @import("./utils/pubkey_index_map.zig").PubkeyIndexMa
 pub const Index2PubkeyCache = @import("./cache/pubkey_cache.zig").Index2PubkeyCache;
 pub const syncPubkeys = @import("./cache/pubkey_cache.zig").syncPubkeys;
 
+pub const ReusedEpochTransitionCache = @import("./cache/epoch_transition_cache.zig").ReusedEpochTransitionCache;
+pub const EpochTransitionCache = @import("./cache/epoch_transition_cache.zig").EpochTransitionCache;
+
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");

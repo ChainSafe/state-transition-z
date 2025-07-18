@@ -99,7 +99,7 @@ pub const TestCachedBeaconStateAllForks = struct {
     }
 };
 
-test "createCachedBeaconState" {
+test TestCachedBeaconStateAllForks {
     const allocator = std.testing.allocator;
     var test_state = try TestCachedBeaconStateAllForks.init(allocator, 256);
     defer test_state.deinit();

@@ -272,7 +272,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getBlockRoot(self: *const BeaconStateAllForks, index: usize) Root {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots.items[index],
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots[index],
         };
     }
 
@@ -463,7 +463,7 @@ pub const BeaconStateAllForks = union(enum) {
     /// only for phase0
     pub fn getPreviousEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
         return switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations,
+            .phase0 => |state| state.previous_epoch_attestations.items,
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         };
     }
@@ -493,7 +493,7 @@ pub const BeaconStateAllForks = union(enum) {
     // only for phase0
     pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
         return switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations,
+            .phase0 => |state| state.current_epoch_attestations.items,
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
         };
     }
