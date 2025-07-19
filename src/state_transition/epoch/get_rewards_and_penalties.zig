@@ -34,14 +34,6 @@ const RewardPenaltyItem = struct {
     timely_head_reward: u64,
 };
 
-const U64Array = std.ArrayList(u64);
-
-// TODO: reuse it in EpochTransitionCache
-pub const RewardsPenaltiesArray = struct {
-    rewards: U64Array,
-    penalties: U64Array,
-};
-
 /// consumer should deinit `rewards` and `penalties` arrays
 pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;

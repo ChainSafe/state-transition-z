@@ -7,7 +7,6 @@ const preset = @import("consensus_types").preset;
 const params = @import("params");
 const getAttestationDeltas = @import("./get_attestation_deltas.zig").getAttestationDeltas;
 const getRewardsAndPenaltiesAltair = @import("./get_rewards_and_penalties.zig").getRewardsAndPenaltiesAltair;
-const RewardsPenaltiesArray = @import("./get_rewards_and_penalties.zig").RewardsPenaltiesArray;
 
 pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     // No rewards are applied at the end of `GENESIS_EPOCH` because rewards are for work done in the previous epoch
@@ -17,11 +16,8 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
 
     const state = cached_state.state;
 
-    const validator_count = state.getValidatorsCount();
-    const rewards = try allocator.alloc(u64, validator_count);
-    const penalties = try allocator.alloc(u64, validator_count);
-    defer allocator.free(rewards);
-    defer allocator.free(penalties);
+    const rewards = cache.rewards;
+    const penalties = cache.penalties;
     try getRewardsAndPenalties(allocator, cached_state, cache, rewards, penalties);
 
     for (rewards, 0..) |reward, i| {

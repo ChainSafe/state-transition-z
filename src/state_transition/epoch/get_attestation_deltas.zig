@@ -35,14 +35,6 @@ const RewardPenaltyItem = struct {
     finality_delay_penalty: u64,
 };
 
-const U64Array = std.ArrayList(u64);
-
-// TODO: reuse it in EpochTransitionCache
-pub const RewardsPenaltiesArray = struct {
-    rewards: U64Array,
-    penalties: U64Array,
-};
-
 pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();

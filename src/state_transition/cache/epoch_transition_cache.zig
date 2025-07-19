@@ -58,6 +58,8 @@ pub const ReusedEpochTransitionCache = struct {
 
     previous_epoch_participation: U8Array,
     current_epoch_participation: U8Array,
+    rewards: U64Array,
+    penalties: U64Array,
 
     pub fn init(allocator: Allocator, validator_count: usize) !ReusedEpochTransitionCache {
         // TODO: should we allocate more than validator_count?
@@ -72,6 +74,8 @@ pub const ReusedEpochTransitionCache = struct {
             .is_compounding_validator_arr = try BoolArray.initCapacity(allocator, validator_count),
             .previous_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
             .current_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
+            .rewards = try U64Array.initCapacity(allocator, validator_count),
+            .penalties = try U64Array.initCapacity(allocator, validator_count),
         };
     }
 
@@ -86,6 +90,8 @@ pub const ReusedEpochTransitionCache = struct {
         self.is_compounding_validator_arr.deinit();
         self.previous_epoch_participation.deinit();
         self.current_epoch_participation.deinit();
+        self.rewards.deinit();
+        self.penalties.deinit();
     }
 };
 
@@ -110,6 +116,8 @@ pub const EpochTransitionCache = struct {
     flags: []const u8,
     // this is borrowed from ReusedEpochTransitionCache
     is_compounding_validator_arr: []const bool,
+    rewards: []u64,
+    penalties: []u64,
     balances: ?U64Array,
     next_shuffling_active_indices: []const ValidatorIndex,
     // TODO: nextShufflingDecisionRoot may not needed as we don't use ShufflingCache
@@ -151,6 +159,10 @@ pub const EpochTransitionCache = struct {
         @memset(reused_cache.is_active_prev_epoch.items, true);
         @memset(reused_cache.is_active_current_epoch.items, true);
         @memset(reused_cache.is_active_next_epoch.items, true);
+
+        // this will be populated in processRewardsAndPenalties()
+        try reused_cache.rewards.resize(validator_count);
+        try reused_cache.penalties.resize(validator_count);
 
         // During the epoch transition, additional data is precomputed to avoid traversing any state a second
         // time. Attestations are a big part of this, and each validator has a "status" to represent its
@@ -404,6 +416,8 @@ pub const EpochTransitionCache = struct {
             .inclusion_delays = reused_cache.inclusion_delays.items,
             .flags = reused_cache.flags.items,
             .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr.items,
+            .rewards = reused_cache.rewards.items,
+            .penalties = reused_cache.penalties.items,
             // Will be assigned in processRewardsAndPenalties()
             .balances = null,
         };
@@ -421,6 +435,7 @@ pub const EpochTransitionCache = struct {
         self.indices_eligible_for_activation_queue.deinit();
         self.indices_eligible_for_activation.deinit();
         self.indices_to_eject.deinit();
+        // rewards and penalties are from reused_cache
         if (self.balances) |balances| {
             balances.deinit();
         }
