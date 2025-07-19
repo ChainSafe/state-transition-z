@@ -9,7 +9,7 @@ const getAttestationDeltas = @import("./get_attestation_deltas.zig").getAttestat
 const getRewardsAndPenaltiesAltair = @import("./get_rewards_and_penalties.zig").getRewardsAndPenaltiesAltair;
 const RewardsPenaltiesArray = @import("./get_rewards_and_penalties.zig").RewardsPenaltiesArray;
 
-pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
+pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     // No rewards are applied at the end of `GENESIS_EPOCH` because rewards are for work done in the previous epoch
     if (cache.current_epoch == params.GENESIS_EPOCH) {
         return;
@@ -17,13 +17,14 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
 
     const state = cached_state.state;
 
-    const rewards_and_penalties = getRewardsAndPenalties(allocator, cached_state, cache);
-    const rewards = rewards_and_penalties.rewards;
-    const penalties = rewards_and_penalties.penalties;
-    defer rewards.deinit();
-    defer penalties.deinit();
+    const validator_count = state.getValidatorsCount();
+    const rewards = try allocator.alloc(u64, validator_count);
+    const penalties = try allocator.alloc(u64, validator_count);
+    defer allocator.free(rewards);
+    defer allocator.free(penalties);
+    try getRewardsAndPenalties(allocator, cached_state, cache, rewards, penalties);
 
-    for (rewards.items, 0..) |reward, i| {
+    for (rewards, 0..) |reward, i| {
         const result = state.getBalance(i) + reward - penalties[i];
         state.setBalance(i, @max(result, 0));
     }
@@ -31,8 +32,8 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
     // TODO this is naive version, consider caching balances here when switching to TreeView
 }
 
-pub fn getRewardsAndPenalties(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) RewardsPenaltiesArray {
+pub fn getRewardsAndPenalties(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const fork = cached_state.config.getForkSeq(state.getSlot());
-    return if (fork == ForkSeq.phase0) getAttestationDeltas(allocator, cached_state, cache) else getRewardsAndPenaltiesAltair(allocator, cached_state, cache);
+    return if (fork == ForkSeq.phase0) try getAttestationDeltas(allocator, cached_state, cache, rewards, penalties) else try getRewardsAndPenaltiesAltair(allocator, cached_state, cache, rewards, penalties);
 }

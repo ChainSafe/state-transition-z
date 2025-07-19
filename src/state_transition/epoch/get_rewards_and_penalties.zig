@@ -43,16 +43,15 @@ pub const RewardsPenaltiesArray = struct {
 };
 
 /// consumer should deinit `rewards` and `penalties` arrays
-pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache) RewardsPenaltiesArray {
+pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const validator_count = state.getValidatorsCount();
     const active_increments = cache.total_active_stake_by_increment;
-    const rewards = U64Array.init(allocator);
-    rewards.resize(validator_count);
-    @memset(rewards.items, 0);
-    const penalties = U64Array.init(allocator);
-    penalties.resize(validator_count);
-    @memset(penalties.items, 0);
+    if (rewards.len != validator_count or penalties.len != validator_count) {
+        return error.InvalidArrayLength;
+    }
+    @memset(rewards, 0);
+    @memset(penalties, 0);
 
     const is_in_inactivity_leak = isInInactivityLeak(cached_state);
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
@@ -107,34 +106,29 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
         // same logic to getFlagIndexDeltas
         if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_UNSLASHED)) {
             if (!is_in_inactivity_leak) {
-                rewards.items[i] += timely_source_reward;
+                rewards[i] += timely_source_reward;
             }
         } else {
-            penalties.items[i] += timely_source_penalty;
+            penalties[i] += timely_source_penalty;
         }
 
         if (hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
             if (!is_in_inactivity_leak) {
-                rewards.items[i] += timely_target_reward;
+                rewards[i] += timely_target_reward;
             }
         } else {
-            penalties.items[i] += timely_target_penalty;
+            penalties[i] += timely_target_penalty;
         }
 
         if (hasMarkers(flag, FLAG_PREV_HEAD_ATTESTER_UNSLASHED) and !is_in_inactivity_leak) {
-            rewards.items[i] += timely_head_reward;
+            rewards[i] += timely_head_reward;
         }
 
         // Same logic to getInactivityPenaltyDeltas
         // TODO: if we have limited value in inactivityScores we can provide a cache too
         if (!hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
             const penalty_numerator = effective_balance_increment * EFFECTIVE_BALANCE_INCREMENT * state.getInactivityScore(i);
-            penalties.items[i] += @divFloor(penalty_numerator, penalty_denominator);
+            penalties[i] += @divFloor(penalty_numerator, penalty_denominator);
         }
     }
-
-    return .{
-        .rewards = rewards,
-        .penalties = penalties,
-    };
 }

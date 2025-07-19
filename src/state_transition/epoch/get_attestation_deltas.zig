@@ -43,8 +43,7 @@ pub const RewardsPenaltiesArray = struct {
     penalties: U64Array,
 };
 
-/// consumer should deinit `rewards` and `penalties` arrays
-pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache) RewardsPenaltiesArray {
+pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
 
@@ -52,12 +51,11 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const proposer_indices = cache.proposer_indices;
     const inclusion_delays = cache.inclusion_delays;
     const validator_count = flags.items.len;
-    const rewards = U64Array.init(allocator);
-    rewards.resize(validator_count);
-    @memset(rewards.items, 0);
-    const penalties = U64Array.init(allocator);
-    penalties.resize(validator_count);
-    @memset(penalties.items, 0);
+    if (rewards.len != validator_count or penalties.len != validator_count) {
+        return error.InvalidArrayLength;
+    }
+    @memset(rewards, 0);
+    @memset(penalties, 0);
 
     const total_balance = cache.total_active_stake_by_increment;
     const total_balance_in_gwei = total_balance * preset.EFFECTIVE_BALANCE_INCREMENT;
@@ -154,10 +152,5 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
                 }
             }
         }
-
-        return .{
-            .rewards = rewards,
-            .penalties = penalties,
-        };
     }
 }
