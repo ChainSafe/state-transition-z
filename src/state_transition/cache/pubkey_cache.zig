@@ -20,6 +20,7 @@ pub fn syncPubkeys(
     index_to_pubkey: *Index2PubkeyCache,
 ) !void {
     if (pubkey_to_index.size() != index_to_pubkey.items.len) {
+        std.debug.print("Error: Pubkey-to-index map size ({d}) does not match index-to-pubkey list length ({d})\n", .{ pubkey_to_index.size(), index_to_pubkey.items.len });
         return error.InvalidPubkeyIndexMap;
     }
 
