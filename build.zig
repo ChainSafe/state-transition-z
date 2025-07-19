@@ -176,24 +176,44 @@ pub fn build(b: *std.Build) void {
 
     const run_state_transition_unit_tests = b.addRunArtifact(state_transition_unit_tests);
 
-    const module_int = b.createModule(.{
+    // common test utils module used for different kinds of tests, like int, perf etc.
+    const test_utils = b.createModule(.{
+        .root_source_file = b.path("test/utils/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    test_utils.addImport("ssz", module_ssz);
+    test_utils.addImport("consensus_types", module_consensus_types);
+    test_utils.addImport("blst_min_pk", module_blst_min_pk);
+    test_utils.addImport("config", module_config);
+    test_utils.addImport("state_transition", module_state_transition);
+
+    const test_utils_tests = b.addTest(.{
+        .name = "utils",
+        .root_module = test_utils,
+        .filters = &[_][]const u8{},
+    });
+    const run_test_utils_tests = b.addRunArtifact(test_utils_tests);
+
+    const module_test_int = b.createModule(.{
         .root_source_file = b.path("test/int/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    module_int.addImport("config", module_config);
-    module_int.addImport("state_transition", module_state_transition);
-    module_int.addImport("ssz", dep_ssz.module("ssz"));
-    module_int.addImport("consensus_types", module_consensus_types);
-    module_int.addImport("blst_min_pk", module_blst_min_pk);
+    module_test_int.addImport("config", module_config);
+    module_test_int.addImport("state_transition", module_state_transition);
+    module_test_int.addImport("ssz", dep_ssz.module("ssz"));
+    module_test_int.addImport("consensus_types", module_consensus_types);
+    module_test_int.addImport("blst_min_pk", module_blst_min_pk);
+    module_test_int.addImport("test_utils", test_utils);
 
-    const test_int = b.addTest(.{
+    const test_int_tests = b.addTest(.{
         .name = "int",
-        .root_module = module_int,
+        .root_module = module_test_int,
         .filters = &[_][]const u8{},
     });
 
-    const run_test_int = b.addRunArtifact(test_int);
+    const run_test_int_tests = b.addRunArtifact(test_int_tests);
 
     // trigger via `zig build test:unit`
     const test_step = b.step("test:unit", "Run unit tests");
@@ -204,5 +224,7 @@ pub fn build(b: *std.Build) void {
 
     // trigger via `zig build test:int`
     const test_step_int = b.step("test:int", "Run int tests");
-    test_step_int.dependOn(&run_test_int.step);
+    test_step_int.dependOn(&run_test_int_tests.step);
+    // this also run tests inside test utils
+    test_step_int.dependOn(&run_test_utils_tests.step);
 }
