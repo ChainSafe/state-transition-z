@@ -8,12 +8,14 @@ const EpochTransitionCache = state_transition.EpochTransitionCache;
 test "EpochTransitionCache.initBeforeProcessEpoch" {
     const allocator = std.testing.allocator;
     const validator_count_arr = &.{ 256, 10_000 };
+
+    // this is created once per runtime, cannot put inside TestCachedBeaconStateAllForks
+    var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count_arr[0]);
+    defer reused_epoch_transition_cache.deinit();
+
     inline for (validator_count_arr) |validator_count| {
         var test_state = try TestCachedBeaconStateAllForks.init(allocator, validator_count);
         defer test_state.deinit();
-
-        var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
-        defer reused_epoch_transition_cache.deinit();
 
         var epoch_transition_cache = try EpochTransitionCache.initBeforeProcessEpoch(
             allocator,
