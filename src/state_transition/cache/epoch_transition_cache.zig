@@ -102,19 +102,23 @@ pub const EpochTransitionCache = struct {
     indices_eligible_for_activation_queue: ValidatorIndices,
     indices_eligible_for_activation: ValidatorIndices,
     indices_to_eject: ValidatorIndices,
-    proposer_indices: UsizeArray,
+    // this is borrowed from ReusedEpochTransitionCache
+    proposer_indices: []const usize,
     // phase0 only
-    inclusion_delays: UsizeArray,
-    flags: U8Array,
-    is_compounding_validator_arr: BoolArray,
+    inclusion_delays: []const usize,
+    // this is borrowed from ReusedEpochTransitionCache
+    flags: []const u8,
+    // this is borrowed from ReusedEpochTransitionCache
+    is_compounding_validator_arr: []const bool,
     balances: ?U64Array,
-    next_shuffling_active_indices: []ValidatorIndex,
+    next_shuffling_active_indices: []const ValidatorIndex,
     // TODO: nextShufflingDecisionRoot may not needed as we don't use ShufflingCache
     next_epoch_total_active_balance_by_increment: u64,
     // TODO: asyncShufflingCalculation may not needed as we don't use ShufflingCache
-    is_active_prev_epoch: BoolArray,
-    is_active_curr_epoch: BoolArray,
-    is_active_next_epoch: BoolArray,
+    // these are borrowed from ReusedEpochTransitionCache
+    is_active_prev_epoch: []const bool,
+    is_active_curr_epoch: []const bool,
+    is_active_next_epoch: []const bool,
 
     // TODO: no need EpochTransitionCacheOpts for zig version
     pub fn initBeforeProcessEpoch(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache) !EpochTransitionCache {
@@ -393,13 +397,13 @@ pub const EpochTransitionCache = struct {
             .next_shuffling_active_indices = next_shuffling_active_indices,
             // to be updated in processEffectiveBalanceUpdates
             .next_epoch_total_active_balance_by_increment = 0,
-            .is_active_prev_epoch = reused_cache.is_active_prev_epoch,
-            .is_active_curr_epoch = reused_cache.is_active_current_epoch,
-            .is_active_next_epoch = reused_cache.is_active_next_epoch,
-            .proposer_indices = reused_cache.proposer_indices,
-            .inclusion_delays = reused_cache.inclusion_delays,
-            .flags = reused_cache.flags,
-            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr,
+            .is_active_prev_epoch = reused_cache.is_active_prev_epoch.items,
+            .is_active_curr_epoch = reused_cache.is_active_current_epoch.items,
+            .is_active_next_epoch = reused_cache.is_active_next_epoch.items,
+            .proposer_indices = reused_cache.proposer_indices.items,
+            .inclusion_delays = reused_cache.inclusion_delays.items,
+            .flags = reused_cache.flags.items,
+            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr.items,
             // Will be assigned in processRewardsAndPenalties()
             .balances = null,
         };
@@ -422,5 +426,3 @@ pub const EpochTransitionCache = struct {
         }
     }
 };
-
-// TODO: unit tests
