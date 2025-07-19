@@ -423,18 +423,18 @@ pub const EpochCache = struct {
         self.sync_period = computeSyncPeriodAtEpoch(self.epoch);
     }
 
-    pub fn beforeEpochTransition(self: *EpochCache) void {
+    pub fn beforeEpochTransition(self: *EpochCache) !void {
         // Clone (copy) before being mutated in processEffectiveBalanceUpdates
-        const effective_balance_increment = EffectiveBalanceIncrements.initCapacity(self.allocator, self.effective_balance_increment.items.len);
-        effective_balance_increment.appendSlice(self.effective_balance_increment.items);
+        var effective_balance_increment = try EffectiveBalanceIncrements.initCapacity(self.allocator, self.effective_balance_increment.get().items.len);
+        try effective_balance_increment.appendSlice(self.effective_balance_increment.get().items);
         // unref the previous effective balance increment
         self.effective_balance_increment.release();
-        self.effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increment);
+        self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(self.allocator, effective_balance_increment);
     }
 
-    pub fn getBeaconCommittee(self: *const EpochCache, slot: Slot, index: CommitteeIndex) ![]const u32 {
-        const epoch_committees = self.getShufflingAtSlotOrNull(slot) orelse error.EpochShufflingNotFound;
-        const slot_committees = epoch_committees[slot % preset.SLOTS_PER_EPOCH];
+    pub fn getBeaconCommittee(self: *const EpochCache, slot: Slot, index: CommitteeIndex) ![]const ValidatorIndex {
+        const shuffling = self.getShufflingAtSlotOrNull(slot) orelse return error.EpochShufflingNotFound;
+        const slot_committees = shuffling.committees[slot % preset.SLOTS_PER_EPOCH];
         if (index >= slot_committees.len) {
             return error.CommitteeIndexOutOfBounds;
         }
@@ -568,18 +568,20 @@ pub const EpochCache = struct {
     }
 
     // TODO: getBeaconCommittee
-    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?EpochShuffling {
+    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*EpochShuffling {
         const epoch = computeEpochAtSlot(slot);
         return self.getShufflingAtEpochOrNull(epoch);
     }
 
-    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?EpochShuffling {
-        switch (epoch) {
-            self.epoch - 1 => return self.previous_shuffling.get(),
-            self.epoch => return self.current_shuffling.get(),
-            self.next_epoch => return self.next_shuffling.get(),
-            else => return null,
-        }
+    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*EpochShuffling {
+        const shuffling = if (epoch == self.epoch - 1)
+            self.previous_shuffling.get()
+        else if (epoch == self.epoch) self.current_shuffling.get() else if (epoch == self.next_epoch)
+            self.next_shuffling.get()
+        else
+            null;
+
+        return shuffling;
     }
 
     /// Note: The range of slots a validator has to perform duties is off by one.

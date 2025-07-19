@@ -7,15 +7,18 @@ const Secretkey = blst_min_pk.SecretKey;
 
 /// Generates a list of BLS public keys for interop testing.
 // TODO: store this to a file and cache there
-pub fn interopPubkeysCached(allocator: Allocator, validator_count: usize) !std.ArrayList(BLSPubkey) {
-    var pubkeys = try std.ArrayList(BLSPubkey).initCapacity(allocator, validator_count);
-
-    for (0..validator_count) |i| {
-        const ikm = [_]u8{@intCast(i % 256)} ** 32;
-        const sk = try Secretkey.keyGen(&ikm, null);
-        const pk = sk.skToPk();
-        try pubkeys.append(pk.toBytes());
+pub fn interopPubkeysCached(validator_count: usize, out: []BLSPubkey) !void {
+    if (out.len != validator_count) {
+        return error.InvalidLength;
     }
 
-    return pubkeys;
+    for (0..validator_count) |i| {
+        // only need to set for the first 8 bytes which is u64
+        var ikm = [_]u8{0} ** 32;
+        const u64_slice = std.mem.bytesAsSlice(u64, ikm[0..8]);
+        u64_slice[0] = @intCast(i);
+        const sk = try Secretkey.keyGen(&ikm, null);
+        const pk = sk.skToPk();
+        out[i] = (pk.toBytes());
+    }
 }

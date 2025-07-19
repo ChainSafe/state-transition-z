@@ -34,7 +34,8 @@ pub const CachedBeaconStateAllForks = struct {
         return cached_state;
     }
 
-    pub fn getEpochCache(self: *const CachedBeaconStateAllForks) *const EpochCache {
+    // TODO: do we need another getConst()?
+    pub fn getEpochCache(self: *const CachedBeaconStateAllForks) *EpochCache {
         return self.epoch_cache_ref.get();
     }
 

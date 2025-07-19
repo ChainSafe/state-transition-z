@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const mainnet_chain_config = @import("config").mainnet_chain_config;
 const ssz = @import("consensus_types");
 const ElectraBeaconState = ssz.electra.BeaconState.Type;
+const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const preset = ssz.preset;
 const BeaconConfig = @import("config").BeaconConfig;
 const ChainConfig = @import("config").ChainConfig;
@@ -22,11 +23,14 @@ pub fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, val
     beacon_state_ptr.* = ssz.electra.BeaconState.default_value;
     // set the slot to be ready for the next epoch transition
     beacon_state_ptr.slot = chain_config.ELECTRA_FORK_EPOCH * preset.SLOTS_PER_EPOCH + 2025 * preset.SLOTS_PER_EPOCH - 1;
-    const pubkeys = try interopPubkeysCached(allocator, validator_count);
-    defer pubkeys.deinit();
+
+    const pubkeys = try allocator.alloc(BLSPubkey, validator_count);
+    defer allocator.free(pubkeys);
+    try interopPubkeysCached(validator_count, pubkeys);
+
     for (0..validator_count) |i| {
         const validator = ssz.phase0.Validator.Type{
-            .pubkey = pubkeys.items[i],
+            .pubkey = pubkeys[i],
             .withdrawal_credentials = [_]u8{0} ** 32,
             .effective_balance = 32e9,
             .slashed = false,
@@ -42,7 +46,7 @@ pub fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, val
         try beacon_state_ptr.current_epoch_participation.append(allocator, 0b11111111);
     }
     for (0..preset.SYNC_COMMITTEE_SIZE) |i| {
-        const pubkey = pubkeys.items[i % validator_count];
+        const pubkey = pubkeys[i % validator_count];
         beacon_state_ptr.current_sync_committee.pubkeys[i] = pubkey;
         beacon_state_ptr.next_sync_committee.pubkeys[i] = pubkey;
     }
@@ -99,7 +103,7 @@ pub const TestCachedBeaconStateAllForks = struct {
     }
 };
 
-test "createCachedBeaconState" {
+test TestCachedBeaconStateAllForks {
     const allocator = std.testing.allocator;
     var test_state = try TestCachedBeaconStateAllForks.init(allocator, 256);
     defer test_state.deinit();
