@@ -121,7 +121,7 @@ pub const EpochTransitionCache = struct {
     is_active_next_epoch: []const bool,
 
     // TODO: no need EpochTransitionCacheOpts for zig version
-    pub fn initBeforeProcessEpoch(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache) !EpochTransitionCache {
+    pub fn beforeProcessEpoch(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache, out: *EpochTransitionCache) !void {
         const config = cached_state.config;
         var epoch_cache = cached_state.getEpochCache();
         const state = cached_state.state;
@@ -381,7 +381,7 @@ pub const EpochTransitionCache = struct {
             try indices_eligible_for_activation.append(activation.validator_index);
         }
 
-        return .{
+        out.* = .{
             .prev_epoch = prev_epoch,
             .current_epoch = current_epoch,
             .total_active_stake_by_increment = total_active_stake_by_increment,

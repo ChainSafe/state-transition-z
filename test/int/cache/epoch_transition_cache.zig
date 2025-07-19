@@ -5,7 +5,7 @@ const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 
-test "EpochTransitionCache.initBeforeProcessEpoch" {
+test "EpochTransitionCache.beforeProcessEpoch" {
     const allocator = std.testing.allocator;
     const validator_count_arr = &.{ 256, 10_000 };
 
@@ -17,11 +17,8 @@ test "EpochTransitionCache.initBeforeProcessEpoch" {
         var test_state = try TestCachedBeaconStateAllForks.init(allocator, validator_count);
         defer test_state.deinit();
 
-        var epoch_transition_cache = try EpochTransitionCache.initBeforeProcessEpoch(
-            allocator,
-            test_state.cached_state,
-            &reused_epoch_transition_cache,
-        );
+        var epoch_transition_cache: EpochTransitionCache = undefined;
+        try EpochTransitionCache.beforeProcessEpoch(allocator, test_state.cached_state, &reused_epoch_transition_cache, &epoch_transition_cache);
         defer epoch_transition_cache.deinit();
     }
 }
