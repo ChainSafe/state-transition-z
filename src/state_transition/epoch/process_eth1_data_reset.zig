@@ -5,7 +5,7 @@ const preset = ssz.preset;
 const EPOCHS_PER_ETH1_VOTING_PERIOD = preset.EPOCHS_PER_ETH1_VOTING_PERIOD;
 
 /// Reset eth1DataVotes tree every `EPOCHS_PER_ETH1_VOTING_PERIOD`.
-pub fn processEth1DataReset(cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) void {
+pub fn processEth1DataReset(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
     const next_epoch = cache.current_epoch + 1;
 
     // reset eth1 data votes

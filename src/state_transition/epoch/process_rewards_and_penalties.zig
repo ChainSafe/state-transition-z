@@ -9,7 +9,7 @@ const getAttestationDeltas = @import("./get_attestation_deltas.zig").getAttestat
 const getRewardsAndPenaltiesAltair = @import("./get_rewards_and_penalties.zig").getRewardsAndPenaltiesAltair;
 const RewardsPenaltiesArray = @import("./get_rewards_and_penalties.zig").RewardsPenaltiesArray;
 
-pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) void {
+pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
     // No rewards are applied at the end of `GENESIS_EPOCH` because rewards are for work done in the previous epoch
     if (cache.current_epoch == params.GENESIS_EPOCH) {
         return;

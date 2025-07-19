@@ -11,7 +11,7 @@ const getBlockRoot = @import("../utils/block_root.zig").getBlockRoot;
 /// Update justified and finalized checkpoints depending on network participation.
 ///
 /// PERF: Very low (constant) cost. Persist small objects to the tree.
-pub fn processJustificationAndFinalization(cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     // Initial FFG checkpoint values have a `0x00` stub for `root`.
     // Skip FFG updates in the first two epochs to avoid corner cases that might result in modifying this stub.
     if (cache.current_epoch <= GENESIS_EPOCH + 1) {
@@ -20,7 +20,7 @@ pub fn processJustificationAndFinalization(cached_state: CachedBeaconStateAllFor
     try weighJustificationAndFinalization(cached_state, cache.total_active_stake_by_increment, cache.prev_epoch_unslashed_stake_target_by_increment, cache.curr_epoch_unslashed_target_stake_by_increment);
 }
 
-pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
+pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
     const state = cached_state.state;
     const current_epoch = computeEpochAtSlot(state.getSlot());
     const previous_epoch = current_epoch - 1;

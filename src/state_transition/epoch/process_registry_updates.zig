@@ -6,7 +6,7 @@ const ForkSeq = @import("params").ForkSeq;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
 const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
 
-pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processRegistryUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
 

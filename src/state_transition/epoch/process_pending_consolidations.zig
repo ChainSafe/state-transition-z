@@ -5,6 +5,7 @@ const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").Epoc
 const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 
+/// also modify balances inside EpochTransitionCache
 pub fn processPendingConsolidations(cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;

@@ -14,8 +14,8 @@ const PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX = preset.PROPORTIONAL_SLASHING_
 /// TODO: consider returning number[] when we switch to TreeView
 pub fn processSlashings(
     allocator: std.mem.Allocator,
-    cached_state: CachedBeaconStateAllForks,
-    cache: EpochTransitionCache,
+    cached_state: *CachedBeaconStateAllForks,
+    cache: *const EpochTransitionCache,
 ) void {
     // Return early if there no index to slash
     if (cache.indicesToSlash.length == 0) {

@@ -43,7 +43,7 @@ pub const RewardsPenaltiesArray = struct {
 };
 
 /// consumer should deinit `rewards` and `penalties` arrays
-pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) RewardsPenaltiesArray {
+pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache) RewardsPenaltiesArray {
     const state = cached_state.state;
     const validator_count = state.getValidatorsCount();
     const active_increments = cache.total_active_stake_by_increment;

@@ -8,7 +8,7 @@ const isInInactivityLeak = @import("../utils/finality.zig").isInInactivityLeak;
 const attester_status_utils = @import("../utils/attester_status.zig");
 const hasMarkers = attester_status_utils.hasMarkers;
 
-pub fn processInactivityUpdates(cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     if (cached_state.epoch_cache.epoch == GENESIS_EPOCH) {
         return;
     }

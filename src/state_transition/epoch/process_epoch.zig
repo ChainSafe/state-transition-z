@@ -20,7 +20,7 @@ const processParticipationFlagUpdates = @import("./process_participation_flag_up
 const processSyncCommitteeUpdates = @import("./process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 
 // TODO: add metrics
-pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const state = cached_state.state;
     processJustificationAndFinalization(cached_state, cache);
 
