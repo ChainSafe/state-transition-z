@@ -1,6 +1,6 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const types = @import("../types.zig");
-const Epoch = types.Epoch;
+const ssz = @import("consensus_types");
+const Epoch = ssz.primitive.Epoch.Type;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const params = @import("params");
 const GENESIS_EPOCH = params.GENESIS_EPOCH;
@@ -9,7 +9,7 @@ const attester_status_utils = @import("../utils/attester_status.zig");
 const hasMarkers = attester_status_utils.hasMarkers;
 
 pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
-    if (cached_state.epoch_cache.epoch == GENESIS_EPOCH) {
+    if (cached_state.getEpochCache().epoch == GENESIS_EPOCH) {
         return;
     }
 
@@ -26,8 +26,8 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
 
     // for TreeView, we may need a reused inactivityScoresArr
 
-    for (0..flags.items.len) |i| {
-        const flag = flags.items[i];
+    for (0..flags.len) |i| {
+        const flag = flags[i];
         if (hasMarkers(flag, FLAG_ELIGIBLE_ATTESTER)) {
             var inactivity_score = state.getInactivityScore(i);
 

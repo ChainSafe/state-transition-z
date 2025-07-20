@@ -58,7 +58,7 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
             // Read validator state
             var is_validator_exited = false;
             var is_validator_withdrawn = false;
-            const validator_index = epoch_cache.getValidatorIndex(&deposit.pubkey);
+            const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey);
 
             if (isValidatorKnown(state, validator_index)) {
                 const validator = state.getValidator(validator_index.?);

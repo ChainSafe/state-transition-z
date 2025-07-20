@@ -16,9 +16,9 @@ pub fn processSlashings(
     allocator: std.mem.Allocator,
     cached_state: *CachedBeaconStateAllForks,
     cache: *const EpochTransitionCache,
-) void {
+) !void {
     // Return early if there no index to slash
-    if (cache.indicesToSlash.length == 0) {
+    if (cache.indices_to_slash.items.len == 0) {
         return;
     }
     const config = cached_state.config;
@@ -27,34 +27,35 @@ pub fn processSlashings(
 
     const total_balance_by_increment = cache.total_active_stake_by_increment;
     const fork = config.getForkSeq(state.getSlot());
-    const proportional_slashing_multiplier =
-        if (fork == ForkSeq.phase0) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork == ForkSeq.altair)
+    const proportional_slashing_multiplier: u64 =
+        if (fork.isPhase0()) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork.isAltair())
             PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR
         else
             PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;
 
-    const effective_balance_increments = epoch_cache.effective_balance_increment;
+    // TODO: implement getEffectiveBalanceIncrement()?
+    const effective_balance_increments = epoch_cache.effective_balance_increment.get().items;
     const adjusted_total_slashing_balance_by_increment = @min(getTotalSlashingsByIncrement(state) * proportional_slashing_multiplier, total_balance_by_increment);
     const increment = EFFECTIVE_BALANCE_INCREMENT;
 
     const penalty_per_effective_balance_increment = @divFloor((adjusted_total_slashing_balance_by_increment * increment), total_balance_by_increment);
 
-    const penaltiesByEffectiveBalanceIncrement = std.AutoHashMap(u64, u64).init(allocator);
-    defer penaltiesByEffectiveBalanceIncrement.deinit();
+    var penalties_by_effective_balance_increment = std.AutoHashMap(u64, u64).init(allocator);
+    defer penalties_by_effective_balance_increment.deinit();
 
-    for (cache.indices_to_slash) |index| {
+    for (cache.indices_to_slash.items) |index| {
         const effective_balance_increment = effective_balance_increments[index];
-        var penalty = penaltiesByEffectiveBalanceIncrement.get(effective_balance_increment);
+        var penalty: ?u64 = penalties_by_effective_balance_increment.get(effective_balance_increment);
         if (penalty == null) {
-            if (fork < ForkSeq.electra) {
+            if (!fork.isPostElectra()) {
                 const penalty_numerator_by_increment = effective_balance_increment * adjusted_total_slashing_balance_by_increment;
                 penalty = @divFloor(penalty_numerator_by_increment, total_balance_by_increment) * increment;
             } else {
                 penalty = penalty_per_effective_balance_increment * effective_balance_increment;
             }
-            penaltiesByEffectiveBalanceIncrement.put(effective_balance_increment, penalty);
+            try penalties_by_effective_balance_increment.put(effective_balance_increment, penalty.?);
         }
-        decreaseBalance(state, index, penalty);
+        decreaseBalance(state, index, penalty.?);
     }
 }
 

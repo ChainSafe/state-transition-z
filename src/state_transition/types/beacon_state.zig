@@ -382,13 +382,13 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setValidator(self: *BeaconStateAllForks, index: usize, validator: *const Validator) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.items[index] = *validator,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.items[index] = validator.*,
         }
     }
 
     pub fn appendValidator(self: *BeaconStateAllForks, validator: *const Validator) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.append(*validator),
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.validators.append(validator.*),
         }
     }
 
@@ -629,21 +629,21 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn getInactivityScore(self: *const BeaconStateAllForks, index: usize) u64 {
         return switch (self.*) {
             .phase0 => @panic("inactivity_scores is not available in phase0"),
-            else => |state| state.inactivity_scores.items[index],
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.inactivity_scores.items[index],
         };
     }
 
     pub fn setInactivityScore(self: *BeaconStateAllForks, index: usize, score: u64) void {
         switch (self.*) {
             .phase0 => @panic("inactivity_scores is not available in phase0"),
-            else => |state| state.inactivity_scores.items[index] = score,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.inactivity_scores.items[index] = score,
         }
     }
 
     pub fn addInactivityScore(self: *BeaconStateAllForks, score: u64) void {
         switch (self.*) {
             .phase0 => @panic("inactivity_scores is not available in phase0"),
-            else => |state| state.inactivity_scores.append(score),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.inactivity_scores.append(score),
         }
     }
 
@@ -901,7 +901,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getPendingDeposits(self: *const BeaconStateAllForks) []const PendingDeposit {
+    pub fn getPendingDeposits(self: *const BeaconStateAllForks) []PendingDeposit {
         return switch (self.*) {
             .phase0 => @panic("pending_deposits is not available in phase0"),
             .altair => @panic("pending_deposits is not available in altair"),

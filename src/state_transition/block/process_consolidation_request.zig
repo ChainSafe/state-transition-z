@@ -51,7 +51,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     }
 
     // If there is too little available consolidation churn limit, consolidation requests are ignored
-    if (getConsolidationChurnLimit(cached_state.epoch_cache) <= preset.MIN_ACTIVATION_BALANCE) {
+    if (getConsolidationChurnLimit(epoch_cache) <= preset.MIN_ACTIVATION_BALANCE) {
         return;
     }
 

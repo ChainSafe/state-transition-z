@@ -42,7 +42,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const flags = cache.flags;
     const proposer_indices = cache.proposer_indices;
     const inclusion_delays = cache.inclusion_delays;
-    const validator_count = flags.items.len;
+    const validator_count = flags.len;
     if (rewards.len != validator_count or penalties.len != validator_count) {
         return error.InvalidArrayLength;
     }
@@ -58,7 +58,9 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const prev_epoch_head_stake_by_increment = cache.prev_epoch_unslashed_stake_head_by_increment;
 
     // sqrt first, before factoring out the increment for later usage
-    const balance_sq_root = @sqrt(total_balance_in_gwei);
+    const total_balance_in_gwei_f64: f64 = @floatFromInt(total_balance_in_gwei);
+    const total_balance_in_gwei_sqrt: f64 = @sqrt(total_balance_in_gwei_f64);
+    const balance_sq_root: u64 = @intFromFloat(total_balance_in_gwei_sqrt);
     const finality_delay = cache.prev_epoch - state.getFinalizedCheckpoint().epoch;
 
     const BASE_REWARDS_PER_EPOCH = BASE_REWARDS_PER_EPOCH_CONST;
@@ -67,14 +69,15 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
 
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
     // so there are limited values of them like 32, 31, 30
-    const reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 
-    const effective_balance_increments = epoch_cache.effective_balance_increment;
-    for (0..flags.items.len) |i| {
-        const flag = flags.items[i];
+    // TODO: implement getEffectiveBalanceIncrements()
+    const effective_balance_increments = epoch_cache.effective_balance_increment.get();
+    for (0..flags.len) |i| {
+        const flag = flags[i];
         const effective_balance_increment = effective_balance_increments.items[i];
-        const effective_balance = effective_balance_increment * preset.EFFECTIVE_BALANCE_INCREMENT;
+        const effective_balance: u64 = @as(u64, effective_balance_increment) * preset.EFFECTIVE_BALANCE_INCREMENT;
 
         var reward_item = reward_penalty_item_cache.get(effective_balance_increment);
         if (reward_item == null) {
@@ -90,7 +93,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
                 .base_penalty = base_reward * BASE_REWARDS_PER_EPOCH_CONST - proposer_reward,
                 .finality_delay_penalty = @divFloor((effective_balance * finality_delay), INACTIVITY_PENALTY_QUOTIENT),
             };
-            try reward_penalty_item_cache.put(effective_balance_increment, reward_item);
+            try reward_penalty_item_cache.put(effective_balance_increment, reward_item.?);
         }
 
         const base_reward = reward_item.?.base_reward;

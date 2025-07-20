@@ -48,16 +48,16 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
     const is_in_inactivity_leak = isInInactivityLeak(cached_state);
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
     // so there are limited values of them like 32, 31, 30
-    const reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 
     const config = cached_state.config;
     const epoch_cache = cached_state.getEpochCache();
     const fork = config.getForkSeq(state.getSlot());
 
-    const inactivity_penality_multiplier =
-        if (fork == ForkSeq.altair) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
-    const penalty_denominator = config.INACTIVITY_SCORE_BIAS * inactivity_penality_multiplier;
+    const inactivity_penality_multiplier: u64 =
+        if (fork.isAltair()) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
+    const penalty_denominator = config.chain.INACTIVITY_SCORE_BIAS * inactivity_penality_multiplier;
 
     const flags = cache.flags;
     for (flags, 0..) |flag, i| {
@@ -65,7 +65,8 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
             continue;
         }
 
-        const effective_balance_increment = epoch_cache.effective_balance_increment[i];
+        //TODO: implement getEffectiveBalanceIncrement()
+        const effective_balance_increment = epoch_cache.effective_balance_increment.get().items[i];
 
         var reward_penalty_item = reward_penalty_item_cache.get(effective_balance_increment);
         if (reward_penalty_item == null) {
@@ -73,9 +74,9 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
             const ts_weigh = PARTICIPATION_FLAG_WEIGHTS[TIMELY_SOURCE_FLAG_INDEX];
             const tt_weigh = PARTICIPATION_FLAG_WEIGHTS[TIMELY_TARGET_FLAG_INDEX];
             const th_weigh = PARTICIPATION_FLAG_WEIGHTS[TIMELY_HEAD_FLAG_INDEX];
-            const ts_unslashed_participating_increments = cache.prev_epoch_unslashed_stake.source_stake_by_increment;
-            const tt_unslashed_participating_increments = cache.prev_epoch_unslashed_stake.target_stake_by_increment;
-            const th_unslashed_participating_increments = cache.prev_epoch_unslashed_stake.head_stake_by_increment;
+            const ts_unslashed_participating_increments = cache.prev_epoch_unslashed_stake_source_by_increment;
+            const tt_unslashed_participating_increments = cache.prev_epoch_unslashed_stake_target_by_increment;
+            const th_unslashed_participating_increments = cache.prev_epoch_unslashed_stake_head_by_increment;
             const ts_reward_numerator = base_reward * ts_weigh * ts_unslashed_participating_increments;
             const tt_reward_numerator = base_reward * tt_weigh * tt_unslashed_participating_increments;
             const th_reward_numerator = base_reward * th_weigh * th_unslashed_participating_increments;
@@ -119,7 +120,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
         // Same logic to getInactivityPenaltyDeltas
         // TODO: if we have limited value in inactivityScores we can provide a cache too
         if (!hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
-            const penalty_numerator = effective_balance_increment * EFFECTIVE_BALANCE_INCREMENT * state.getInactivityScore(i);
+            const penalty_numerator: u64 = @as(u64, effective_balance_increment) * EFFECTIVE_BALANCE_INCREMENT * state.getInactivityScore(i);
             penalties[i] += @divFloor(penalty_numerator, penalty_denominator);
         }
     }

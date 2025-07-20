@@ -558,7 +558,7 @@ pub const EpochCache = struct {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: BLSPubkey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: Publickey) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
