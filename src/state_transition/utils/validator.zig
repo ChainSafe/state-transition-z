@@ -10,6 +10,7 @@ const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const BeaconConfig = @import("config").BeaconConfig;
 const ForkSeq = @import("params").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
+const WithdrawalCredentials = ssz.primitive.Root.Type;
 const hasCompoundingWithdrawalCredential = @import("./electra.zig").hasCompoundingWithdrawalCredential;
 
 pub fn isActiveValidator(validator: *const Validator, epoch: Epoch) bool {
@@ -66,7 +67,7 @@ pub fn getConsolidationChurnLimit(epoch_cache: *const EpochCache) u64 {
     return getBalanceChurnLimitFromCache(epoch_cache) - getActivationExitChurnLimit(epoch_cache);
 }
 
-pub fn getMaxEffectiveBalance(withdrawal_credentials: []const u8) u64 {
+pub fn getMaxEffectiveBalance(withdrawal_credentials: WithdrawalCredentials) u64 {
     // Compounding withdrawal credential only available since Electra
     if (hasCompoundingWithdrawalCredential(withdrawal_credentials)) {
         return preset.MAX_EFFECTIVE_BALANCE_ELECTRA;

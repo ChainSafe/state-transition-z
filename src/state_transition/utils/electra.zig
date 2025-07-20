@@ -7,6 +7,7 @@ const WithdrawalCredentials = types.WithdrawalCredentials;
 const BLSPubkey = types.BLSPubkey;
 const ValidatorIndex = types.ValidatorIndex;
 const PendingDeposit = types.PendingDeposit;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const hasEth1WithdrawalCredential = @import("./capella.zig").hasEth1WithdrawalCredential;
 const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
@@ -54,11 +55,11 @@ pub fn queueExcessActiveBalance(cached_state: *CachedBeaconStateAllForks, index:
     }
 }
 
-pub fn isPubkeyKnown(state: *const CachedBeaconStateAllForks, pubkey: BLSPubkey) bool {
+pub fn isPubkeyKnown(state: *const BeaconStateAllForks, pubkey: BLSPubkey) bool {
     return isValidatorKnown(state, state.getEpochCache().getValidatorIndex(pubkey));
 }
 
-pub fn isValidatorKnown(state: *const CachedBeaconStateAllForks, index: ?ValidatorIndex) bool {
+pub fn isValidatorKnown(state: *const BeaconStateAllForks, index: ?ValidatorIndex) bool {
     const validator_index = index orelse return false;
-    return validator_index < state.getValidatorCount();
+    return validator_index < state.getValidatorsCount();
 }

@@ -562,9 +562,12 @@ pub const EpochCache = struct {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
-    pub fn addPubkey(self: *EpochCache, index: ValidatorIndex, pubkey: Publickey) !void {
-        self.pubkey_to_index.set(pubkey[0..], index);
-        self.index_to_pubkey.set(index, try BLSPubkey.fromBytes(pubkey));
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
+        try self.pubkey_to_index.set(pubkey[0..], index);
+        // this is deinit() by application
+        const pk_ptr = try allocator.create(BLSPubkey);
+        pk_ptr.* = try BLSPubkey.fromBytes(&pubkey);
+        self.index_to_pubkey.items[index] = pk_ptr;
     }
 
     // TODO: getBeaconCommittee
@@ -618,15 +621,15 @@ pub const EpochCache = struct {
     // }
 
     /// This is different from typescript version: only allocate new EffectiveBalanceIncrements if needed
-    pub fn effectiveBalanceIncrementsSet(self: *const EpochCache, index: usize, effective_balance: u64) void {
+    pub fn effectiveBalanceIncrementsSet(self: *EpochCache, allocator: Allocator, index: usize, effective_balance: u64) !void {
         var effective_balance_increments = self.effective_balance_increment.get();
         if (index >= effective_balance_increments.items.len) {
             // Clone and extend effectiveBalanceIncrements
-            effective_balance_increments = getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
+            effective_balance_increments = try getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
             self.effective_balance_increment.release();
-            self.effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increments);
+            self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(allocator, effective_balance_increments);
         }
-        self.effective_balance_increment.get().items[index] = @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
+        self.effective_balance_increment.get().items[index] = @intCast(@divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
     }
 
     pub fn isPostElectra(self: *const EpochCache) bool {

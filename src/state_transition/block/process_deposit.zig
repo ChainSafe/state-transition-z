@@ -1,3 +1,5 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
 const BeaconConfig = @import("config").BeaconConfig;
 const types = @import("../type.zig");
 const BLSPubkey = types.BLSPubkey;
@@ -56,7 +58,7 @@ pub const DepositData = union(enum) {
     }
 };
 
-pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const ssz.phase0.Deposit.Type) !void {
+pub fn processDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: *const ssz.phase0.Deposit.Type) !void {
     const state = cached_state.state;
     // verify the merkle branch
     if (!verifyMerkleBranch(ssz.phase0.DepositData.hashTreeRoot(deposit.data), deposit.proof, preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1, state.getEth1DepositIndex(), state.getEth1Data().deposit_root)) {
@@ -65,14 +67,14 @@ pub fn processDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const 
 
     // deposits must be processed in order
     state.increaseEth1DepositIndex();
-    applyDeposit(cached_state, .{
+    applyDeposit(allocator, cached_state, .{
         .phase0 = deposit.data,
     });
 }
 
 /// Adds a new validator into the registry. Or increase balance if already exist.
 /// Follows applyDeposit() in consensus spec. Will be used by processDeposit() and processDepositRequest()
-pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
+pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: *const DepositData) !void {
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
@@ -87,7 +89,7 @@ pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const De
     if (state.isPreElectra()) {
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
-                try addValidatorToRegistry(cached_state, pubkey, withdrawal_credentials, amount);
+                try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, amount);
             }
         } else {
             // increase balance by deposit amount right away pre-electra
@@ -105,7 +107,7 @@ pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const De
 
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
-                try addValidatorToRegistry(cached_state, pubkey, withdrawal_credentials, 0);
+                try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
                 state.addPendingDeposit(pending_deposit);
             }
         } else {
@@ -114,47 +116,47 @@ pub fn applyDeposit(cached_state: *CachedBeaconStateAllForks, deposit: *const De
     }
 }
 
-pub fn addValidatorToRegistry(cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
+pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const validators = state.validators;
+    const validators = state.getValidators();
     // add validator and balance entries
     const effective_balance = @min(
         amount - (amount % preset.EFFECTIVE_BALANCE_INCREMENT),
         if (state.isPreElectra()) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
     );
-    state.appendValidator(.{
+    try state.appendValidator(allocator, &.{
         .pubkey = pubkey,
         .withdrawal_credentials = withdrawal_credentials,
-        .activation_eligibility_epoch = preset.FAR_FUTURE_EPOCH,
-        .activation_epoch = preset.FAR_FUTURE_EPOCH,
-        .exit_epoch = preset.FAR_FUTURE_EPOCH,
-        .withdrawable_epoch = preset.FAR_FUTURE_EPOCH,
+        .activation_eligibility_epoch = params.FAR_FUTURE_EPOCH,
+        .activation_epoch = params.FAR_FUTURE_EPOCH,
+        .exit_epoch = params.FAR_FUTURE_EPOCH,
+        .withdrawable_epoch = params.FAR_FUTURE_EPOCH,
         .effective_balance = effective_balance,
         .slashed = false,
     });
 
-    const validator_index = validators.len - 1;
+    const validator_index = validators.items.len - 1;
     // TODO Electra: Review this
     // Updating here is better than updating at once on epoch transition
     // - Simplify genesis fn applyDeposits(): effectiveBalanceIncrements is populated immediately
     // - Keep related code together to reduce risk of breaking this cache
     // - Should have equal performance since it sets a value in a flat array
-    epoch_cache.effectiveBalanceIncrementsSet(validator_index, effective_balance);
+    try epoch_cache.effectiveBalanceIncrementsSet(allocator, validator_index, effective_balance);
 
     // now that there is a new validator, update the epoch context with the new pubkey
-    epoch_cache.addPubkey(validator_index, pubkey);
+    try epoch_cache.addPubkey(allocator, validator_index, pubkey);
 
     // Only after altair:
     if (state.isPostAltair()) {
-        state.addInactivityScore(0);
+        try state.addInactivityScore(allocator, 0);
 
         // add participation caches
-        state.addPreviousEpochParticipation(0);
-        state.addCurrentEpochParticipation(0);
+        try state.addPreviousEpochParticipation(allocator, 0);
+        try state.addCurrentEpochParticipation(allocator, 0);
     }
 
-    state.appendBalance(amount);
+    try state.appendBalance(allocator, amount);
 }
 
 pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, withdrawal_credential: WithdrawalCredentials, amount: u64, deposit_signature: BLSSignature) !bool {
@@ -174,7 +176,11 @@ pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, w
     try computeSigningRoot(ssz.phase0.DepositMessage, &deposit_message, domain, &signing_root);
 
     // Pubkeys must be checked for group + inf. This must be done only once when the validator deposit is processed
-    const public_key = try blst.PublicKey.fromBytes(&pubkey, true);
-    const signature = try blst.Signature.fromBytes(&deposit_signature, true);
-    return try verify(&signing_root, &public_key, &signature, null, null);
+    // TODO(blst): why fromBytes does not accept another bool param?
+    // const public_key = try blst.PublicKey.fromBytes(&pubkey, true);
+    const public_key = try blst.PublicKey.fromBytes(&pubkey);
+    // TODO(blst): why fromBytes does not accept another bool param?
+    // const signature = try blst.Signature.fromBytes(&deposit_signature, true);
+    const signature = try blst.Signature.fromBytes(&deposit_signature);
+    return verify(&signing_root, &public_key, &signature, null, null);
 }

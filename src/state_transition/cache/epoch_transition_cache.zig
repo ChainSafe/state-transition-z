@@ -114,8 +114,8 @@ pub const EpochTransitionCache = struct {
     inclusion_delays: []const usize,
     // this is borrowed from ReusedEpochTransitionCache
     flags: []const u8,
-    // this is borrowed from ReusedEpochTransitionCache
-    is_compounding_validator_arr: []const bool,
+    // this is borrowed from ReusedEpochTransitionCache, we append it in processPendingDeposits()
+    is_compounding_validator_arr: BoolArray,
     rewards: []u64,
     penalties: []u64,
     balances: ?U64Array,
@@ -415,7 +415,7 @@ pub const EpochTransitionCache = struct {
             .proposer_indices = reused_cache.proposer_indices.items,
             .inclusion_delays = reused_cache.inclusion_delays.items,
             .flags = reused_cache.flags.items,
-            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr.items,
+            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr,
             .rewards = reused_cache.rewards.items,
             .penalties = reused_cache.penalties.items,
             // Will be assigned in processRewardsAndPenalties()
