@@ -70,7 +70,9 @@ pub const BeaconBlock = union(enum) {
         _ = fmt;
         _ = options;
         return switch (self) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => try writer.print("{s}", .{@tagName(self)}),
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => {
+                try writer.print("{s} (at slot {})", .{ @tagName(self), self.getSlot() });
+            },
         };
     }
 
