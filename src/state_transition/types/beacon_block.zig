@@ -218,7 +218,7 @@ pub const BeaconBlockBody = union(enum) {
             .capella => |body| .{ .capella = &body.execution_payload },
             .deneb => |body| .{ .deneb = &body.execution_payload },
             .electra => |body| .{ .electra = &body.execution_payload },
-            .phase0, .altair => panic("ExecutionPayload is not available in {}", .{self}),
+            else => panic("ExecutionPayload is not available in {}", .{self}),
         };
     }
 
@@ -228,7 +228,7 @@ pub const BeaconBlockBody = union(enum) {
             .capella => |body| body.bls_to_execution_changes.items,
             .deneb => |body| body.bls_to_execution_changes.items,
             .electra => |body| body.bls_to_execution_changes.items,
-            .phase0, .altair, .bellatrix => panic("BlsToExecutionChanges is not available in {}", .{self}),
+            else => panic("BlsToExecutionChanges is not available in {}", .{self}),
         };
     }
 
@@ -237,7 +237,7 @@ pub const BeaconBlockBody = union(enum) {
         return switch (self.*) {
             .deneb => |body| &body.blob_kzg_commitments,
             .electra => |body| &body.blob_kzg_commitments,
-            .phase0, .altair, .bellatrix, .capella => panic("BlobKzgCommitments is not available in {}", .{self}),
+            else => panic("BlobKzgCommitments is not available in {}", .{self}),
         };
     }
 

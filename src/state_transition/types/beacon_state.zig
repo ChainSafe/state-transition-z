@@ -693,68 +693,68 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getLatestExecutionPayloadHeader(self: *const BeaconStateAllForks) *const ExecutionPayloadHeader {
         return switch (self.*) {
-            .phase0, .altair => panic("latest_execution_payload_header is not available in {}", .{self}),
             .bellatrix => |state| &.{ .bellatrix = state.latest_execution_payload_header },
             .capella => |state| &.{ .capella = state.latest_execution_payload_header },
             .deneb, .electra => |state| &.{ .deneb = state.latest_execution_payload_header },
+            else => panic("latest_execution_payload_header is not available in {}", .{self}),
         };
     }
 
     pub fn setLatestExecutionPayloadHeader(self: *BeaconStateAllForks, header: *const ExecutionPayloadHeader) void {
         switch (self.*) {
-            .phase0, .altair => panic("latest_execution_payload_header is not available in {}", .{self}),
             .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
             .capella => |state| state.latest_execution_payload_header = header.*.capella,
             .deneb, .electra => |state| state.latest_execution_payload_header = header.*.deneb,
+            else => panic("latest_execution_payload_header is not available in {}", .{self}),
         }
     }
 
     pub fn getNextWithdrawalIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("next_withdrawal_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_index,
+            else => panic("next_withdrawal_index is not available in {}", .{self}),
         };
     }
 
     pub fn setNextWithdrawalIndex(self: *BeaconStateAllForks, index: u64) void {
         switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("next_withdrawal_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_index = index,
+            else => panic("next_withdrawal_index is not available in {}", .{self}),
         }
     }
 
     pub fn getNextWithdrawalValidatorIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("next_withdrawal_validator_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index,
+            else => panic("next_withdrawal_validator_index is not available in {}", .{self}),
         };
     }
 
     pub fn setNextWithdrawalValidatorIndex(self: *BeaconStateAllForks, index: u64) void {
         switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("next_withdrawal_validator_index is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.next_withdrawal_validator_index = index,
+            else => panic("next_withdrawal_validator_index is not available in {}", .{self}),
         }
     }
 
     pub fn getHistoricalSummary(self: *const BeaconStateAllForks, index: usize) *const HistoricalSummary {
         return switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| &state.historical_summaries.items[index],
+            else => panic("historical_summary is not available in {}", .{self}),
         };
     }
 
     pub fn setHistoricalSummary(self: *BeaconStateAllForks, index: usize, summary: *const HistoricalSummary) void {
         switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.historical_summaries.items[index] = *summary,
+            else => panic("historical_summary is not available in {}", .{self}),
         }
     }
 
     pub fn addHistoricalSummary(self: *BeaconStateAllForks, summary: *const HistoricalSummary) void {
         switch (self.*) {
-            .phase0, .altair, .bellatrix => panic("historical_summary is not available in {}", .{self}),
             inline .capella, .deneb, .electra => |state| state.historical_summaries.append(*summary),
+            else => panic("historical_summary is not available in {}", .{self}),
         }
     }
 
