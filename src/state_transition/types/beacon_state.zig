@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const panic = std.debug.panic;
 const ssz = @import("consensus_types");
+const preset = ssz.preset;
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
 const BeaconStateAltair = ssz.altair.BeaconState.Type;
 const BeaconStateBellatrix = ssz.bellatrix.BeaconState.Type;
@@ -21,7 +22,7 @@ const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 const JustificationBits = ssz.phase0.JustificationBits.Type;
 const Checkpoint = ssz.phase0.Checkpoint.Type;
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
-const HistoricalSummary = ssz.capella.HistoricalSummary;
+const HistoricalSummary = ssz.capella.HistoricalSummary.Type;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const PendingPartialWithdrawal = ssz.electra.PendingPartialWithdrawal.Type;
 const PendingConsolidation = ssz.electra.PendingConsolidation.Type;
@@ -292,9 +293,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getBlockRoots(self: *const BeaconStateAllForks) []const Root {
+    pub fn getBlockRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots.items,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.block_roots,
         };
     }
 
@@ -310,9 +311,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getStateRoots(self: *const BeaconStateAllForks) []const Root {
+    pub fn getStateRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.state_roots.items,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.state_roots,
         };
     }
 
@@ -746,14 +747,14 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setHistoricalSummary(self: *BeaconStateAllForks, index: usize, summary: *const HistoricalSummary) void {
         switch (self.*) {
-            inline .capella, .deneb, .electra => |state| state.historical_summaries.items[index] = *summary,
+            inline .capella, .deneb, .electra => |state| state.historical_summaries.items[index] = summary.*,
             else => panic("historical_summary is not available in {}", .{self}),
         }
     }
 
-    pub fn addHistoricalSummary(self: *BeaconStateAllForks, summary: *const HistoricalSummary) void {
+    pub fn addHistoricalSummary(self: *BeaconStateAllForks, allocator: Allocator, summary: *const HistoricalSummary) !void {
         switch (self.*) {
-            inline .capella, .deneb, .electra => |state| state.historical_summaries.append(*summary),
+            inline .capella, .deneb, .electra => |state| try state.historical_summaries.append(allocator, summary.*),
             else => panic("historical_summary is not available in {}", .{self}),
         }
     }
