@@ -1100,7 +1100,7 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     // TODO: implement sliceFrom api for TreeView
-    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation) {
+    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type) {
         switch (self.*) {
             .phase0 => @panic("pending_consolidations is not available in phase0"),
             .altair => @panic("pending_consolidations is not available in altair"),
@@ -1108,15 +1108,15 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => @panic("pending_consolidations is not available in capella"),
             .deneb => @panic("pending_consolidations is not available in deneb"),
             .electra => |state| {
-                if (start_index >= state.pending_consolidations.ites.len) return error.IndexOutOfBounds;
-                const new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation).initCapacity(state.pending_consolidations.items.len - start_index);
-                try new_array.appendSlice(state.pending_consolidations.items[start_index..]);
+                if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
+                var new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
+                try new_array.appendSlice(allocator, state.pending_consolidations.items[start_index..]);
                 return new_array;
             },
         }
     }
 
-    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation)) void {
+    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type)) void {
         switch (self.*) {
             .phase0 => @panic("pending_consolidations is not available in phase0"),
             .altair => @panic("pending_consolidations is not available in altair"),
