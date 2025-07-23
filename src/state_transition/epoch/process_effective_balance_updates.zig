@@ -18,8 +18,7 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const validators = state.getValidators();
-    // TODO: implement EpochCache.getEffectiveBalanceIncrement()
-    const effective_balance_increments = epoch_cache.effective_balance_increment.get().items;
+    const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
     var next_epoch_total_active_balance_by_increment: u64 = 0;
 
     // update effective balances with hysteresis

@@ -135,7 +135,7 @@ pub const EpochTransitionCache = struct {
         const state = cached_state.state;
         const fork_seq = config.getForkSeq(state.getSlot());
         const current_epoch = epoch_cache.epoch;
-        const prev_epoch = epoch_cache.previous_shuffling.get().epoch;
+        const prev_epoch = epoch_cache.getPreviousShuffling().epoch;
         const next_epoch = current_epoch + 1;
         // active validator indices for nextShuffling is ready, we want to precalculate for the one after that
         const next_epoch_2 = current_epoch + 2;
@@ -185,7 +185,7 @@ pub const EpochTransitionCache = struct {
         // Clone before being mutated in processEffectiveBalanceUpdates
         try epoch_cache.beforeEpochTransition();
 
-        const effective_balances_by_increments = epoch_cache.effective_balance_increment.get().items;
+        const effective_balances_by_increments = epoch_cache.getEffectiveBalanceIncrements().items;
 
         for (0..validator_count) |i| {
             const validator = state.getValidator(i);

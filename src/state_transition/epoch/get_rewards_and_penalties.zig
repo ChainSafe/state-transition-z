@@ -60,13 +60,13 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
     const penalty_denominator = config.chain.INACTIVITY_SCORE_BIAS * inactivity_penality_multiplier;
 
     const flags = cache.flags;
+    const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
     for (flags, 0..) |flag, i| {
         if (!hasMarkers(flag, FLAG_ELIGIBLE_ATTESTER)) {
             continue;
         }
 
-        //TODO: implement getEffectiveBalanceIncrement()
-        const effective_balance_increment = epoch_cache.effective_balance_increment.get().items[i];
+        const effective_balance_increment = effective_balance_increments[i];
 
         var reward_penalty_item = reward_penalty_item_cache.get(effective_balance_increment);
         if (reward_penalty_item == null) {

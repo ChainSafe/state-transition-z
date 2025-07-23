@@ -15,10 +15,8 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
     const epoch_cache = cached_state.getEpochCache();
     const next_epoch = epoch_cache.epoch + 1;
     if (next_epoch % preset.EPOCHS_PER_SYNC_COMMITTEE_PERIOD == 0) {
-        // TODO: implement getNextShuffling in EpochCache
-        const active_validator_indices = epoch_cache.next_shuffling.get().active_indices;
-        // TODO: implement getEffectiveBalanceIncrement in EpochCache
-        const effective_balance_increments = epoch_cache.effective_balance_increment.get();
+        const active_validator_indices = epoch_cache.getNextEpochShuffling().active_indices;
+        const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();
         var next_sync_committee_indices: [preset.SYNC_COMMITTEE_SIZE]ValidatorIndex = undefined;
         try getNextSyncCommitteeIndices(allocator, state, active_validator_indices, effective_balance_increments, &next_sync_committee_indices);
         const validators = state.getValidators();

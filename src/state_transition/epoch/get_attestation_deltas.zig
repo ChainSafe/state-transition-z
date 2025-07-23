@@ -72,8 +72,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 
-    // TODO: implement getEffectiveBalanceIncrements()
-    const effective_balance_increments = epoch_cache.effective_balance_increment.get();
+    const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();
     for (0..flags.len) |i| {
         const flag = flags[i];
         const effective_balance_increment = effective_balance_increments.items[i];

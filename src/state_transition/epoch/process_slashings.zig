@@ -33,8 +33,7 @@ pub fn processSlashings(
         else
             PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;
 
-    // TODO: implement getEffectiveBalanceIncrement()?
-    const effective_balance_increments = epoch_cache.effective_balance_increment.get().items;
+    const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
     const adjusted_total_slashing_balance_by_increment = @min(getTotalSlashingsByIncrement(state) * proportional_slashing_multiplier, total_balance_by_increment);
     const increment = EFFECTIVE_BALANCE_INCREMENT;
 

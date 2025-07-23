@@ -377,6 +377,29 @@ pub const EpochCache = struct {
         return epoch_cache_ptr;
     }
 
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    pub fn getPreviousShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.previous_shuffling.get();
+    }
+
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    pub fn getCurrentShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.current_shuffling.get();
+    }
+
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    pub fn getNextEpochShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.next_shuffling.get();
+    }
+
+    /// Utility method to return SyncCommitteeCache so that consumers don't have to deal with ".get()" call
+    pub fn getEffectiveBalanceIncrements(self: *const EpochCache) *const EffectiveBalanceIncrements {
+        return &self.effective_balance_increment.get();
+    }
+
     pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {
         const state = cached_state.state;
         const upcoming_epoch = self.next_epoch;
@@ -571,16 +594,16 @@ pub const EpochCache = struct {
     }
 
     // TODO: getBeaconCommittee
-    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*EpochShuffling {
+    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*const EpochShuffling {
         const epoch = computeEpochAtSlot(slot);
         return self.getShufflingAtEpochOrNull(epoch);
     }
 
-    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*EpochShuffling {
+    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
         const shuffling = if (epoch == self.epoch - 1)
-            self.previous_shuffling.get()
-        else if (epoch == self.epoch) self.current_shuffling.get() else if (epoch == self.next_epoch)
-            self.next_shuffling.get()
+            self.getPreviousShuffling()
+        else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
+            self.getNextEpochShuffling()
         else
             null;
 
