@@ -29,7 +29,7 @@ pub const processSlashingsReset = @import("./epoch/process_slashings_reset.zig")
 pub const processRandaoMixesReset = @import("./epoch/process_randao_mixes_reset.zig").processRandaoMixesReset;
 pub const processHistoricalSummariesUpdate = @import("./epoch/process_historical_summaries_update.zig").processHistoricalSummariesUpdate;
 pub const processHistoricalRootsUpdate = @import("./epoch/process_historical_roots_update.zig").processHistoricalRootsUpdate;
-// pub const processParticipationRecordUpdates = @import("./epoch/process_participation_record_updates.zig").processParticipationRecordUpdates;
+pub const processParticipationRecordUpdates = @import("./epoch/process_participation_record_updates.zig").processParticipationRecordUpdates;
 // pub const processParticipationFlagUpdates = @import("./epoch/process_participation_flag_updates.zig").processParticipationFlagUpdates;
 // pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 

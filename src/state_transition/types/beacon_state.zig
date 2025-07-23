@@ -529,6 +529,17 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn rotateEpochPendingAttestations(self: *BeaconStateAllForks, allocator: Allocator) void {
+        switch (self.*) {
+            .phase0 => |state| {
+                state.previous_epoch_attestations.deinit(allocator);
+                state.previous_epoch_attestations = state.current_epoch_attestations;
+                state.current_epoch_attestations = ssz.phase0.EpochAttestations.default_value;
+            },
+            else => @panic("shift_epoch_pending_attestations is not available post phase0"),
+        }
+    }
+
     /// from altair, epoch pariticipation is just a byte
     pub fn getPreviousEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
         return switch (self.*) {
