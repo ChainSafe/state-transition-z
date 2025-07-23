@@ -335,9 +335,9 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addHistoricalRoot(self: *BeaconStateAllForks, root: Root) void {
+    pub fn addHistoricalRoot(self: *BeaconStateAllForks, allocator: Allocator, root: Root) !void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.historical_roots.append(root),
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| try state.historical_roots.append(allocator, root),
         }
     }
 
