@@ -606,6 +606,17 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn rorateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) void {
+        switch (self.*) {
+            .phase0 => @panic("rotate_epoch_participations is not available in phase0"),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| {
+                state.previous_epoch_participation.deinit(allocator);
+                state.previous_epoch_participation = state.current_epoch_participation;
+                state.current_epoch_participation = ssz.altair.EpochParticipation.default_value;
+            },
+        }
+    }
+
     pub fn getJustificationBits(self: *const BeaconStateAllForks) JustificationBits {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.justification_bits,
