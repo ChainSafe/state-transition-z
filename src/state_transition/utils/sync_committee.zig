@@ -11,9 +11,9 @@ const preset = ssz.preset;
 const params = @import("params");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
-const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
 const ForkSeq = @import("params").ForkSeq;
 
+pub const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
 const SyncCommitteeInfo = struct {
     indices: ValidatorIndices,
     sync_committee: *SyncCommittee,

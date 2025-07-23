@@ -45,9 +45,9 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
 
-    pub fn initValidatorIndices(allocator: Allocator, indices: []ValidatorIndex) !SyncCommitteeCacheAllForks {
+    pub fn initValidatorIndices(allocator: Allocator, indices: []const ValidatorIndex) !SyncCommitteeCacheAllForks {
         const cloned_indices = try allocator.alloc(ValidatorIndex, indices.len);
-        try std.mem.copyForwards(ValidatorIndex, cloned_indices, indices);
+        std.mem.copyForwards(ValidatorIndex, cloned_indices, indices);
         const cache = try SyncCommitteeCache.initValidatorIndices(allocator, cloned_indices);
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }

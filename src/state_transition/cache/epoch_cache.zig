@@ -604,13 +604,14 @@ pub const EpochCache = struct {
         }
     }
 
-    pub fn rotateSyncCommitteeIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
+    pub fn rotateSyncCommitteeIndexed(self: *EpochCache, allocator: Allocator, next_sync_committee_indices: []const ValidatorIndex) !void {
         // unref the old instance
         self.current_sync_committee_indexed.release();
         // this is the transfer of reference count
         // should not do an release() then acquire() here as it may trigger a deinit()
         self.current_sync_committee_indexed = self.next_sync_committee_indexed;
-        self.next_sync_committee_indexed = SyncCommitteeCacheRc.acquire(try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices.items));
+        const next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(allocator, next_sync_committee_indices);
+        self.next_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, next_sync_committee_indexed);
     }
 
     // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead

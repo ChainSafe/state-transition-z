@@ -696,7 +696,7 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn setCurrentSyncCommittee(self: *BeaconStateAllForks, sync_committee: *const SyncCommittee) void {
         switch (self.*) {
             .phase0 => @panic("current_sync_committee is not available in phase0"),
-            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_sync_committee = *sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_sync_committee = sync_committee.*,
         }
     }
 
@@ -710,7 +710,7 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn setNextSyncCommittee(self: *BeaconStateAllForks, sync_committee: *const SyncCommittee) void {
         switch (self.*) {
             .phase0 => @panic("next_sync_committee is not available in phase0"),
-            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.next_sync_committee = *sync_committee,
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.next_sync_committee = sync_committee.*,
         }
     }
 
