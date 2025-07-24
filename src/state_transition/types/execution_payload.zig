@@ -329,5 +329,6 @@ test "electra - sanity" {
     const electra_payload: ExecutionPayload = .{ .electra = &payload };
     const header: ExecutionPayloadHeader =
         try electra_payload.toPayloadHeader(std.testing.allocator);
+    _ = header.getGasUsed();
     try std.testing.expect(header.electra.block_number == payload.block_number);
 }
