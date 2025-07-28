@@ -48,6 +48,9 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
             next_pending_consolidation += 1;
         }
     }
-    const new_pending_consolidations = try state.sliceFromPendingConsolidations(allocator, next_pending_consolidation);
-    state.setPendingConsolidations(new_pending_consolidations);
+
+    if (next_pending_consolidation > 0) {
+        const new_pending_consolidations = try state.sliceFromPendingConsolidations(allocator, next_pending_consolidation);
+        state.setPendingConsolidations(new_pending_consolidations);
+    }
 }
