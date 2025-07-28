@@ -22,17 +22,17 @@ const processSyncCommitteeUpdates = @import("./process_sync_committee_updates.zi
 // TODO: add metrics
 pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const state = cached_state.state;
-    processJustificationAndFinalization(cached_state, cache);
+    try processJustificationAndFinalization(cached_state, cache);
 
     if (state.isPostAltair()) {
-        processInactivityUpdates(cached_state, cache);
+        try processInactivityUpdates(cached_state, cache);
     }
 
-    processRegistryUpdates(cached_state, cache);
+    try processRegistryUpdates(cached_state, cache);
 
-    processSlashings(allocator, cached_state, cache);
+    try processSlashings(allocator, cached_state, cache);
 
-    processRewardsAndPenalties(cached_state, cache);
+    try processRewardsAndPenalties(cached_state, cache);
 
     processEth1DataReset(cached_state, cache);
 
@@ -48,9 +48,9 @@ pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSt
     processRandaoMixesReset(cached_state, cache);
 
     if (state.isPostCapella()) {
-        processHistoricalSummariesUpdate(cached_state, cache);
+        try processHistoricalSummariesUpdate(cached_state, cache);
     } else {
-        processHistoricalRootsUpdate(cached_state, cache);
+        try processHistoricalRootsUpdate(cached_state, cache);
     }
 
     if (state.isPhase0()) {
@@ -59,7 +59,7 @@ pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSt
         processParticipationFlagUpdates(allocator, cached_state);
     }
 
-    processSyncCommitteeUpdates(allocator, cached_state);
+    try processSyncCommitteeUpdates(allocator, cached_state);
 
     // TODO(fulu)
     // processProposerLookahead(fork, state);
