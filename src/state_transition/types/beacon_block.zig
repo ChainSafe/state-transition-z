@@ -347,13 +347,6 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn isExecutionType(self: *const BlindedBeaconBlockBody) bool {
-        return switch (self.*) {
-            .phase0, .altair => false,
-            else => true,
-        };
-    }
-
     // phase0 fields
     pub fn getRandaoReveal(self: *const BlindedBeaconBlockBody) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
