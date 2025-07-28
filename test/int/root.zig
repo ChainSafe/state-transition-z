@@ -11,6 +11,7 @@ const process_pending_deposits = @import("./epoch/process_pending_deposits.zig")
 const process_pending_consolidations = @import("./epoch/process_pending_consolidations.zig");
 const process_effective_balance_updates = @import("./epoch/process_effective_balance_updates.zig");
 const process_slashings_reset = @import("./epoch/process_slashings_reset.zig");
+const process_randao_mixes_reset = @import("./epoch/process_randao_mixes_reset.zig");
 
 test {
     testing.refAllDecls(epoch_transition_cache);
@@ -24,4 +25,5 @@ test {
     testing.refAllDecls(process_pending_consolidations);
     testing.refAllDecls(process_effective_balance_updates);
     testing.refAllDecls(process_slashings_reset);
+    testing.refAllDecls(process_randao_mixes_reset);
 }
