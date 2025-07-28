@@ -522,16 +522,15 @@ fn testBlockSanity(Block: type) !void {
     const sync_aggregate = block_body.getSyncAggregate();
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 96, &sync_aggregate.sync_committee_signature);
 
-    if (!is_blinded) {
-        // Blinded blocks do not have the execution payload in plain
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().electra.parent_hash);
-        // another way to access the parent_hash
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
-    } else {
+    if (is_blinded) {
         // Blinded blocks do not have the execution payload in plain
         try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().electra.parent_hash);
         // another way to access the parent_hash
         try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().getParentHash());
+    } else {
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().electra.parent_hash);
+        // another way to access the parent_hash
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
     }
 
     // capella
