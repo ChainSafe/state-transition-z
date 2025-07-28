@@ -91,8 +91,10 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
         }
     }
 
-    const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
-    state.setPendingDeposits(remaining_pending_deposits);
+    if (next_deposit_index > 0) {
+        const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
+        state.setPendingDeposits(remaining_pending_deposits);
+    }
 
     // TODO: consider doing this for TreeView
     //   for (const deposit of depositsToPostpone) {
