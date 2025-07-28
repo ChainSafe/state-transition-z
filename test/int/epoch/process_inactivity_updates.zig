@@ -4,7 +4,7 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessInactivityUpdates = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processInactivityUpdates, true, false).testProcessEpochFn;
+const testProcessInactivityUpdates = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processInactivityUpdates, true, false, false).testProcessEpochFn;
 
 test "processInactivityUpdates - sanity" {
     try testProcessInactivityUpdates();
