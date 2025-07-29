@@ -586,7 +586,7 @@ pub const EpochCache = struct {
     }
 
     pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
-        try self.pubkey_to_index.set(pubkey[0..], index);
+        try self.pubkey_to_index.set(pubkey, index);
         // this is deinit() by application
         const pk_ptr = try allocator.create(BLSPubkey);
         pk_ptr.* = try BLSPubkey.fromBytes(&pubkey);

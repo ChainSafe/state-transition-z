@@ -33,7 +33,7 @@ pub fn syncPubkeys(
     for (old_len..new_count) |i| {
         const pubkey = validators[i].pubkey;
         // TODO: make pubkey_to_index generic: accept both usize and u32
-        try pubkey_to_index.set(&pubkey, @intCast(i));
+        try pubkey_to_index.set(pubkey, @intCast(i));
         const pk = try PublicKey.fromBytes(&pubkey);
         // index_to_pubkey deinit() consumer should also deinit this
         const pk_ptr = try allocator.create(PublicKey);

@@ -1007,7 +1007,7 @@ pub const BeaconStateAllForks = union(enum) {
         switch (self.*) {
             .electra => |state| {
                 if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
-                var new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
+                var new_array = try std.ArrayListUnmanaged(PendingConsolidation).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
                 try new_array.appendSlice(allocator, state.pending_consolidations.items[start_index..]);
                 return new_array;
             },

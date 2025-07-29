@@ -30,22 +30,15 @@ pub fn PubkeyIndexMap(comptime T: type) type {
             allocator.destroy(self);
         }
 
-        pub fn set(self: *@This(), key: []const u8, value: Val) !void {
-            if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
-                return error.InvalidKeyLen;
-            }
-            var fixed_key: Key = undefined;
-            @memcpy(&fixed_key, key);
-            try self.map.put(fixed_key, value);
+        pub fn set(self: *@This(), key: Key, value: Val) !void {
+            try self.map.put(key, value);
         }
 
-        pub fn get(self: *const @This(), key: []const u8) ?Val {
+        pub fn get(self: *const @This(), key: *const Key) ?Val {
             if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
                 return null;
             }
-            var fixed_key: Key = undefined;
-            @memcpy(&fixed_key, key);
-            return self.map.get(fixed_key);
+            return self.map.get(key.*);
         }
 
         pub fn has(self: *const @This(), key: []const u8) bool {
