@@ -16,6 +16,7 @@ pub const syncPubkeys = @import("./cache/pubkey_cache.zig").syncPubkeys;
 
 pub const ReusedEpochTransitionCache = @import("./cache/epoch_transition_cache.zig").ReusedEpochTransitionCache;
 pub const EpochTransitionCache = @import("./cache/epoch_transition_cache.zig").EpochTransitionCache;
+pub const processEpoch = @import("./epoch/process_epoch.zig").processEpoch;
 pub const processJustificationAndFinalization = @import("./epoch/process_justification_and_finalization.zig").processJustificationAndFinalization;
 pub const processInactivityUpdates = @import("./epoch/process_inactivity_updates.zig").processInactivityUpdates;
 pub const processRegistryUpdates = @import("./epoch/process_registry_updates.zig").processRegistryUpdates;

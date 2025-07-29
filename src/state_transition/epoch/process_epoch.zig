@@ -20,7 +20,7 @@ const processParticipationFlagUpdates = @import("./process_participation_flag_up
 const processSyncCommitteeUpdates = @import("./process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 
 // TODO: add metrics
-pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
+pub fn processEpoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
     const state = cached_state.state;
     try processJustificationAndFinalization(cached_state, cache);
 
@@ -32,13 +32,13 @@ pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSt
 
     try processSlashings(allocator, cached_state, cache);
 
-    try processRewardsAndPenalties(cached_state, cache);
+    try processRewardsAndPenalties(allocator, cached_state, cache);
 
     processEth1DataReset(cached_state, cache);
 
     if (state.isPostElectra()) {
-        try processPendingDeposits(cached_state, cache);
-        try processPendingConsolidations(cached_state, cache);
+        try processPendingDeposits(allocator, cached_state, cache);
+        try processPendingConsolidations(allocator, cached_state, cache);
     }
 
     // const numUpdate = processEffectiveBalanceUpdates(fork, state, cache);
@@ -48,13 +48,13 @@ pub fn process_epoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSt
     processRandaoMixesReset(cached_state, cache);
 
     if (state.isPostCapella()) {
-        try processHistoricalSummariesUpdate(cached_state, cache);
+        try processHistoricalSummariesUpdate(allocator, cached_state, cache);
     } else {
-        try processHistoricalRootsUpdate(cached_state, cache);
+        try processHistoricalRootsUpdate(allocator, cached_state, cache);
     }
 
     if (state.isPhase0()) {
-        processParticipationRecordUpdates(cached_state);
+        processParticipationRecordUpdates(allocator, cached_state);
     } else {
         processParticipationFlagUpdates(allocator, cached_state);
     }
