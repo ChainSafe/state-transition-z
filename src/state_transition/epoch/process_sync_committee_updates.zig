@@ -26,7 +26,7 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
         var next_sync_committee_pubkeys_slices: [preset.SYNC_COMMITTEE_SIZE][]const u8 = undefined;
         for (next_sync_committee_indices, 0..next_sync_committee_indices.len) |index, i| {
             next_sync_committee_pubkeys[i] = validators.items[index].pubkey;
-            next_sync_committee_pubkeys_slices[9] = &next_sync_committee_pubkeys[i];
+            next_sync_committee_pubkeys_slices[i] = &next_sync_committee_pubkeys[i];
         }
 
         // Rotate syncCommittee in state
