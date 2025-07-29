@@ -18,7 +18,7 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
     const INACTIVITY_SCORE_BIAS = config.INACTIVITY_SCORE_BIAS;
     const INACTIVITY_SCORE_RECOVERY_RATE = config.INACTIVITY_SCORE_RECOVERY_RATE;
     const flags = cache.flags;
-    const in_activity_leak = isInInactivityLeak(cached_state);
+    const is_in_activity_leak = isInInactivityLeak(cached_state);
 
     // this avoids importing FLAG_ELIGIBLE_ATTESTER inside the for loop, check the compiled code
     const FLAG_PREV_TARGET_ATTESTER_UNSLASHED = attester_status_utils.FLAG_PREV_TARGET_ATTESTER_UNSLASHED;
@@ -37,7 +37,7 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
             } else {
                 inactivity_score += INACTIVITY_SCORE_BIAS;
             }
-            if (!in_activity_leak) {
+            if (!is_in_activity_leak) {
                 inactivity_score -= @min(INACTIVITY_SCORE_RECOVERY_RATE, inactivity_score);
             }
             if (inactivity_score != prev_inactivity_score) {

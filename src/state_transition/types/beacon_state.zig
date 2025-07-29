@@ -335,7 +335,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addHistoricalRoot(self: *BeaconStateAllForks, allocator: Allocator, root: Root) !void {
+    pub fn appendHistoricalRoot(self: *BeaconStateAllForks, allocator: Allocator, root: Root) !void {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| try state.historical_roots.append(allocator, root),
         }
@@ -485,7 +485,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn addPreviousEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
         switch (self.*) {
             .phase0 => |state| state.previous_epoch_attestations.append(attestation),
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
@@ -522,7 +522,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addCurrentEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
         switch (self.*) {
             .phase0 => |state| state.current_epoch_attestations.append(attestation),
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
@@ -556,7 +556,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn addPreviousEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
+    pub fn appendPreviousEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
         switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| try state.previous_epoch_participation.append(allocator, participation),
@@ -592,7 +592,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addCurrentEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
+    pub fn appendCurrentEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
         switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| try state.current_epoch_participation.append(allocator, participation),
@@ -679,7 +679,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addInactivityScore(self: *BeaconStateAllForks, allocator: Allocator, score: u64) !void {
+    pub fn appendInactivityScore(self: *BeaconStateAllForks, allocator: Allocator, score: u64) !void {
         switch (self.*) {
             .phase0 => @panic("inactivity_scores is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| try state.inactivity_scores.append(allocator, score),
@@ -774,7 +774,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addHistoricalSummary(self: *BeaconStateAllForks, allocator: Allocator, summary: *const HistoricalSummary) !void {
+    pub fn appendHistoricalSummary(self: *BeaconStateAllForks, allocator: Allocator, summary: *const HistoricalSummary) !void {
         switch (self.*) {
             inline .capella, .deneb, .electra => |state| try state.historical_summaries.append(allocator, summary.*),
             else => panic("historical_summary is not available in {}", .{self}),
@@ -893,7 +893,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addPendingDeposit(self: *BeaconStateAllForks, allocator: Allocator, pending_deposit: *const PendingDeposit) !void {
+    pub fn appendPendingDeposit(self: *BeaconStateAllForks, allocator: Allocator, pending_deposit: *const PendingDeposit) !void {
         switch (self.*) {
             .electra => |state| try state.pending_deposits.append(allocator, pending_deposit.*),
             else => panic("pending_deposits is not available in {}", .{self}),
@@ -934,7 +934,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn addPendingPartialWithdrawal(self: *BeaconStateAllForks, withdrawal: *const PendingPartialWithdrawal) !void {
+    pub fn appendPendingPartialWithdrawal(self: *BeaconStateAllForks, withdrawal: *const PendingPartialWithdrawal) !void {
         switch (self.*) {
             .electra => |state| state.pending_partial_withdrawals.append(*withdrawal),
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
@@ -995,7 +995,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn addPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
+    pub fn appendPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
         switch (self.*) {
             .electra => |state| state.pending_consolidations.append(*pending_consolidation),
             else => panic("pending_consolidations is not available in {}", .{self}),

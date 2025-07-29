@@ -21,5 +21,5 @@ pub fn processDepositRequest(cached_state: *CachedBeaconStateAllForks, deposit_r
         .slot = state.getSlot(),
     };
 
-    try state.addPendingDeposit(&pending_deposit);
+    try state.appendPendingDeposit(&pending_deposit);
 }

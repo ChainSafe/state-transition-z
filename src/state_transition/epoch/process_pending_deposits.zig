@@ -74,7 +74,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
                 try applyPendingDeposit(allocator, cached_state, deposit, cache);
             } else if (is_validator_exited) {
                 // TODO: typescript version accumulate to temp array while in zig we append directly
-                try state.addPendingDeposit(allocator, &deposit);
+                try state.appendPendingDeposit(allocator, &deposit);
             } else {
                 // Check if deposit fits in the churn, otherwise, do no more deposit processing in this epoch.
                 is_churn_limit_reached = processed_amount + deposit.amount > available_for_processing;

@@ -108,10 +108,10 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
                 try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
-                state.addPendingDeposit(pending_deposit);
+                state.appendPendingDeposit(pending_deposit);
             }
         } else {
-            state.addPendingDeposit(pending_deposit);
+            state.appendPendingDeposit(pending_deposit);
         }
     }
 }
@@ -149,11 +149,11 @@ pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconS
 
     // Only after altair:
     if (state.isPostAltair()) {
-        try state.addInactivityScore(allocator, 0);
+        try state.appendInactivityScore(allocator, 0);
 
         // add participation caches
-        try state.addPreviousEpochParticipation(allocator, 0);
-        try state.addCurrentEpochParticipation(allocator, 0);
+        try state.appendPreviousEpochParticipation(allocator, 0);
+        try state.appendCurrentEpochParticipation(allocator, 0);
     }
 
     try state.appendBalance(allocator, amount);

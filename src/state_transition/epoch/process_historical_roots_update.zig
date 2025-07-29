@@ -24,6 +24,6 @@ pub fn processHistoricalRootsUpdate(allocator: Allocator, cached_state: *CachedB
             .block_roots = block_roots,
             .state_roots = state_roots,
         }, &root);
-        try state.addHistoricalRoot(allocator, root);
+        try state.appendHistoricalRoot(allocator, root);
     }
 }

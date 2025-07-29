@@ -17,7 +17,7 @@ pub fn processHistoricalSummariesUpdate(allocator: Allocator, cached_state: *Cac
         try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.getBlockRoots(), &block_summary_root);
         var state_summary_root: Root = undefined;
         try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.getStateRoots(), &state_summary_root);
-        try state.addHistoricalSummary(allocator, &.{
+        try state.appendHistoricalSummary(allocator, &.{
             .block_summary_root = block_summary_root,
             .state_summary_root = state_summary_root,
         });

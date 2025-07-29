@@ -102,7 +102,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
         .source_index = source_index,
         .target_index = target_index,
     };
-    try state.addPendingConsolidation(&pending_consolidation);
+    try state.appendPendingConsolidation(&pending_consolidation);
 }
 
 fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) bool {
