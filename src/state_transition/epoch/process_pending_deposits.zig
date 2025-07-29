@@ -30,11 +30,11 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     var start_index: usize = 0;
     // TODO: is this a good number?
     const chunk = 100;
-    const pending_deposits_len = state.getPendingDepositCount();
+    const pending_deposits_len = state.pendingDeposits().items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
         // TODO(ssz): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
-        const deposits: []PendingDeposit = state.getPendingDeposits()[start_index..@min(start_index + chunk, pending_deposits_len)];
+        const deposits: []PendingDeposit = state.pendingDeposits().items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {
             // Do not process deposit requests if Eth1 bridge deposits are not yet applied.
             if (
@@ -74,7 +74,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
                 try applyPendingDeposit(allocator, cached_state, deposit, cache);
             } else if (is_validator_exited) {
                 // TODO: typescript version accumulate to temp array while in zig we append directly
-                try state.appendPendingDeposit(allocator, &deposit);
+                try state.pendingDeposits().append(allocator, deposit);
             } else {
                 // Check if deposit fits in the churn, otherwise, do no more deposit processing in this epoch.
                 is_churn_limit_reached = processed_amount + deposit.amount > available_for_processing;
@@ -93,7 +93,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
     if (next_deposit_index > 0) {
         const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
-        state.setPendingDeposits(remaining_pending_deposits);
+        state.pendingDeposits().items = remaining_pending_deposits.items;
     }
 
     // TODO: consider doing this for TreeView

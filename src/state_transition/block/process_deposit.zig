@@ -108,10 +108,10 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
                 try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
-                state.appendPendingDeposit(pending_deposit);
+                try state.pendingDeposits().append(allocator, pending_deposit);
             }
         } else {
-            state.appendPendingDeposit(pending_deposit);
+            try state.pendingDeposits().append(allocator, pending_deposit);
         }
     }
 }

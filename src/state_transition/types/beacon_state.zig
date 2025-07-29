@@ -37,6 +37,7 @@ const ForkSeq = @import("params").ForkSeq;
 pub const BeaconStateAllForks = union(enum) {
     phase0: *BeaconStatePhase0,
     altair: *BeaconStateAltair,
+
     bellatrix: *BeaconStateBellatrix,
     capella: *BeaconStateCapella,
     deneb: *BeaconStateDeneb,
@@ -865,39 +866,11 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getPendingDeposit(self: *const BeaconStateAllForks, index: usize) *const PendingDeposit {
+    pub fn pendingDeposits(self: *BeaconStateAllForks) *std.ArrayListUnmanaged(PendingDeposit) {
         return switch (self.*) {
-            .electra => |state| &state.pending_deposits[index],
+            .electra => |state| &state.pending_deposits,
             else => panic("pending_deposits is not available in {}", .{self}),
         };
-    }
-
-    pub fn getPendingDeposits(self: *const BeaconStateAllForks) []PendingDeposit {
-        return switch (self.*) {
-            .electra => |state| state.pending_deposits.items,
-            else => panic("pending_deposits is not available in {}", .{self}),
-        };
-    }
-
-    pub fn getPendingDepositCount(self: *const BeaconStateAllForks) usize {
-        return switch (self.*) {
-            .electra => |state| state.pending_deposits.items.len,
-            else => panic("pending_deposits is not available in {}", .{self}),
-        };
-    }
-
-    pub fn setPendingDeposit(self: *BeaconStateAllForks, index: usize, deposit: *const PendingDeposit) void {
-        switch (self.*) {
-            .electra => |state| state.pending_deposits[index] = *deposit,
-            else => panic("pending_deposits is not available in {}", .{self}),
-        }
-    }
-
-    pub fn appendPendingDeposit(self: *BeaconStateAllForks, allocator: Allocator, pending_deposit: *const PendingDeposit) !void {
-        switch (self.*) {
-            .electra => |state| try state.pending_deposits.append(allocator, pending_deposit.*),
-            else => panic("pending_deposits is not available in {}", .{self}),
-        }
     }
 
     // TODO(ssz): implement sliceFrom api for TreeView
@@ -909,13 +882,6 @@ pub const BeaconStateAllForks = union(enum) {
                 try new_array.appendSlice(allocator, (state.pending_deposits.items[start_index..]));
                 return new_array;
             },
-            else => panic("pending_deposits is not available in {}", .{self}),
-        }
-    }
-
-    pub fn setPendingDeposits(self: *BeaconStateAllForks, deposits: std.ArrayListUnmanaged(ssz.electra.PendingDeposit.Type)) void {
-        switch (self.*) {
-            .electra => |state| state.pending_deposits = deposits,
             else => panic("pending_deposits is not available in {}", .{self}),
         }
     }
