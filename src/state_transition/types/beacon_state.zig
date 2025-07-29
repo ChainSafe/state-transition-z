@@ -606,7 +606,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn rorateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) void {
+    pub fn rotateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) void {
         switch (self.*) {
             .phase0 => @panic("rotate_epoch_participations is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| {
