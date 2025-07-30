@@ -25,9 +25,9 @@ pub const AggregatedSignatureSet = struct {
     signature: BLSSignature,
 };
 
-pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) bool {
+pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = Signature.fromBytes(&set.signature, true);
+    const signature = try Signature.fromBytes(&set.signature);
     return verify(&set.signing_root, &set.pubkey, &signature, null, null);
 }
 

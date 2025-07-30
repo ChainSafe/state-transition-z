@@ -12,7 +12,7 @@ pub fn processEth1Data(cached_state: *const CachedBeaconStateAllForks, eth1_data
     state.getEth1DataVotes().append(eth1_data.*);
 }
 
-pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_eth1_data: *const Eth1Data) boolean {
+pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_eth1_data: *const Eth1Data) bool {
     const state = cached_state.state;
     const SLOTS_PER_ETH1_VOTING_PERIOD = preset.EPOCHS_PER_ETH1_VOTING_PERIOD * preset.SLOTS_PER_EPOCH;
 

@@ -6,10 +6,11 @@ const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const BeaconConfig = @import("config").BeaconConfig;
 const BeaconBlockHeader = @import("../type.zig").BeaconBlockHeader;
 const Root = @import("../type.zig").Root;
+const SignedBlock = @import("../state_transition.zig").SignedBlock;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 
 // TODO: BlindedBeaconBlock
-pub fn processBlockHeader(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, block: *const BeaconBlock) !void {
+pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, block: *const SignedBlock) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const slot = state.getSlot();
@@ -25,27 +26,29 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *CachedBeaconState
     }
 
     // verify that proposer index is the correct index
-    const proposer_index = epoch_cache.getBeaconProposer(slot);
+    const proposer_index = try epoch_cache.getBeaconProposer(slot);
     if (block.getProposerIndex() != proposer_index) {
         return error.BlockProposerIndexMismatch;
     }
 
     // verify that the parent matches
-    if (!std.mem.eql(u8, &block.getParentRoot(), &ssz.phase0.BeaconBlockHeader.hashTreeRoot(state.getLatestBlockHeader()))) {
+    var header_parent_root: [32]u8 = undefined;
+    try ssz.phase0.BeaconBlockHeader.hashTreeRoot(state.getLatestBlockHeader(), &header_parent_root);
+    if (!std.mem.eql(u8, &block.getParentRoot(), &header_parent_root)) {
         return error.BlockParentRootMismatch;
     }
-
-    var block_header: BeaconBlockHeader = undefined;
-    try blockToHeader(allocator, block, &block_header);
-
-    // cache current block as the new latest block
-    state.setLatestBlockHeader(&.{
+    var body_root: [32]u8 = undefined;
+    try block.hashTreeRoot(allocator, &body_root);
+    const block_header: BeaconBlockHeader = .{
         .slot = slot,
         .proposer_index = proposer_index,
         .parent_root = block.getParentRoot(),
         .state_root = ZERO_HASH,
-        .bodyRoot = block_header.body_root,
-    });
+        .body_root = body_root,
+    };
+
+    // cache current block as the new latest block
+    state.setLatestBlockHeader(block_header);
 
     // verify proposer is not slashed. Only once per block, may use the slower read from tree
     if (state.getValidator(proposer_index).slashed) {
@@ -53,10 +56,10 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *CachedBeaconState
     }
 }
 
-pub fn blockToHeader(allocator: Allocator, block: *const BeaconBlock, out: *BeaconBlockHeader) !void {
+pub fn blockToHeader(allocator: Allocator, block: *const SignedBlock, out: *BeaconBlockHeader) !void {
     out.slot = block.getSlot();
     out.proposer_index = block.getProposerIndex();
     out.parent_root = block.getParentRoot();
     out.state_root = block.getStateRoot();
-    try block.getBeaconBlockBody().hashTreeRoot(allocator, &out.bodyRoot);
+    try block.hashTreeRoot(allocator, &out.body_root);
 }

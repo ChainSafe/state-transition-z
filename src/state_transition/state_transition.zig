@@ -5,6 +5,9 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const Root = ssz.primitive.Root.Type;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+
+const ExecutionPayload = @import("types/execution_payload.zig").ExecutionPayload;
+
 const Slot = ssz.primitive.Slot.Type;
 
 const CachedBeaconStateAllForks = @import("cache/state_cache.zig").CachedBeaconStateAllForks;
@@ -14,6 +17,8 @@ const processBlock = @import("./block/process_block.zig").processBlock;
 const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
 const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
+const BlindedBeaconBlockBody = @import("types/beacon_block.zig").BlindedBeaconBlockBody;
+const BeaconBlockBody = @import("types/beacon_block.zig").BeaconBlockBody;
 const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
 const TestCachedBeaconStateAllForks = @import("../../test/int/generate_state.zig").TestCachedBeaconStateAllForks;
 const EpochTransitionCacheOpts = @import("cache/epoch_transition_cache.zig").EpochTransitionCacheOpts;
@@ -29,7 +34,7 @@ const Options = struct {
     do_not_transfer_cache: bool = false,
 };
 
-const Block = union(enum) {
+pub const Block = union(enum) {
     block: BeaconBlock,
     blinded_block: BlindedBeaconBlock,
 };
@@ -38,10 +43,69 @@ pub const SignedBlock = union(enum) {
     signed_beacon_block: *const SignedBeaconBlock,
     signed_blinded_beacon_block: *const SignedBlindedBeaconBlock,
 
+    const BeaconBlockBody_ = union(enum) {
+        unblinded: BeaconBlockBody,
+        blinded: BlindedBeaconBlockBody,
+
+        pub fn getExecutionPayload(self: *const BeaconBlockBody_) ExecutionPayload {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getExecutionPayload(),
+            };
+        }
+    };
+
     pub fn getMessage(self: *const SignedBlock) Block {
         return switch (self.*) {
-            .signed_beacon_block => |b| Block{ .block = b.getBeaconBlock() },
-            .signed_blinded_beacon_block => |b| Block{ .blinded_block = b.getBeaconBlock() },
+            .signed_beacon_block => |b| .{ .block = b.getBeaconBlock() },
+            .signed_blinded_beacon_block => |b| .{ .blinded_block = b.getBeaconBlock() },
+        };
+    }
+    pub fn getBeaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
+        return switch (self.*) {
+            .signed_beacon_block => |b| .{ .unblinded = b.getBeaconBlock().getBeaconBlockBody() },
+            .signed_blinded_beacon_block => |b| .{ .blinded = b.getBeaconBlock().getBeaconBlockBody() },
+        };
+    }
+
+    pub fn getParentRoot(self: *const SignedBlock) [32]u8 {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getBeaconBlock().getParentRoot(),
+            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getParentRoot(),
+        };
+    }
+
+    pub fn getStateRoot(self: *const SignedBlock) [32]u8 {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getBeaconBlock().getStateRoot(),
+            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getStateRoot(),
+        };
+    }
+
+    pub fn getSlot(self: *const SignedBlock) Slot {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getBeaconBlock().getSlot(),
+            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getSlot(),
+        };
+    }
+
+    pub fn hashTreeRoot(self: *const SignedBlock, allocator: std.mem.Allocator, out: *[32]u8) !void {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
+            .signed_blinded_beacon_block => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
+        };
+    }
+
+    pub fn getProposerIndex(self: *const SignedBlock) u64 {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getBeaconBlock().getProposerIndex(),
+            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getProposerIndex(),
+        };
+    }
+
+    pub fn getSignature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
+        return switch (self.*) {
+            .signed_beacon_block => |b| b.getSignature(),
+            .signed_blinded_beacon_block => |b| b.getSignature(),
         };
     }
 };
@@ -110,18 +174,21 @@ pub fn stateTransition(
     try processSlotsWithTransientCache(allocator, post_state, block_slot, .{});
 
     // Verify proposer signature only
-    if (opts.verify_proposer and !verifyProposerSignature(post_state, &signed_block)) {
+    if (opts.verify_proposer and !try verifyProposerSignature(post_state, &signed_block)) {
         return error.InvalidBlockSignature;
     }
 
     //  // Note: time only on success
     //  const processBlockTimer = metrics?.processBlockTime.startTimer();
     //
-    processBlock(
+    try processBlock(
         allocator,
         post_state,
-        block,
-        BlockExternalData{},
+        &signed_block,
+        BlockExternalData{
+            .execution_payload_status = .valid,
+            .data_availability_status = .available,
+        },
         .{},
     );
     //

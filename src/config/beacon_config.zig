@@ -15,7 +15,7 @@ const ForkInfo = params.ForkInfo;
 const TOTAL_FORKS = params.TOTAL_FORKS;
 const getForkSeqByForkName = params.getForkSeqByForkName;
 
-const DomainByTypeHashMap = std.AutoHashMap([]const u8, []const u8);
+const DomainByTypeHashMap = std.StringHashMap([]const u8);
 const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);
 
 pub const ChainConfig = @import("./chain/chain_config.zig").ChainConfig;
@@ -173,7 +173,7 @@ pub const BeaconConfig = struct {
         return if (fork.isForkPostElectra()) self.chain.MAX_REQUEST_BLOB_SIDECARS_ELECTRA else self.chain.MAX_REQUEST_BLOB_SIDECARS;
     }
 
-    pub fn getDomain(self: *BeaconConfig, state_slot: Slot, domain_type: DomainType, message_slot: ?Slot) ![32]u8 {
+    pub fn getDomain(self: *const BeaconConfig, state_slot: Slot, domain_type: DomainType, message_slot: ?Slot) ![32]u8 {
         const slot = if (message_slot) |s| s else state_slot;
         const epoch = @divFloor(slot, preset.SLOTS_PER_EPOCH);
         const state_fork_info = self.getForkInfo(state_slot);
@@ -183,27 +183,29 @@ pub const BeaconConfig = struct {
     }
 
     // TODO: may not need this method
-    pub fn getDomainByForkName(self: *BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
+    pub fn getDomainByForkName(self: *const BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
         const fork_seq = getForkSeqByForkName(fork_name);
         return try self.getDomainByForkSeq(fork_seq, domain_type);
     }
 
-    pub fn getDomainByForkSeq(self: *BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
-        if (fork_seq >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
+    pub fn getDomainByForkSeq(self: *const BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
+        if (@intFromEnum(fork_seq) >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
 
-        const domain_by_type = self.domain_cache.items[@intFromEnum(fork_seq)];
-        const domain = domain_by_type.get(domain_type) orelse {
+        var domain_by_type = self.domain_cache.items[@intFromEnum(fork_seq)];
+        var domain: [32]u8 = undefined;
+
+        if (domain_by_type.get(&domain_type)) |d| @memcpy(&domain, d) else {
             const out = try self.allocator.create([32]u8);
             const fork_info = self.forks_ascending_epoch_order[@intFromEnum(fork_seq)];
-            computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
-            try domain_by_type.put(domain_type, out);
-            return out;
-        };
+            try computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
+            try domain_by_type.put(&domain_type, out);
+            @memcpy(&domain, out);
+        }
 
-        return domain.*;
+        return domain;
     }
 
-    pub fn getDomainForVoluntaryExit(self: *BeaconConfig, state_slot: Slot, message_slot: ?Slot) ![32]u8 {
+    pub fn getDomainForVoluntaryExit(self: *const BeaconConfig, state_slot: Slot, message_slot: ?Slot) ![32]u8 {
         const domain = if (state_slot < self.chain.DENEB_FORK_EPOCH * preset.SLOTS_PER_EPOCH) {
             return self.getDomain(state_slot, DOMAIN_VOLUNTARY_EXIT, message_slot);
         } else {
@@ -217,17 +219,17 @@ pub const BeaconConfig = struct {
     // may not need it for state-transition
 };
 
-fn computeDomain(domain_type: DomainType, fork_version: Version, genesis_validators_root: Root, out: *[32]u8) void {
-    computeForkDataRoot(fork_version, genesis_validators_root, out);
+fn computeDomain(domain_type: DomainType, fork_version: Version, genesis_validators_root: Root, out: *[32]u8) !void {
+    try computeForkDataRoot(fork_version, genesis_validators_root, out);
     std.mem.copyForwards(u8, out[0..], domain_type[0..]);
 }
 
-fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, out: *[32]u8) void {
+fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, out: *[32]u8) !void {
     const fork_data: ForkData = .{
         .current_version = current_version,
         .genesis_validators_root = genesis_validators_root,
     };
-    ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
+    try ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
 }
 
 // TODO: unit tests

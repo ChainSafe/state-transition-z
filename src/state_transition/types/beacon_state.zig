@@ -281,9 +281,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn setLatestBlockHeader(self: *BeaconStateAllForks, header: *BeaconBlockHeader) void {
+    pub fn setLatestBlockHeader(self: *BeaconStateAllForks, header: BeaconBlockHeader) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.latest_block_header = *header,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.latest_block_header = header,
         }
     }
 
@@ -922,7 +922,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getPendingPartialWithdrawal(self: *const BeaconStateAllForks, index: usize) *const PendingPartialWithdrawal {
         return switch (self.*) {
-            .electra => |state| &state.pending_partial_withdrawals[index],
+            .electra => |state| &state.pending_partial_withdrawals.items[index],
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
@@ -941,12 +941,12 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
+    pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         switch (self.*) {
             .electra => |state| {
-                if (start_index >= state.pending_partial_withdrawals.len) return error.IndexOutOfBounds;
-                const new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(state.pending_partial_withdrawals.items.len - start_index);
-                try new_array.appendSlice(state.pending_partial_withdrawals.items[start_index..]);
+                if (start_index >= state.pending_partial_withdrawals.items.len) return error.IndexOutOfBounds;
+                var new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(allocator, state.pending_partial_withdrawals.items.len - start_index);
+                try new_array.appendSlice(allocator, state.pending_partial_withdrawals.items[start_index..]);
                 return new_array;
             },
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
@@ -955,7 +955,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getPendingPartialWithdrawalCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
-            .electra => |state| state.pending_partial_withdrawals.len,
+            .electra => |state| state.pending_partial_withdrawals.items.len,
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }

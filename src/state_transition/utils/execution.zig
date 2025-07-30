@@ -1,6 +1,8 @@
+const std = @import("std");
 const ForkSeq = @import("params").ForkSeq;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
+const SignedBlock = @import("../state_transition.zig").SignedBlock;
 const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
 const ExecutionPayload = @import("../types/beacon_block.zig").ExecutionPayload;
 // const ExecutionPayloadHeader
@@ -8,7 +10,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 
 // TODO: support BlindedBeaconBlock
-pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const BeaconBlock) bool {
+pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const SignedBlock) bool {
     if (!state.isPostBellatrix()) {
         return false;
     }
@@ -17,9 +19,11 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Beaco
         return true;
     }
 
-    const payload = block.getBeaconBlockBody().getExecutionPayload();
+    _ = block.getBeaconBlockBody().getExecutionPayload();
 
-    return (state.isBellatrix() and ssz.bellatrix.ExecutionPayload.equals(payload.bellatrix, ssz.bellatrix.ExecutionPayload.default_value));
+    return true;
+    //TODO(bing): fix when equals works
+    // return (state.isBellatrix() and ssz.bellatrix.ExecutionPayload.equals(payload.bellatrix, ssz.bellatrix.ExecutionPayload.default_value));
 }
 
 pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const BeaconBlockBody) bool {
@@ -33,9 +37,14 @@ pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const Be
 
 // TODO: make sure this function is not called for forks other than Bellatrix and Capella
 pub fn isMergeTransitionComplete(state: *const BeaconStateAllForks) bool {
-    if (!state.isPostCapella()) {
-        return !ssz.bellatrix.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().bellatrix, ssz.bellatrix.ExecutionPayloadHeader.default_value);
-    }
+    std.debug.assert(state.getForkSeq() == .bellatrix or state.getForkSeq() == .capella);
+    // TODO(bing): reenable below code when 'equals' works; first return false to test longer codepath
+    return false;
 
-    return !ssz.capella.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().capella, ssz.capella.ExecutionPayloadHeader.default_value);
+    // TODO(bing): Fix equals
+    // if (!state.isPostCapella()) {
+    //     return !ssz.bellatrix.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().bellatrix, ssz.bellatrix.ExecutionPayloadHeader.default_value);
+    // }
+
+    // return !ssz.capella.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().capella, ssz.capella.ExecutionPayloadHeader.default_value);
 }

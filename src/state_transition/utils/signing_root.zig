@@ -6,6 +6,8 @@ const Root = types.Root;
 const SigningData = types.SigningData;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
+const Block = @import("../state_transition.zig").Block;
+const SignedBlock = @import("../state_transition.zig").SignedBlock;
 
 /// Return the signing root of an object by calculating the root of the object-domain tree.
 pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: Domain, out: *[32]u8) !void {
@@ -19,7 +21,7 @@ pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: D
     try ssz.phase0.SigningData.hashTreeRoot(&domain_wrapped_object, out);
 }
 
-pub fn computeBlockSigningRoot(allocator: Allocator, block: BeaconBlock, domain: Domain, out: *[32]u8) !void {
+pub fn computeBlockSigningRoot(allocator: Allocator, block: *const SignedBlock, domain: Domain, out: *[32]u8) !void {
     var object_root: Root = undefined;
     try block.hashTreeRoot(allocator, &object_root);
     const domain_wrapped_object: SigningData = .{

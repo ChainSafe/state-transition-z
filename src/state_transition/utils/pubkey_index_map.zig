@@ -11,16 +11,14 @@ pub fn PubkeyIndexMap(comptime T: type) type {
     const Val = T;
     const Key = [PUBKEY_INDEX_MAP_KEY_SIZE]u8;
 
-    const AutoHashMap = std.AutoHashMap(Key, Val);
-
     return struct {
         // this HashMap copies key/value using its own allocator
         // this duplicates all items at Bun side
-        map: AutoHashMap,
+        map: std.StringHashMap(Val),
 
         pub fn init(allocator: Allocator) !*@This() {
             const instance = try allocator.create(@This());
-            instance.* = .{ .map = AutoHashMap.init(allocator) };
+            instance.* = .{ .map = std.StringHashMap(Val).init(allocator) };
             return instance;
         }
 
@@ -36,7 +34,7 @@ pub fn PubkeyIndexMap(comptime T: type) type {
             }
             var fixed_key: Key = undefined;
             @memcpy(&fixed_key, key);
-            try self.map.put(fixed_key, value);
+            try self.map.put(key, value);
         }
 
         pub fn get(self: *const @This(), key: []const u8) ?Val {
@@ -45,7 +43,7 @@ pub fn PubkeyIndexMap(comptime T: type) type {
             }
             var fixed_key: Key = undefined;
             @memcpy(&fixed_key, key);
-            return self.map.get(fixed_key);
+            return self.map.get(key);
         }
 
         pub fn has(self: *const @This(), key: []const u8) bool {
