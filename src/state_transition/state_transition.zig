@@ -9,6 +9,9 @@ const Slot = ssz.primitive.Slot.Type;
 
 const CachedBeaconStateAllForks = @import("cache/state_cache.zig").CachedBeaconStateAllForks;
 pub const SignedBeaconBlock = @import("types/beacon_block.zig").SignedBeaconBlock;
+const verifyProposerSignature = @import("./signature_sets/proposer.zig").verifyProposerSignature;
+const processBlock = @import("./block/process_block.zig").processBlock;
+const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
 const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
 const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
@@ -35,7 +38,7 @@ pub const SignedBlock = union(enum) {
     signed_beacon_block: *const SignedBeaconBlock,
     signed_blinded_beacon_block: *const SignedBlindedBeaconBlock,
 
-    fn getMessage(self: *const SignedBlock) Block {
+    pub fn getMessage(self: *const SignedBlock) Block {
         return switch (self.*) {
             .signed_beacon_block => |b| Block{ .block = b.getBeaconBlock() },
             .signed_blinded_beacon_block => |b| Block{ .blinded_block = b.getBeaconBlock() },
@@ -87,21 +90,70 @@ pub fn stateTransition(
     allocator: std.mem.Allocator,
     state: *CachedBeaconStateAllForks,
     signed_block: SignedBlock,
-    options: Options,
+    opts: Options,
 ) !*CachedBeaconStateAllForks {
-    _ = options;
-
-    //TODO(bing): deep clone
-    // const post_state = state.clone();
-    //
-    const post_state = state;
     const block = signed_block.getMessage();
     const block_slot = switch (block) {
         .block => |b| b.getSlot(),
         .blinded_block => |b| b.getSlot(),
     };
 
+    //TODO(bing): deep clone
+    // const post_state = state.clone();
+    const post_state = state;
+
+    //TODO(bing): metrics
+    //if (metrics) {
+    //  onStateCloneMetrics(postState, metrics, StateCloneSource.stateTransition);
+    //}
+
     try processSlotsWithTransientCache(allocator, post_state, block_slot, .{});
+
+    // Verify proposer signature only
+    if (opts.verify_proposer and !verifyProposerSignature(post_state, &signed_block)) {
+        return error.InvalidBlockSignature;
+    }
+
+    //  // Note: time only on success
+    //  const processBlockTimer = metrics?.processBlockTime.startTimer();
+    //
+    processBlock(
+        allocator,
+        post_state,
+        block,
+        BlockExternalData{},
+        .{},
+    );
+    //
+    // TODO(bing): commit
+    //  const processBlockCommitTimer = metrics?.processBlockCommitTime.startTimer();
+    //  postState.commit();
+    //  processBlockCommitTimer?.();
+
+    //  // Note: time only on success. Include processBlock and commit
+    //  processBlockTimer?.();
+    // TODO(bing): metrics
+    //  if (metrics) {
+    //    onPostStateMetrics(postState, metrics);
+    //  }
+
+    // Verify state root
+    if (opts.verify_state_root) {
+        var out: [32]u8 = undefined;
+        //    const hashTreeRootTimer = metrics?.stateHashTreeRootTime.startTimer({
+        //      source: StateHashTreeRootSource.stateTransition,
+        //    });
+        try post_state.state.hashTreeRoot(allocator, &out);
+        //    hashTreeRootTimer?.();
+
+        const block_state_root = switch (block) {
+            .block => |b| b.getStateRoot(),
+            .blinded_block => |b| b.getStateRoot(),
+        };
+        if (!std.mem.eql(u8, &out, block_state_root)) {
+            return error.InvalidStateRoot;
+        }
+    }
 
     return state;
 }
