@@ -99,7 +99,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
 
         // same logic to getFlagIndexDeltas
         if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_UNSLASHED)) {
-            if (!is_in_inactivity_leak) {
+            if (is_in_inactivity_leak) {} else {
                 rewards[i] += timely_source_reward;
             }
         } else {
@@ -107,7 +107,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
         }
 
         if (hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
-            if (!is_in_inactivity_leak) {
+            if (is_in_inactivity_leak) {} else {
                 rewards[i] += timely_target_reward;
             }
         } else {
