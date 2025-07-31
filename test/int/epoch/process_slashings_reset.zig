@@ -4,8 +4,12 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessSlashingsReset = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processSlashingsReset, true, true, false).testProcessEpochFn;
+const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processSlashingsReset - sanity" {
-    try testProcessSlashingsReset();
+    try getTestProcessFn(state_transition.processSlashingsReset, .{
+        .no_alloc = true,
+        .no_err_return = true,
+        .no_void_return = false,
+    }).testProcessEpochFn();
 }

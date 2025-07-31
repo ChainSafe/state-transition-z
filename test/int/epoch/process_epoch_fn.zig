@@ -5,7 +5,13 @@ const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 
-pub fn getTestProcessFn(process_epoch_fn: anytype, no_alloc: bool, no_err_return: bool, no_void_return: bool) type {
+pub const ProcessEpochTestOpt = struct {
+    no_alloc: bool = false,
+    no_err_return: bool = false,
+    no_void_return: bool = false,
+};
+
+pub fn getTestProcessFn(process_epoch_fn: anytype, opt: ProcessEpochTestOpt) type {
     return struct {
         pub fn testProcessEpochFn() !void {
             const allocator = std.testing.allocator;
@@ -27,33 +33,33 @@ pub fn getTestProcessFn(process_epoch_fn: anytype, no_alloc: bool, no_err_return
                 );
                 defer epoch_transition_cache.deinit();
 
-                if (no_void_return) {
-                    if (no_err_return) {
+                if (opt.no_void_return) {
+                    if (opt.no_err_return) {
                         // no try
-                        if (no_alloc) {
+                        if (opt.no_alloc) {
                             _ = process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         } else {
                             _ = process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         }
                     } else {
                         // with try
-                        if (no_alloc) {
+                        if (opt.no_alloc) {
                             _ = try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         } else {
                             _ = try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         }
                     }
                 } else {
-                    if (no_err_return) {
+                    if (opt.no_err_return) {
                         // no try
-                        if (no_alloc) {
+                        if (opt.no_alloc) {
                             process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         } else {
                             process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         }
                     } else {
                         // with try
-                        if (no_alloc) {
+                        if (opt.no_alloc) {
                             try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         } else {
                             try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);

@@ -4,8 +4,12 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessJustificationAndFinalization = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processJustificationAndFinalization, true, false, false).testProcessEpochFn;
+const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processJustificationAndFinalization - sanity" {
-    try testProcessJustificationAndFinalization();
+    try getTestProcessFn(state_transition.processJustificationAndFinalization, .{
+        .no_alloc = true,
+        .no_err_return = false,
+        .no_void_return = false,
+    }).testProcessEpochFn();
 }
