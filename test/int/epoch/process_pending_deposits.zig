@@ -4,10 +4,10 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
+const TestRunner = @import("./test_runner.zig").TestRunner;
 
 test "processPendingDeposits - sanity" {
-    try getTestProcessFn(state_transition.processPendingDeposits, .{
+    try TestRunner(state_transition.processPendingDeposits, .{
         // .no_alloc = false,
         .alloc = true,
         // .no_err_return = false,

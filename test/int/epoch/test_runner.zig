@@ -5,13 +5,13 @@ const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 
-pub const ProcessEpochTestOpt = struct {
+pub const TestOpt = struct {
     alloc: bool = false,
     err_return: bool = false,
     void_return: bool = false,
 };
 
-pub fn getTestProcessFn(process_epoch_fn: anytype, opt: ProcessEpochTestOpt) type {
+pub fn TestRunner(process_epoch_fn: anytype, opt: TestOpt) type {
     return struct {
         pub fn testProcessEpochFn() !void {
             const allocator = std.testing.allocator;
