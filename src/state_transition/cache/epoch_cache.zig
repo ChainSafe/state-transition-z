@@ -379,6 +379,7 @@ pub const EpochCache = struct {
 
     /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
     /// Consumers borrow value, so they must not either modify or deinit it.
+    /// TODO: @spiral-ladder prefer `self.previous_shuffling.get()` pattern instead, same to below
     pub fn getPreviousShuffling(self: *const EpochCache) *const EpochShuffling {
         return self.previous_shuffling.get();
     }
