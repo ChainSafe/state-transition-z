@@ -901,19 +901,19 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     // TODO(ssz): implement sliceFrom api for TreeView
-    pub fn sliceFromPendingDeposits(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingDeposit.Type) {
+    pub fn sliceFromPendingDeposits(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingDeposit) {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_deposits is not available in {}", .{self}),
             inline else => |state| {
                 if (start_index >= state.pending_deposits.items.len) return error.IndexOutOfBounds;
-                var new_array = try std.ArrayListUnmanaged(ssz.electra.PendingDeposit.Type).initCapacity(allocator, state.pending_deposits.items.len - start_index);
+                var new_array = try std.ArrayListUnmanaged(PendingDeposit).initCapacity(allocator, state.pending_deposits.items.len - start_index);
                 try new_array.appendSlice(allocator, (state.pending_deposits.items[start_index..]));
                 return new_array;
             },
         }
     }
 
-    pub fn setPendingDeposits(self: *BeaconStateAllForks, deposits: std.ArrayListUnmanaged(ssz.electra.PendingDeposit.Type)) void {
+    pub fn setPendingDeposits(self: *BeaconStateAllForks, deposits: std.ArrayListUnmanaged(PendingDeposit)) void {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_deposits is not available in {}", .{self}),
             inline else => |state| state.pending_deposits = deposits,
@@ -1003,19 +1003,19 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     // TODO: implement sliceFrom api for TreeView
-    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type) {
+    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingConsolidation) {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
             inline else => |state| {
                 if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
-                var new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
+                var new_array = try std.ArrayListUnmanaged(PendingConsolidation).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
                 try new_array.appendSlice(allocator, state.pending_consolidations.items[start_index..]);
                 return new_array;
             },
         }
     }
 
-    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type)) void {
+    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(PendingConsolidation)) void {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
             inline else => |state| state.pending_consolidations = consolidations,
