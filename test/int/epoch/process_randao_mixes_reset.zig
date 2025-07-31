@@ -10,9 +10,9 @@ test "processRandaoMixesReset - sanity" {
     try getTestProcessFn(
         state_transition.processRandaoMixesReset,
         .{
-            .no_alloc = true,
-            .no_err_return = true,
-            .no_void_return = false,
+            .alloc = false,
+            .err_return = false,
+            .void_return = true,
         },
     ).testProcessEpochFn();
 }

@@ -8,8 +8,8 @@ const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processSlashingsReset - sanity" {
     try getTestProcessFn(state_transition.processSlashingsReset, .{
-        .no_alloc = true,
-        .no_err_return = true,
-        .no_void_return = false,
+        .alloc = false,
+        .err_return = false,
+        .void_return = true,
     }).testProcessEpochFn();
 }

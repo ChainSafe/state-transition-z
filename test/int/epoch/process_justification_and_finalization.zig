@@ -8,8 +8,8 @@ const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processJustificationAndFinalization - sanity" {
     try getTestProcessFn(state_transition.processJustificationAndFinalization, .{
-        .no_alloc = true,
-        .no_err_return = false,
-        .no_void_return = false,
+        .alloc = false,
+        .err_return = true,
+        .void_return = true,
     }).testProcessEpochFn();
 }

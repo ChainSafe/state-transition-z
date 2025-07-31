@@ -8,8 +8,11 @@ const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processPendingDeposits - sanity" {
     try getTestProcessFn(state_transition.processPendingDeposits, .{
-        .no_alloc = false,
-        .no_err_return = false,
-        .no_void_return = false,
+        // .no_alloc = false,
+        .alloc = true,
+        // .no_err_return = false,
+        .err_return = true,
+        // .no_void_return = false,
+        .void_return = true,
     }).testProcessEpochFn();
 }

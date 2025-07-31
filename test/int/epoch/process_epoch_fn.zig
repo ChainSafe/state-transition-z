@@ -6,9 +6,9 @@ const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 
 pub const ProcessEpochTestOpt = struct {
-    no_alloc: bool = false,
-    no_err_return: bool = false,
-    no_void_return: bool = false,
+    alloc: bool = false,
+    err_return: bool = false,
+    void_return: bool = false,
 };
 
 pub fn getTestProcessFn(process_epoch_fn: anytype, opt: ProcessEpochTestOpt) type {
@@ -33,36 +33,36 @@ pub fn getTestProcessFn(process_epoch_fn: anytype, opt: ProcessEpochTestOpt) typ
                 );
                 defer epoch_transition_cache.deinit();
 
-                if (opt.no_void_return) {
-                    if (opt.no_err_return) {
-                        // no try
-                        if (opt.no_alloc) {
-                            _ = process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
+                if (opt.void_return) {
+                    if (opt.err_return) {
+                        // with try
+                        if (opt.alloc) {
+                            try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         } else {
-                            _ = process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
+                            try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         }
                     } else {
-                        // with try
-                        if (opt.no_alloc) {
-                            _ = try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
+                        // no try
+                        if (opt.alloc) {
+                            process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         } else {
-                            _ = try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
+                            process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         }
                     }
                 } else {
-                    if (opt.no_err_return) {
-                        // no try
-                        if (opt.no_alloc) {
-                            process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
+                    if (opt.err_return) {
+                        // with try
+                        if (opt.alloc) {
+                            _ = try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         } else {
-                            process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
+                            _ = try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         }
                     } else {
-                        // with try
-                        if (opt.no_alloc) {
-                            try process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
+                        // no try
+                        if (opt.alloc) {
+                            _ = process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
                         } else {
-                            try process_epoch_fn(allocator, test_state.cached_state, &epoch_transition_cache);
+                            _ = process_epoch_fn(test_state.cached_state, &epoch_transition_cache);
                         }
                     }
                 }

@@ -8,8 +8,8 @@ const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processEth1DataReset - sanity" {
     try getTestProcessFn(state_transition.processEth1DataReset, .{
-        .no_alloc = true,
-        .no_err_return = true,
-        .no_void_return = false,
+        .alloc = false,
+        .err_return = false,
+        .void_return = true,
     }).testProcessEpochFn();
 }

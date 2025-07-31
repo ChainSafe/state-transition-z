@@ -10,9 +10,9 @@ test "processEffectiveBalanceUpdates - sanity" {
     try testProcessFn(
         state_transition.processEffectiveBalanceUpdates,
         .{
-            .no_alloc = true,
-            .no_err_return = false,
-            .no_void_return = true,
+            .alloc = false,
+            .err_return = true,
+            .void_return = false,
         },
     ).testProcessEpochFn();
 }

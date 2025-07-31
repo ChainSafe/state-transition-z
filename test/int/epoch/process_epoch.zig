@@ -8,8 +8,8 @@ const getTestProcessFn = @import("./process_epoch_fn.zig").getTestProcessFn;
 
 test "processEpoch - sanity" {
     try getTestProcessFn(state_transition.processEpoch, .{
-        .no_alloc = false,
-        .no_err_return = false,
-        .no_void_return = false,
+        .alloc = true,
+        .err_return = true,
+        .void_return = true,
     }).testProcessEpochFn();
 }
