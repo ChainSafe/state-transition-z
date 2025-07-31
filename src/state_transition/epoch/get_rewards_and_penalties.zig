@@ -68,8 +68,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
 
         const effective_balance_increment = effective_balance_increments[i];
 
-        var reward_penalty_item = reward_penalty_item_cache.get(effective_balance_increment);
-        if (reward_penalty_item == null) {
+        const reward_penalty_item = if (reward_penalty_item_cache.get(effective_balance_increment)) |rpi| rpi else blk: {
             const base_reward = effective_balance_increment * cache.base_reward_per_increment;
             const ts_weigh = PARTICIPATION_FLAG_WEIGHTS[TIMELY_SOURCE_FLAG_INDEX];
             const tt_weigh = PARTICIPATION_FLAG_WEIGHTS[TIMELY_TARGET_FLAG_INDEX];
@@ -80,7 +79,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
             const ts_reward_numerator = base_reward * ts_weigh * ts_unslashed_participating_increments;
             const tt_reward_numerator = base_reward * tt_weigh * tt_unslashed_participating_increments;
             const th_reward_numerator = base_reward * th_weigh * th_unslashed_participating_increments;
-            reward_penalty_item = .{
+            const rpi = RewardPenaltyItem{
                 .base_reward = base_reward,
                 .timely_source_reward = @divFloor(ts_reward_numerator, active_increments * WEIGHT_DENOMINATOR),
                 .timely_target_reward = @divFloor(tt_reward_numerator, active_increments * WEIGHT_DENOMINATOR),
@@ -88,13 +87,15 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
                 .timely_source_penalty = @divFloor(base_reward * ts_weigh, WEIGHT_DENOMINATOR),
                 .timely_target_penalty = @divFloor(base_reward * tt_weigh, WEIGHT_DENOMINATOR),
             };
-        }
+            try reward_penalty_item_cache.put(effective_balance_increment, rpi);
+            break :blk rpi;
+        };
 
-        const timely_source_reward = reward_penalty_item.?.timely_source_reward;
-        const timely_source_penalty = reward_penalty_item.?.timely_source_penalty;
-        const timely_target_reward = reward_penalty_item.?.timely_target_reward;
-        const timely_target_penalty = reward_penalty_item.?.timely_target_penalty;
-        const timely_head_reward = reward_penalty_item.?.timely_head_reward;
+        const timely_source_reward = reward_penalty_item.timely_source_reward;
+        const timely_source_penalty = reward_penalty_item.timely_source_penalty;
+        const timely_target_reward = reward_penalty_item.timely_target_reward;
+        const timely_target_penalty = reward_penalty_item.timely_target_penalty;
+        const timely_head_reward = reward_penalty_item.timely_head_reward;
 
         // same logic to getFlagIndexDeltas
         if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_UNSLASHED)) {

@@ -586,6 +586,7 @@ pub const EpochCache = struct {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
+    /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
     pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application

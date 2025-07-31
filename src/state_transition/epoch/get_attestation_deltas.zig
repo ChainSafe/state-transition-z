@@ -43,8 +43,11 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const proposer_indices = cache.proposer_indices;
     const inclusion_delays = cache.inclusion_delays;
     const validator_count = flags.len;
-    if (rewards.len != validator_count or penalties.len != validator_count) {
-        return error.InvalidArrayLength;
+    if (rewards.len != validator_count) {
+        return error.InvalidRewardsArrayLength;
+    }
+    if (penalties.len != validator_count) {
+        return error.InvalidPenaltiesArrayLength;
     }
     @memset(rewards, 0);
     @memset(penalties, 0);
@@ -73,16 +76,16 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     defer reward_penalty_item_cache.deinit();
 
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();
+    std.debug.assert(flags.len == effective_balance_increments.items.len);
     for (0..flags.len) |i| {
         const flag = flags[i];
         const effective_balance_increment = effective_balance_increments.items[i];
         const effective_balance: u64 = @as(u64, effective_balance_increment) * preset.EFFECTIVE_BALANCE_INCREMENT;
 
-        var reward_item = reward_penalty_item_cache.get(effective_balance_increment);
-        if (reward_item == null) {
+        const rewards_items = if (reward_penalty_item_cache.get(effective_balance_increment)) |ri| ri else blk: {
             const base_reward = @divFloor(@divFloor(effective_balance * BASE_REWARD_FACTOR, balance_sq_root), BASE_REWARDS_PER_EPOCH);
             const proposer_reward = @divFloor(base_reward, proposer_reward_quotient);
-            reward_item = .{
+            const ri = RewardPenaltyItem{
                 .base_reward = base_reward,
                 .proposer_reward = proposer_reward,
                 .max_attester_reward = base_reward - proposer_reward,
@@ -92,17 +95,18 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
                 .base_penalty = base_reward * BASE_REWARDS_PER_EPOCH_CONST - proposer_reward,
                 .finality_delay_penalty = @divFloor((effective_balance * finality_delay), INACTIVITY_PENALTY_QUOTIENT),
             };
-            try reward_penalty_item_cache.put(effective_balance_increment, reward_item.?);
-        }
+            try reward_penalty_item_cache.put(effective_balance_increment, ri);
+            break :blk ri;
+        };
 
-        const base_reward = reward_item.?.base_reward;
-        const proposer_reward = reward_item.?.proposer_reward;
-        const max_attester_reward = reward_item.?.max_attester_reward;
-        const source_checkpoint_reward = reward_item.?.source_checkpoint_reward;
-        const target_checkpoint_reward = reward_item.?.target_checkpoint_reward;
-        const head_reward = reward_item.?.head_reward;
-        const base_penalty = reward_item.?.base_penalty;
-        const finality_delay_penalty = reward_item.?.finality_delay_penalty;
+        const base_reward = rewards_items.base_reward;
+        const proposer_reward = rewards_items.proposer_reward;
+        const max_attester_reward = rewards_items.max_attester_reward;
+        const source_checkpoint_reward = rewards_items.source_checkpoint_reward;
+        const target_checkpoint_reward = rewards_items.target_checkpoint_reward;
+        const head_reward = rewards_items.head_reward;
+        const base_penalty = rewards_items.base_penalty;
+        const finality_delay_penalty = rewards_items.finality_delay_penalty;
 
         // inclusion speed bonus
         if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_OR_UNSLASHED)) {
