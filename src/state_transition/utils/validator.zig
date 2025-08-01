@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const Validator = ssz.phase0.Validator.Type;
+
 const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;

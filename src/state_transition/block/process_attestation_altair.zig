@@ -49,7 +49,7 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
         try validateAttestation(AT, cached_state, attestation);
 
         // Retrieve the validator indices from the attestation participation bitfield
-        const attesting_indices = if (AT == Phase0Attestation) epoch_cache.getAttestingIndicesPhase0(&attestation) else epoch_cache.getAttestingIndicesElectra(&attestation);
+        const attesting_indices = try if (AT == Phase0Attestation) epoch_cache.getAttestingIndicesPhase0(&attestation) else epoch_cache.getAttestingIndicesElectra(&attestation);
         defer attesting_indices.deinit();
 
         // this check is done last because its the most expensive (if signature verification is toggled on)

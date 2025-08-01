@@ -1,15 +1,16 @@
+const std = @import("std");
 const ssz = @import("consensus_types");
 const Eth1Data = ssz.phase0.Eth1Data.Type;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const preset = ssz.preset;
 
-pub fn processEth1Data(cached_state: *const CachedBeaconStateAllForks, eth1_data: *const Eth1Data) void {
+pub fn processEth1Data(allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, eth1_data: *const Eth1Data) !void {
     const state = cached_state.state;
     if (becomesNewEth1Data(cached_state, eth1_data)) {
         state.setEth1Data(eth1_data.*);
     }
 
-    state.getEth1DataVotes().append(eth1_data.*);
+    try state.getEth1DataVotes().append(allocator, eth1_data.*);
 }
 
 pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_eth1_data: *const Eth1Data) bool {
@@ -18,12 +19,12 @@ pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_et
 
     // If there are not more than 50% votes, then we do not have to count to find a winner.
     const state_eth1_data_votes = state.getEth1DataVotes().items;
-    if ((state_eth1_data_votes.length + 1) * 2 <= SLOTS_PER_ETH1_VOTING_PERIOD) {
+    if ((state_eth1_data_votes.len + 1) * 2 <= SLOTS_PER_ETH1_VOTING_PERIOD) {
         return false;
     }
 
     // Nothing to do if the state already has this as eth1data (happens a lot after majority vote is in)
-    if (isEqualEth1DataView(state.getEth1Data(), new_eth1_data.*)) {
+    if (isEqualEth1DataView(state.getEth1Data().*, new_eth1_data.*)) {
         return false;
     }
 
@@ -47,7 +48,8 @@ pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_et
 }
 
 // TODO: should have a different implement in TreeView
-fn isEqualEth1DataView(eth1_data_a: Eth1Data, eth1_data_b: Eth1Data) bool {
-    // TODO(ssz): implement equals api
-    return ssz.phase0.Eth1Data.equals(eth1_data_a, eth1_data_b);
+fn isEqualEth1DataView(_: Eth1Data, _: Eth1Data) bool {
+    // TODO(bing): implement equals api, for now return true
+    // return ssz.phase0.Eth1Data.equals(eth1_data_a, eth1_data_b);
+    return true;
 }

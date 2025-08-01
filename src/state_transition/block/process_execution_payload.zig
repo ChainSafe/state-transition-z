@@ -5,37 +5,63 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
-const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
+const SignedBlock = @import("../state_transition.zig").SignedBlock;
 const ExecutionPayloadStatus = @import("./external_data.zig").ExecutionPayloadStatus;
-const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
+const SignedBlindedBeaconBlock = @import("../types/beacon_block.zig").SignedBlindedBeaconBlock;
+const BlockExternalData = @import("./external_data.zig").BlockExternalData;
 const BeaconConfig = @import("config").BeaconConfig;
 const isMergeTransitionComplete = @import("../utils/execution.zig").isMergeTransitionComplete;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 
+const PartialPayload = struct {
+    parent_hash: [32]u8 = undefined,
+    block_hash: [32]u8 = undefined,
+    prev_randao: ssz.primitive.Bytes32.Type = undefined,
+    timestamp: u64 = undefined,
+};
+
 // TODO: support BlindedBeaconBlockBody
 pub fn processExecutionPayload(
     allocator: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
-    body: BeaconBlockBody,
-    external_data: ExecutionPayloadStatus,
+    body: SignedBlock.BeaconBlockBody_,
+    external_data: BlockExternalData,
 ) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
-    const payload = body.getExecutionPayload();
+    var partial_payload = PartialPayload{};
+    switch (body) {
+        .unblinded => |b| {
+            partial_payload = .{
+                .parent_hash = b.getExecutionPayload().getParentHash(),
+                .block_hash = b.getExecutionPayload().getBlockHash(),
+                .prev_randao = b.getExecutionPayload().getPrevRandao(),
+                .timestamp = b.getExecutionPayload().getTimestamp(),
+            };
+        },
+        .blinded => |b| {
+            partial_payload = .{
+                .parent_hash = b.getExecutionPayloadHeader().getParentHash(),
+                .block_hash = b.getExecutionPayloadHeader().getBlockHash(),
+                .prev_randao = b.getExecutionPayloadHeader().getPrevRandao(),
+                .timestamp = b.getExecutionPayloadHeader().getTimestamp(),
+            };
+        },
+    }
+
     // Verify consistency of the parent hash, block number, base fee per gas and gas limit
     // with respect to the previous execution payload header
     if (isMergeTransitionComplete(state)) {
-        const execution_payload_header = state.getLatestExecutionPayloadHeader();
-        if (!std.mem.eql(u8, &payload.getParentHash(), &execution_payload_header.getBlockHash())) {
+        if (!std.mem.eql(u8, &partial_payload.parent_hash, &partial_payload.block_hash)) {
             return error.InvalidExecutionPayloadParentHash;
         }
     }
 
     // Verify random
-    const expected_random = getRandaoMix(state.*, epoch_cache.epoch);
-    if (!std.mem.eql(u8, &payload.getPrevRandao(), &expected_random)) {
+    const expected_random = getRandaoMix(state, epoch_cache.epoch);
+    if (!std.mem.eql(u8, &partial_payload.prev_randao, &expected_random)) {
         return error.InvalidExecutionPayloadRandom;
     }
 
@@ -45,14 +71,13 @@ pub fn processExecutionPayload(
     // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
     //   slots_since_genesis = slot - GENESIS_SLOT
     //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (payload.getTimestamp() != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
+    if (partial_payload.timestamp != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
         return error.InvalidExecutionPayloadTimestamp;
     }
 
     if (state.isPostDeneb()) {
         const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.getSlot()));
-        const blob_kzg_commitments_len = body.getBlobKzgCommitments().items.len;
-        if (blob_kzg_commitments_len > max_blobs_per_block) {
+        if (body.blobKzgCommitmentsLen() > max_blobs_per_block) {
             return error.BlobKzgCommitmentsExceedsLimit;
         }
     }
@@ -64,76 +89,15 @@ pub fn processExecutionPayload(
     // the state transition sync
     //
     // Equivalent to `assert executionEngine.notifyNewPayload(payload)
-    if (external_data == ExecutionPayloadStatus.pre_merge) {
+    if (external_data.execution_payload_status == .pre_merge) {
         return error.ExecutionPayloadStatusPreMerge;
-    } else if (external_data == ExecutionPayloadStatus.invalid) {
+    } else if (external_data.execution_payload_status == .invalid) {
         return error.InvalidExecutionPayload;
     }
 
-    const payload_header = try payload.toPayloadHeader(allocator);
-    state.setLatestExecutionPayloadHeader(payload_header);
-}
-
-pub fn processExecutionPayloadHeader(
-    allocator: Allocator,
-    cached_state: *const CachedBeaconStateAllForks,
-    block: SignedBlindedBeaconBlock,
-) !void {
-    var signed_header = block.getBeaconBlock().getBeaconBlockBody().signed_execution_payload_header;
-    try verifyExecutionPayloadHeader(state, signed_header);
-
-    const header = signed_header.message;
-
-    const state = cached_state.state;
-    const epoch_cache = cached_state.getEpochCache();
-    const config = epoch_cache.config;
-    const payload = body.getExecutionPayload();
-    // Verify consistency of the parent hash, block number, base fee per gas and gas limit
-    // with respect to the previous execution payload header
-    if (isMergeTransitionComplete(state)) {
-        const execution_payload_header = state.getLatestExecutionPayloadHeader();
-        if (!std.mem.eql(u8, &payload.getParentHash(), &execution_payload_header.getBlockHash())) {
-            return error.InvalidExecutionPayloadParentHash;
-        }
-    }
-
-    // Verify random
-    const expected_random = getRandaoMix(state.*, epoch_cache.epoch);
-    if (!std.mem.eql(u8, &payload.getPrevRandao(), &expected_random)) {
-        return error.InvalidExecutionPayloadRandom;
-    }
-
-    // Verify timestamp
-    //
-    // Note: inlined function in if statement
-    // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
-    //   slots_since_genesis = slot - GENESIS_SLOT
-    //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (payload.getTimestamp() != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
-        return error.InvalidExecutionPayloadTimestamp;
-    }
-
-    if (state.isPostDeneb()) {
-        const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.getSlot()));
-        const blob_kzg_commitments_len = body.getBlobKzgCommitments().items.len;
-        if (blob_kzg_commitments_len > max_blobs_per_block) {
-            return error.BlobKzgCommitmentsExceedsLimit;
-        }
-    }
-
-    // Verify the execution payload is valid
-    //
-    // if executionEngine is null, executionEngine.onPayload MUST be called after running processBlock to get the
-    // correct randao mix. Since executionEngine will be an async call in most cases it is called afterwards to keep
-    // the state transition sync
-    //
-    // Equivalent to `assert executionEngine.notifyNewPayload(payload)
-    if (external_data == ExecutionPayloadStatus.pre_merge) {
-        return error.ExecutionPayloadStatusPreMerge;
-    } else if (external_data == ExecutionPayloadStatus.invalid) {
-        return error.InvalidExecutionPayload;
-    }
-
-    const payload_header = try payload.toPayloadHeader(allocator);
-    state.setLatestExecutionPayloadHeader(payload_header);
+    const payload_header = switch (body) {
+        .unblinded => |b| try b.getExecutionPayload().toPayloadHeader(allocator),
+        .blinded => |b| b.getExecutionPayloadHeader(),
+    };
+    state.setLatestExecutionPayloadHeader(&payload_header);
 }

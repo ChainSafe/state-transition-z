@@ -465,8 +465,9 @@ pub const EpochCache = struct {
     }
 
     pub fn getCommitteeCountPerSlot(self: *const EpochCache, epoch: Epoch) !usize {
-        const shuffling = self.getShufflingAtEpochOrNull(epoch) orelse error.EpochShufflingNotFound;
-        return shuffling.committees_per_slot;
+        if (self.getShufflingAtEpochOrNull(epoch)) |s| return s.committees_per_slot;
+
+        return error.EpochShufflingNotFound;
     }
 
     pub fn computeSubnetForSlot(self: *const EpochCache, slot: Slot, committee_index: CommitteeIndex) !u8 {

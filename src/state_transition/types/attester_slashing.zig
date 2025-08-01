@@ -15,7 +15,7 @@ pub const AttesterSlashings = union(enum) {
 
     pub fn items(self: *const AttesterSlashings) AttesterSlashingItems {
         return switch (self.*) {
-            .phase0 => |attester_slashings| .{ .phase = attester_slashings.items },
+            .phase0 => |attester_slashings| .{ .phase0 = attester_slashings.items },
             .electra => |attester_slashings| .{ .electra = attester_slashings.items },
         };
     }

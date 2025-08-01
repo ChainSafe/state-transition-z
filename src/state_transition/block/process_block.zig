@@ -15,6 +15,7 @@ const processOperations = @import("./process_operations.zig").processOperations;
 const processRandao = @import("./process_randao.zig").processRandao;
 const processSyncAggregate = @import("./process_sync_committee.zig").processSyncAggregate;
 const processWithdrawals = @import("./process_withdrawals.zig").processWithdrawals;
+const getExpectedWithdrawals = @import("./process_withdrawals.zig").getExpectedWithdrawals;
 const ProcessBlockOpts = @import("./types.zig").ProcessBlockOpts;
 const isExecutionEnabled = @import("../utils/execution.zig").isExecutionEnabled;
 // TODO: proposer reward api
@@ -27,7 +28,7 @@ pub fn processBlock(
     // TODO: support BlindedBeaconBlock
     block: *const SignedBlock,
     external_data: BlockExternalData,
-    opts: ?ProcessBlockOpts,
+    opts: ProcessBlockOpts,
     // TODO: metrics
 ) !void {
     const state = cached_state.state;
@@ -40,33 +41,45 @@ pub fn processBlock(
         // TODO Deneb: Allow to disable withdrawals for interop testing
         // https://github.com/ethereum/consensus-specs/blob/b62c9e877990242d63aa17a2a59a49bc649a2f2e/specs/eip4844/beacon-chain.md#disabling-withdrawals
         if (state.isPostCapella()) {
+            const expected_withdrawals_result = try getExpectedWithdrawals(allocator, cached_state);
+            const body = block.getBeaconBlockBody();
+            switch (body) {
+                .unblinded => |b| {
+                    const actual_withdrawals = b.getExecutionPayload().getWithdrawals();
+                    std.debug.assert(expected_withdrawals_result.withdrawals.items.len == actual_withdrawals.items.len);
+                    for (expected_withdrawals_result.withdrawals.items, actual_withdrawals.items) |ew, pw| {
+                        _ = ew;
+                        _ = pw;
+                        // TODO(bing): equals API
+                        // assert(ew == pw)
+                    }
+                },
+                .blinded => |b| {
+                    const header = b.getExecutionPayloadHeader();
+                    var expected: [32]u8 = undefined;
+                    try ssz.capella.Withdrawals.hashTreeRoot(allocator, &expected_withdrawals_result.withdrawals, &expected);
+                    var actual = header.getWithdrawalsRoot();
+                    std.debug.assert(std.mem.eql(u8, &expected, &actual));
+                },
+            }
             try processWithdrawals(
                 allocator,
                 cached_state,
-                &block.getBeaconBlockBody().getExecutionPayload(),
+                expected_withdrawals_result,
             );
         }
 
-        switch (block) {
-            .signed_beacon_block => |b| try processExecutionPayload(
-                allocator,
-                cached_state,
-                b.getBeaconBlockBody(),
-                external_data,
-            ),
-            .signed_blinded_beacon_block => |b| try processExecutionPayloadHeader(
-                allocator,
-                cached_state,
-                b,
-                external_data,
-            ),
-        }
-        try processExecutionPayload();
+        try processExecutionPayload(
+            allocator,
+            cached_state,
+            block.getBeaconBlockBody(),
+            external_data,
+        );
     }
 
-    try processRandao(state, block, opts.verify_signature);
-    try processEth1Data(state, block.getBeaconBlockBody().getEth1Data());
-    try processOperations(cached_state, block.getBeaconBlockBody(), external_data);
+    try processRandao(cached_state, &block.getBeaconBlockBody(), block.getProposerIndex(), opts.verify_signature);
+    try processEth1Data(allocator, cached_state, block.getBeaconBlockBody().getEth1Data());
+    try processOperations(allocator, cached_state, &block.getBeaconBlockBody(), opts);
     if (state.isPostAltair()) {
         try processSyncAggregate(cached_state, block, opts.verify_signature);
     }

@@ -162,10 +162,9 @@ pub const BeaconConfig = struct {
         return switch (fork) {
             .deneb => self.chain.MAX_BLOBS_PER_BLOCK,
             .electra => self.chain.MAX_BLOBS_PER_BLOCK_ELECTRA,
-            else => {
-                // For forks before Deneb, we assume no blobs
-                0;
-            },
+            else =>
+            // For forks before Deneb, we assume no blobs
+            0,
         };
     }
 

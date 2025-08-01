@@ -11,19 +11,21 @@ const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllF
 
 // TODO: support BlindedBeaconBlock
 pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const SignedBlock) bool {
-    if (!state.isPostBellatrix()) {
-        return false;
-    }
+    if (!state.isPostBellatrix()) return false;
+    if (isMergeTransitionComplete(state)) return true;
 
-    if (isMergeTransitionComplete(state)) {
-        return true;
+    switch (block.*) {
+        .signed_blinded_beacon_block => |b| {
+            _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayloadHeader();
+            // TODO(bing) equals
+        },
+        .signed_beacon_block => |b| {
+            _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayload();
+            // TODO(bing) equals
+        },
     }
-
-    _ = block.getBeaconBlockBody().getExecutionPayload();
 
     return true;
-    //TODO(bing): fix when equals works
-    // return (state.isBellatrix() and ssz.bellatrix.ExecutionPayload.equals(payload.bellatrix, ssz.bellatrix.ExecutionPayload.default_value));
 }
 
 pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const BeaconBlockBody) bool {

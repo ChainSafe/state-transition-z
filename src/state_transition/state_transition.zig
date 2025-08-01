@@ -16,6 +16,13 @@ const verifyProposerSignature = @import("./signature_sets/proposer.zig").verifyP
 const processBlock = @import("./block/process_block.zig").processBlock;
 const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
+const SignedVoluntaryExit = @import("types/beacon_block.zig").SignedVoluntaryExit;
+const Deposit = ssz.phase0.Deposit.Type;
+const Attestation = @import("types/attestation.zig").Attestation;
+const Attestations = @import("types/attestation.zig").Attestations;
+const SignedBLSToExecutionChange = @import("types/beacon_block.zig").SignedBLSToExecutionChange;
+const AttesterSlashings = @import("types/attester_slashing.zig").AttesterSlashings;
+const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
 const BlindedBeaconBlockBody = @import("types/beacon_block.zig").BlindedBeaconBlockBody;
 const BeaconBlockBody = @import("types/beacon_block.zig").BeaconBlockBody;
@@ -43,13 +50,61 @@ pub const SignedBlock = union(enum) {
     signed_beacon_block: *const SignedBeaconBlock,
     signed_blinded_beacon_block: *const SignedBlindedBeaconBlock,
 
-    const BeaconBlockBody_ = union(enum) {
+    pub const BeaconBlockBody_ = union(enum) {
         unblinded: BeaconBlockBody,
         blinded: BlindedBeaconBlockBody,
 
-        pub fn getExecutionPayload(self: *const BeaconBlockBody_) ExecutionPayload {
+        pub fn blobKzgCommitmentsLen(self: *const BeaconBlockBody_) usize {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getExecutionPayload(),
+                inline .unblinded, .blinded => |b| b.getBlobKzgCommitments().items.len,
+            };
+        }
+
+        pub fn getEth1Data(self: *const BeaconBlockBody_) *const ssz.phase0.Eth1Data.Type {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getEth1Data(),
+            };
+        }
+
+        pub fn getRandaoReveal(self: *const BeaconBlockBody_) ssz.primitive.BLSSignature.Type {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getRandaoReveal(),
+            };
+        }
+
+        pub fn deposits(self: *const BeaconBlockBody_) []Deposit {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getDeposits(),
+            };
+        }
+
+        pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getAttesterSlashings(),
+            };
+        }
+
+        pub fn attestations(self: *const BeaconBlockBody_) Attestations {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getAttestations(),
+            };
+        }
+
+        pub fn voluntaryExits(self: *const BeaconBlockBody_) []SignedVoluntaryExit {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getVoluntaryExits(),
+            };
+        }
+
+        pub fn proposerSlashings(self: *const BeaconBlockBody_) []ProposerSlashing {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getProposerSlashings(),
+            };
+        }
+
+        pub fn blsToExecutionChanges(self: *const BeaconBlockBody_) []SignedBLSToExecutionChange {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getBlsToExecutionChanges(),
             };
         }
     };

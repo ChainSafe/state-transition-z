@@ -11,7 +11,7 @@ const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateV
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
-pub fn slashValidator(cached_state: *CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
+pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const epoch = epoch_cache.epoch;
@@ -20,7 +20,7 @@ pub fn slashValidator(cached_state: *CachedBeaconStateAllForks, slashed_index: V
     const validator = state.getValidator(slashed_index);
 
     // TODO: Bellatrix initiateValidatorExit validators.update() with the one below
-    try initiateValidatorExit(state, validator);
+    try initiateValidatorExit(cached_state, validator);
 
     validator.slashed = true;
     validator.withdrawable_epoch = @max(validator.withdrawable_epoch, epoch + preset.EPOCHS_PER_SLASHINGS_VECTOR);
@@ -34,12 +34,18 @@ pub fn slashValidator(cached_state: *CachedBeaconStateAllForks, slashed_index: V
     //  - with that and 32_000_000_000 MAX_EFFECTIVE_BALANCE or 2048_000_000_000 MAX_EFFECTIVE_BALANCE_ELECTRA, it still fits in a number given that Math.floor(Number.MAX_SAFE_INTEGER / 32_000_000_000) = 281474
     //  - we don't need to compute the total slashings from state.slashings, it's handled by totalSlashingsByIncrement in EpochCache
     const slashing_index = epoch % preset.EPOCHS_PER_SLASHINGS_VECTOR;
-    state.setSlashing(slashing_index, state.getSlashing + effective_balance);
-    epoch_cache.total_slashings_by_increment += effective_balance_increments[slashed_index];
+    state.setSlashing(slashing_index, state.getSlashing(slashing_index) + effective_balance);
+    epoch_cache.total_slashings_by_increment += effective_balance_increments.get().items[slashed_index];
 
     // TODO(ssz): define MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA
-    const min_slashing_penalty_quotient =
-        if (state.isPhase0()) preset.MIN_SLASHING_PENALTY_QUOTIENT else if (state.isAltair()) preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR else if (state.isPreElectra()) preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX else preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
+    const min_slashing_penalty_quotient: usize = if (state.isPhase0())
+        preset.MIN_SLASHING_PENALTY_QUOTIENT
+    else if (state.isAltair())
+        preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR
+    else if (state.isPreElectra())
+        preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX
+    else
+        preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
 
     decreaseBalance(state, slashed_index, @divFloor(effective_balance, min_slashing_penalty_quotient));
 

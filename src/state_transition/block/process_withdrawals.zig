@@ -6,6 +6,7 @@ const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
 const Withdrawal = @import("../type.zig").Withdrawal;
+const Withdrawals = @import("../type.zig").Withdrawals;
 const ValidatorIndex = @import("../type.zig").ValidatorIndex;
 const ExecutionAddress = @import("../type.zig").ExecutionAddress;
 const ExecutionPayload = @import("../types/execution_payload.zig").ExecutionPayload;
@@ -15,13 +16,13 @@ const getMaxEffectiveBalance = @import("../utils//validator.zig").getMaxEffectiv
 const decreaseBalance = @import("../utils//balance.zig").decreaseBalance;
 
 const WithdrawalsResult = struct {
-    withdrawals: std.ArrayList(Withdrawal),
+    withdrawals: Withdrawals,
     sampled_validators: usize,
     processed_partial_withdrawals_count: usize,
 
     pub fn init(allocator: Allocator) !WithdrawalsResult {
         return WithdrawalsResult{
-            .withdrawals = std.ArrayList(Withdrawal).init(allocator),
+            .withdrawals = try Withdrawals.initCapacity(allocator, preset.MAX_WITHDRAWALS_PER_PAYLOAD),
             .sampled_validators = 0,
             .processed_partial_withdrawals_count = 0,
         };
@@ -33,25 +34,16 @@ const WithdrawalsResult = struct {
 };
 
 // TODO: support capella.FullOrBlindedExecutionPayload
-pub fn processWithdrawals(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, payload: *const ExecutionPayload) !void {
+pub fn processWithdrawals(
+    allocator: Allocator,
+    cached_state: *const CachedBeaconStateAllForks,
+    expected_withdrawals_result: WithdrawalsResult,
+) !void {
     const state = cached_state.state;
     // processedPartialWithdrawalsCount is withdrawals coming from EL since electra (EIP-7002)
-    const expected_withdrawals_result = try getExpectedWithdrawals(allocator, cached_state);
     const processed_partial_withdrawals_count = expected_withdrawals_result.processed_partial_withdrawals_count;
     const expected_withdrawals = expected_withdrawals_result.withdrawals.items;
     const num_withdrawals = expected_withdrawals.len;
-
-    // TODO: if (isCapellaPayloadHeader(payload)) {
-    if (expected_withdrawals.len != payload.getWithdrawals().items.len) {
-        return error.InvalidWithdrawalsLength;
-    }
-    for (0..num_withdrawals) |_| {
-        // TODO: equals api https://github.com/ChainSafe/ssz-z/issues/27
-        // const withdrawal = expected_withdrawals[i];
-        //if (!ssz.capella.Withdrawal.equals(withdrawal, payload.withdrawals.items[i])) {
-        //    return error.WithdrawalMismatch;
-        //}
-    }
 
     for (0..num_withdrawals) |i| {
         const withdrawal = expected_withdrawals[i];
@@ -125,7 +117,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
                 const withdrawable_balance = if (balance_over_min_activation_balance < withdrawal.amount) balance_over_min_activation_balance else withdrawal.amount;
                 var execution_address: ExecutionAddress = undefined;
                 std.mem.copyForwards(u8, &execution_address, validator.withdrawal_credentials[12..]);
-                try withdrawals_result.withdrawals.append(.{
+                try withdrawals_result.withdrawals.append(allocator, .{
                     .index = withdrawal_index,
                     .validator_index = withdrawal.validator_index,
                     .address = execution_address,
@@ -168,7 +160,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
         if (withdrawable_epoch <= epoch) {
             var execution_address: ExecutionAddress = undefined;
             std.mem.copyForwards(u8, &execution_address, validator.withdrawal_credentials[12..]);
-            try withdrawals_result.withdrawals.append(.{
+            try withdrawals_result.withdrawals.append(allocator, .{
                 .index = withdrawal_index,
                 .validator_index = validator_index,
                 .address = execution_address,
@@ -183,7 +175,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
             const partial_amount = balance - effective_balance;
             var execution_address: ExecutionAddress = undefined;
             std.mem.copyForwards(u8, &execution_address, validator.withdrawal_credentials[12..]);
-            try withdrawals_result.withdrawals.append(.{
+            try withdrawals_result.withdrawals.append(allocator, .{
                 .index = withdrawal_index,
                 .validator_index = validator_index,
                 .address = execution_address,

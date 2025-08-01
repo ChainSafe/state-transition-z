@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const params = @import("params");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
+const BeaconBlockBody_ = @import("../state_transition.zig").SignedBlock.BeaconBlockBody_;
 
 const getEth1DepositCount = @import("../utils/deposit.zig").getEth1DepositCount;
 const processAttestations = @import("./process_attestations.zig").processAttestations;
@@ -17,61 +17,59 @@ const processVoluntaryExit = @import("./process_voluntary_exit.zig").processVolu
 const processWithdrawalRequest = @import("./process_withdrawal_request.zig").processWithdrawalRequest;
 const ProcessBlockOpts = @import("./types.zig").ProcessBlockOpts;
 
-pub fn processOperations(cached_state: *CachedBeaconStateAllForks, body: *const BeaconBlockBody, opts: ?ProcessBlockOpts) !void {
+pub fn processOperations(allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, body: *const BeaconBlockBody_, opts: ProcessBlockOpts) !void {
     const state = cached_state.state;
 
     // verify that outstanding deposits are processed up to the maximum number of deposits
     const max_deposits = getEth1DepositCount(cached_state, null);
-    if (body.getDeposits().len != max_deposits) {
+    if (body.deposits().len != max_deposits) {
         return error.InvalidDepositCount;
     }
 
-    const verify_signatures: ?bool = if (opts) |o| o.verify_signature else null;
-
-    for (body.getProposerSlashings()) |*proposer_slashing| {
-        try processProposerSlashing(cached_state, proposer_slashing, verify_signatures);
+    for (body.proposerSlashings()) |*proposer_slashing| {
+        try processProposerSlashing(cached_state, proposer_slashing, opts.verify_signature);
     }
 
-    const attester_slashings = body.getAttesterSlashings().items();
+    const attester_slashings = body.attesterSlashings().items();
     switch (attester_slashings) {
         .phase0 => |attester_slashings_phase0| {
             for (attester_slashings_phase0) |*attester_slashing| {
-                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, cached_state, attester_slashing, verify_signatures);
+                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
             }
         },
         .electra => |attester_slashings_electra| {
             for (attester_slashings_electra) |*attester_slashing| {
-                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, cached_state, attester_slashing, verify_signatures);
+                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
             }
         },
     }
 
-    try processAttestations(cached_state, body.getAttestations(), verify_signatures);
+    try processAttestations(allocator, cached_state, body.attestations(), opts.verify_signature);
 
-    for (body.getDeposits()) |*deposit| {
+    for (body.deposits()) |*deposit| {
         try processDeposit(cached_state, deposit);
     }
 
-    for (body.getVoluntaryExits()) |*voluntary_exit| {
-        try processVoluntaryExit(cached_state, voluntary_exit, verify_signatures);
+    for (body.voluntaryExits()) |*voluntary_exit| {
+        try processVoluntaryExit(cached_state, voluntary_exit, opts.verify_signature);
     }
 
     if (state.isPostCapella()) {
-        for (body.getBlsToExecutionChanges()) |*bls_to_execution_change| {
+        for (body.blsToExecutionChanges()) |*bls_to_execution_change| {
             try processBlsToExecutionChange(cached_state, bls_to_execution_change);
         }
     }
 
     if (state.isPostElectra()) {
-        for (body.getDepositRequests()) |*deposit_request| {
+        for (body.depositRequests()) |*deposit_request| {
             try processDepositRequest(cached_state, deposit_request);
         }
 
-        for (body.getWithdrawalRequests()) |*withdrawal_request| {
+        for (body.withdrawalRequests()) |*withdrawal_request| {
             try processWithdrawalRequest(cached_state, withdrawal_request);
         }
 
-        for (body.getConsolidationRequests()) |*consolidation_request| {
+        for (body.consolidationRequests()) |*consolidation_request| {
             try processConsolidationRequest(cached_state, consolidation_request);
         }
     }

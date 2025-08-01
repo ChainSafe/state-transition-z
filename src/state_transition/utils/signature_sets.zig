@@ -31,9 +31,9 @@ pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) !bool {
     return verify(&set.signing_root, &set.pubkey, &signature, null, null);
 }
 
-pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) bool {
+pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = try Signature.fromBytes(&set.signature, true);
+    const signature = try Signature.fromBytes(&set.signature);
     return fastAggregateVerify(allocator, &set.signing_root, set.pubkeys, &signature, null);
 }
 

@@ -215,7 +215,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn isPreElectra(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => true,
+            .phase0, .altair, .bellatrix, .capella, .deneb => true,
             else => false,
         };
     }
@@ -347,13 +347,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: *const Eth1Data) void {
+    pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: Eth1Data) void {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_data = *eth1_data,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_data = eth1_data,
         }
     }
 
-    pub fn getEth1DataVotes(self: *const BeaconStateAllForks) *const Eth1DataVotes {
+    pub fn getEth1DataVotes(self: *const BeaconStateAllForks) *Eth1DataVotes {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.eth1_data_votes,
         };
@@ -727,7 +727,8 @@ pub const BeaconStateAllForks = union(enum) {
         switch (self.*) {
             .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
             .capella => |state| state.latest_execution_payload_header = header.*.capella,
-            .deneb, .electra => |state| state.latest_execution_payload_header = header.*.deneb,
+            .deneb => |state| state.latest_execution_payload_header = header.*.deneb,
+            .electra => |state| state.latest_execution_payload_header = header.*.electra,
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         }
     }

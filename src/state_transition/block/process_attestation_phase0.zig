@@ -53,7 +53,7 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
     const data = attestation.data;
     const computed_epoch = computeEpochAtSlot(data.slot);
     const committee_count = try epoch_cache.getCommitteeCountPerSlot(computed_epoch);
-    if (data.target.epoch != epoch_cache.previous_shuffling.epoch and data.target.epoch != epoch_cache.epoch) {
+    if (data.target.epoch != epoch_cache.previous_shuffling.get().epoch and data.target.epoch != epoch_cache.epoch) {
         // TODO: print to stderr?
         return error.InvalidAttestationTargetEpochNotInPreviousOrCurrentEpoch;
     }
