@@ -24,7 +24,7 @@ const isExecutionEnabled = @import("../utils/execution.zig").isExecutionEnabled;
 // TODO
 pub fn processBlock(
     allocator: Allocator,
-    cached_state: *const CachedBeaconStateAllForks,
+    cached_state: *CachedBeaconStateAllForks,
     // TODO: support BlindedBeaconBlock
     block: *const SignedBlock,
     external_data: BlockExternalData,

@@ -37,9 +37,10 @@
     // internet connectivity.
     .dependencies = .{
         .ssz = .{
+            .path = "../ssz-z/",
             // zig fetch --save git+https://github.com/ChainSafe/ssz-z.git#te/fix_state_transition
-            .url = "git+https://github.com/ChainSafe/ssz-z.git?ref=te/fix_state_transition#01be0709147da7e18aa9b0b677890ab58b550bc5",
-            .hash = "ssz-0.1.0-yORmzHdjBACqgGGiBhHCruHv94rZq6lvlfnZdbRqyLgl",
+            // .url = "git+https://github.com/ChainSafe/ssz-z.git?ref=te/fix_state_transition#01be0709147da7e18aa9b0b677890ab58b550bc5",
+            //.hash = "ssz-0.1.0-yORmzHdjBACqgGGiBhHCruHv94rZq6lvlfnZdbRqyLgl",
         },
         // zig fetch --save git+https://github.com/ChainSafe/blst-z.git#te/fix_state_transition
         .blst_z = .{

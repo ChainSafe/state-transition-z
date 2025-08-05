@@ -476,6 +476,12 @@ pub const BeaconStateAllForks = union(enum) {
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         };
     }
+    pub fn previousEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
+        return switch (self.*) {
+            .phase0 => |state| &state.previous_epoch_attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        };
+    }
 
     /// only for phase0
     pub fn getPreviousEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
@@ -485,9 +491,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
         switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations.append(attestation),
+            .phase0 => |state| state.previous_epoch_attestations.append(allocator, attestation),
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         }
     }
@@ -507,6 +513,13 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn currentEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
+        return switch (self.*) {
+            .phase0 => |state| &state.current_epoch_attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        };
+    }
+
     // only for phase0
     pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
         return switch (self.*) {
@@ -522,9 +535,9 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
         switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations.append(attestation),
+            .phase0 => |state| state.current_epoch_attestations.append(allocator, attestation),
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
         }
     }
@@ -549,7 +562,7 @@ pub const BeaconStateAllForks = union(enum) {
     }
 
     // from altair
-    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []u8 {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.previous_epoch_participation.items,
@@ -571,7 +584,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []u8 {
         return switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| state.current_epoch_participation.items,

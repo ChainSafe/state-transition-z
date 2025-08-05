@@ -1,3 +1,5 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
@@ -11,34 +13,34 @@ const Phase0Attestation = ssz.phase0.Attestation.Type;
 const ElectraAttestation = ssz.electra.Attestation.Type;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
-pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) void {
+pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const slot = state.getSlot();
     const data = attestation.data;
 
-    try validateAttestation(Phase0Attestation, cached_state, attestation);
+    try validateAttestation(*const Phase0Attestation, allocator, cached_state, attestation);
 
     const pending_attestation = PendingAttestation{
         .data = data,
         .aggregation_bits = attestation.aggregation_bits,
         .inclusion_delay = slot - data.slot,
-        .proposer_index = epoch_cache.getBeaconProposer(slot),
+        .proposer_index = try epoch_cache.getBeaconProposer(slot),
     };
 
     if (data.target.epoch == epoch_cache.epoch) {
-        if (!ssz.phase0.Checkpoint.equals(data.source, state.getCurrentJustifiedCheckpoint())) {
+        if (!ssz.phase0.Checkpoint.equals(&data.source, state.getCurrentJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToCurrentJustifiedCheckpoint;
         }
-        state.appendCurrentEpochPendingAttestation(pending_attestation);
+        try state.currentEpochPendingAttestations().append(allocator, pending_attestation);
     } else {
-        if (!ssz.phase0.Checkpoint.equals(data.source, state.getPreviousJustifiedCheckpoint())) {
+        if (!ssz.phase0.Checkpoint.equals(&data.source, state.getPreviousJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToPreviousJustifiedCheckpoint;
         }
-        state.appendPreviousEpochPendingAttestation(pending_attestation);
+        try state.previousEpochPendingAttestations().append(allocator, pending_attestation);
     }
 
-    const indexed_attestation = try epoch_cache.getIndexedAttestation(&.{
+    const indexed_attestation = try epoch_cache.getIndexedAttestation(.{
         .phase0 = attestation.*,
     });
 
@@ -46,7 +48,7 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
-pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
+pub fn validateAttestation(comptime AT: type, allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const slot = state.getSlot();
@@ -73,8 +75,9 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
             return error.InvalidAttestationNonZeroDataIndex;
         }
         // TODO(ssz): implement getTrueBitIndexes() api
-        const committee_indices = attestation.committee_bits.getTrueBitIndexes();
-        if (committee_indices.items.len == 0) {
+        var committee_indices: []usize = undefined;
+        attestation.committee_bits.getTrueBitIndexes(allocator, &committee_indices);
+        if (committee_indices.len == 0) {
             return error.InvalidAttestationCommitteeBitsEmpty;
         }
 

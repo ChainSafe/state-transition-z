@@ -494,28 +494,33 @@ pub const EpochCache = struct {
     /// hence it needs to deinit attesting_indices inside
     /// TODO: unit test
     pub fn getIndexedAttestation(self: *const EpochCache, attestation: Attestation) !IndexedAttestation {
-        const attesting_indices = switch (attestation.*) {
+        var attesting_indices_ = switch (attestation) {
             .phase0 => |phase0_attestation| try self.getAttestingIndicesPhase0(&phase0_attestation),
             .electra => |electra_attestation| try self.getAttestingIndicesElectra(&electra_attestation),
         };
+        const attesting_indices = attesting_indices_.moveToUnmanaged();
 
         const sort_fn = struct {
-            pub fn sort(_: anytype, a: ValidatorIndex, b: ValidatorIndex) bool {
+            pub fn sort(_: void, a: ValidatorIndex, b: ValidatorIndex) bool {
                 return a < b;
             }
         }.sort;
         std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
 
         return switch (attestation) {
-            .phase0 => |phase0_attestation| Phase0IndexedAttestation{
-                .attesting_indices = attesting_indices,
-                .data = phase0_attestation.data,
-                .signature = phase0_attestation.signature,
+            .phase0 => |phase0_attestation| .{
+                .phase0 = .{
+                    .attesting_indices = attesting_indices,
+                    .data = phase0_attestation.data,
+                    .signature = phase0_attestation.signature,
+                },
             },
-            .electra => |electra_attestation| ElectraIndexedAttestation{
-                .attesting_indices = attesting_indices,
-                .data = electra_attestation.data,
-                .signature = electra_attestation.signature,
+            .electra => |electra_attestation| .{
+                .electra = .{
+                    .attesting_indices = attesting_indices,
+                    .data = electra_attestation.data,
+                    .signature = electra_attestation.signature,
+                },
             },
         };
     }
@@ -533,7 +538,7 @@ pub const EpochCache = struct {
         const aggregation_bits = attestation.aggregation_bits;
         const data = attestation.data;
         const validator_indices = try self.getBeaconCommittee(data.slot, data.index);
-        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, validator_indices);
+        return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, validator_indices);
     }
 
     /// consumer takes ownership of the returned array
@@ -547,11 +552,11 @@ pub const EpochCache = struct {
         // In the spec it means a list of committee indices according to committeeBits
         // This `committeeIndices` refers to the latter
         // TODO Electra: resolve the naming conflicts
-        const committee_indices = try committee_bits.getTrueBitIndexes(self.allocator);
-        defer committee_indices.deinit();
+        var committee_indices: []usize = undefined;
+        try committee_bits.getTrueBitIndexes(self.allocator, &committee_indices);
 
         var total_len: usize = 0;
-        for (committee_indices.items) |committee_index| {
+        for (committee_indices) |committee_index| {
             const committee = try self.getBeaconCommittee(data.slot, committee_index);
             total_len += committee.len;
         }
@@ -560,13 +565,13 @@ pub const EpochCache = struct {
         defer self.allocator.free(committee_validators);
 
         var offset: usize = 0;
-        for (committee_indices.items) |committee_index| {
+        for (committee_indices) |committee_index| {
             const committee = try self.getBeaconCommittee(data.slot, committee_index);
             std.mem.copyForwards(ValidatorIndex, committee_validators[offset..(offset + committee.len)], committee);
             offset += committee.len;
         }
 
-        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, committee_validators);
+        return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, committee_validators);
     }
 
     // TODO: getCommitteeAssignments

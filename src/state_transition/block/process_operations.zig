@@ -17,7 +17,7 @@ const processVoluntaryExit = @import("./process_voluntary_exit.zig").processVolu
 const processWithdrawalRequest = @import("./process_withdrawal_request.zig").processWithdrawalRequest;
 const ProcessBlockOpts = @import("./types.zig").ProcessBlockOpts;
 
-pub fn processOperations(allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, body: *const BeaconBlockBody_, opts: ProcessBlockOpts) !void {
+pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, body: *const BeaconBlockBody_, opts: ProcessBlockOpts) !void {
     const state = cached_state.state;
 
     // verify that outstanding deposits are processed up to the maximum number of deposits

@@ -43,7 +43,7 @@ pub const RootCache = struct {
         }
     }
 
-    pub fn getBlockRootAtSlot(self: *RootCache, slot: Slot) Root {
+    pub fn getBlockRootAtSlot(self: *RootCache, slot: Slot) !Root {
         if (self.block_root_slot_cache.get(slot)) |root| {
             return root;
         } else {
