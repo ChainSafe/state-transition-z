@@ -508,15 +508,15 @@ pub const EpochCache = struct {
         std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
 
         return switch (attestation) {
-            .phase0 => |phase0_attestation| .{
-                .phase0 = .{
+            .phase0 => |phase0_attestation| IndexedAttestation{
+                .phase0 = &ssz.phase0.IndexedAttestation.Type{
                     .attesting_indices = attesting_indices,
                     .data = phase0_attestation.data,
                     .signature = phase0_attestation.signature,
                 },
             },
-            .electra => |electra_attestation| .{
-                .electra = .{
+            .electra => |electra_attestation| IndexedAttestation{
+                .electra = &ssz.electra.IndexedAttestation.Type{
                     .attesting_indices = attesting_indices,
                     .data = electra_attestation.data,
                     .signature = electra_attestation.signature,

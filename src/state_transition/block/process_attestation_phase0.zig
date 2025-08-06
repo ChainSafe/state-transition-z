@@ -39,12 +39,12 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         }
         try state.previousEpochPendingAttestations().append(allocator, pending_attestation);
     }
-
     const indexed_attestation = try epoch_cache.getIndexedAttestation(.{
         .phase0 = attestation.*,
     });
 
-    try isValidIndexedAttestation(cached_state, &indexed_attestation, verify_signature);
+    //TODO(bing): ugly to take in indexed_attestation.phase0; clean
+    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, allocator, cached_state, indexed_attestation.phase0, verify_signature);
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
@@ -76,12 +76,12 @@ pub fn validateAttestation(comptime AT: type, allocator: Allocator, cached_state
         }
         // TODO(ssz): implement getTrueBitIndexes() api
         var committee_indices: []usize = undefined;
-        attestation.committee_bits.getTrueBitIndexes(allocator, &committee_indices);
+        try attestation.committee_bits.getTrueBitIndexes(allocator, &committee_indices);
         if (committee_indices.len == 0) {
             return error.InvalidAttestationCommitteeBitsEmpty;
         }
 
-        const last_committee_index = committee_indices.items[committee_indices.items.len - 1];
+        const last_committee_index = committee_indices[committee_indices.len - 1];
 
         if (last_committee_index >= committee_count) {
             return error.InvalidAttestationInvalidLstCommitteeIndex;
@@ -89,10 +89,12 @@ pub fn validateAttestation(comptime AT: type, allocator: Allocator, cached_state
 
         // const validators_by_committee = try epoch_cache.getBeaconCommittees(slot, committee_indices.items);
         // TODO(ssz): implement toBoolArray() for BitVector/BitList https://github.com/ChainSafe/ssz-z/issues/25
-        const aggregation_bits_array = attestation.aggregation_bits.toBoolArray().items;
+
+        var aggregation_bits_array: []bool = undefined;
+        try attestation.aggregation_bits.toBoolSlice(&aggregation_bits_array);
         // instead of implementing/calling getBeaconCommittees(slot, committee_indices.items), we call getBeaconCommittee(slot, index)
         var committee_offset: usize = 0;
-        for (committee_indices.items) |committee_index| {
+        for (committee_indices) |committee_index| {
             const committee_validators = try epoch_cache.getBeaconCommittee(slot, committee_index);
             const committee_aggregation_bits = aggregation_bits_array[committee_offset..(committee_offset + committee_validators.len)];
 
