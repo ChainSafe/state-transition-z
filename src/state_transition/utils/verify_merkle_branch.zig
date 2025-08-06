@@ -3,7 +3,7 @@ const ssz = @import("consensus_types");
 const digest = @import("./sha256.zig").digest;
 const Root = ssz.primitive.Root.Type;
 
-pub fn verifyMerkleBranch(leaf: Root, proof: []Root, depth: usize, index: usize, root: Root) bool {
+pub fn verifyMerkleBranch(leaf: Root, proof: *const [33]Root, depth: usize, index: usize, root: Root) bool {
     var value = leaf;
     var tmp: [64]u8 = undefined;
     for (0..depth) |i| {

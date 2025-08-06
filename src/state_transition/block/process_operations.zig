@@ -47,7 +47,7 @@ pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeac
     try processAttestations(allocator, cached_state, body.attestations(), opts.verify_signature);
 
     for (body.deposits()) |*deposit| {
-        try processDeposit(cached_state, deposit);
+        try processDeposit(allocator, cached_state, deposit);
     }
 
     for (body.voluntaryExits()) |*voluntary_exit| {

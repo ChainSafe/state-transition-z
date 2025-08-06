@@ -886,6 +886,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn pendingDeposits(self: *const BeaconStateAllForks) *std.ArrayList(PendingDeposit) {
+        return switch (self.*) {
+            .electra => |state| &state.pending_deposits,
+            else => panic("pending_deposits is not available in {}", .{self}),
+        };
+    }
+
     pub fn getPendingDeposits(self: *const BeaconStateAllForks) []PendingDeposit {
         return switch (self.*) {
             .electra => |state| state.pending_deposits.items,

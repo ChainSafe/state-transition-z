@@ -29,29 +29,29 @@ pub const DepositData = union(enum) {
     phase0: ssz.phase0.DepositData.Type,
     electra: ssz.electra.DepositRequest.Type,
 
-    pub fn getPubkey(self: *const DepositData) BLSPubkey {
-        return switch (self) {
+    pub fn pubkey(self: *const DepositData) BLSPubkey {
+        return switch (self.*) {
             .phase0 => |data| data.pubkey,
             .electra => |data| data.pubkey,
         };
     }
 
-    pub fn getWithdrawalCredentials(self: *const DepositData) WithdrawalCredentials {
-        return switch (self) {
+    pub fn withdrawalCredentials(self: *const DepositData) WithdrawalCredentials {
+        return switch (self.*) {
             .phase0 => |data| data.withdrawal_credentials,
             .electra => |data| data.withdrawal_credentials,
         };
     }
 
-    pub fn getAmount(self: *const DepositData) u64 {
-        return switch (self) {
+    pub fn amount(self: *const DepositData) u64 {
+        return switch (self.*) {
             .phase0 => |data| data.amount,
             .electra => |data| data.amount,
         };
     }
 
-    pub fn getSignature(self: *const DepositData) BLSSignature {
-        return switch (self) {
+    pub fn signature(self: *const DepositData) BLSSignature {
+        return switch (self.*) {
             .phase0 => |data| data.signature,
             .electra => |data| data.signature,
         };
@@ -61,13 +61,21 @@ pub const DepositData = union(enum) {
 pub fn processDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: *const ssz.phase0.Deposit.Type) !void {
     const state = cached_state.state;
     // verify the merkle branch
-    if (!verifyMerkleBranch(ssz.phase0.DepositData.hashTreeRoot(deposit.data), deposit.proof, preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1, state.getEth1DepositIndex(), state.getEth1Data().deposit_root)) {
+    var deposit_data_root: Root = undefined;
+    try ssz.phase0.DepositData.hashTreeRoot(&deposit.data, &deposit_data_root);
+    if (!verifyMerkleBranch(
+        deposit_data_root,
+        &deposit.proof,
+        preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1,
+        state.getEth1DepositIndex(),
+        state.getEth1Data().deposit_root,
+    )) {
         return error.InvalidMerkleProof;
     }
 
     // deposits must be processed in order
     state.increaseEth1DepositIndex();
-    applyDeposit(allocator, cached_state, .{
+    try applyDeposit(allocator, cached_state, &.{
         .phase0 = deposit.data,
     });
 }
@@ -78,10 +86,10 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const pubkey = deposit.getPubkey();
-    const withdrawal_credentials = deposit.getWithdrawalCredentials();
-    const amount = deposit.getAmount();
-    const signature = deposit.getSignature();
+    const pubkey = deposit.pubkey();
+    const withdrawal_credentials = deposit.withdrawalCredentials();
+    const amount = deposit.amount();
+    const signature = deposit.signature();
 
     const cached_index = epoch_cache.getValidatorIndex(&pubkey);
     const is_new_validator = cached_index == null or cached_index.? >= state.getValidatorsCount();
@@ -108,10 +116,10 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
                 try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
-                state.appendPendingDeposit(pending_deposit);
+                try state.pendingDeposits().append(pending_deposit);
             }
         } else {
-            state.appendPendingDeposit(pending_deposit);
+            try state.pendingDeposits().append(pending_deposit);
         }
     }
 }
