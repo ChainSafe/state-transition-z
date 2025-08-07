@@ -12,9 +12,9 @@ pub fn processBlsToExecutionChange(state: *CachedBeaconStateAllForks, signed_bls
 
     try isValidBlsToExecutionChange(state, signed_bls_to_execution_change, true);
 
+    var new_withdrawal_credentials: Root = undefined;
     const validator_index = address_change.validator_index;
     const validator = state.state.getValidator(validator_index);
-    const new_withdrawal_credentials = address_change.to_execution_address;
     new_withdrawal_credentials[0] = params.ETH1_ADDRESS_WITHDRAWAL_PREFIX;
     @memcpy(new_withdrawal_credentials[12..], &address_change.to_execution_address);
 
@@ -37,7 +37,7 @@ pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, sig
     }
 
     var digest_credentials: Root = undefined;
-    digest(address_change.from_bls_pubkey, &digest_credentials);
+    digest(&address_change.from_bls_pubkey, &digest_credentials);
     // Set the BLS_WITHDRAWAL_PREFIX on the digest_credentials for direct match
     digest_credentials[0] = params.BLS_WITHDRAWAL_PREFIX;
     if (!std.mem.eql(u8, &withdrawal_credentials, &digest_credentials)) {
@@ -45,7 +45,7 @@ pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, sig
     }
 
     if (verify_signature orelse true) {
-        if (!verifyBlsToExecutionChangeSignature(cached_state, signed_bls_to_execution_change)) {
+        if (!try verifyBlsToExecutionChangeSignature(cached_state, signed_bls_to_execution_change)) {
             return error.InvalidBlsToExecutionChangeSignature;
         }
     }
