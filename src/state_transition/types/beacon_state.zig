@@ -1016,6 +1016,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn pendingConsolidations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingConsolidation) {
+        return switch (self.*) {
+            .electra => |state| &state.pending_consolidations,
+            else => panic("pending_consolidations is not available in {}", .{self}),
+        };
+    }
+
     pub fn getPendingConsolidations(self: *const BeaconStateAllForks) []const PendingConsolidation {
         return switch (self.*) {
             .electra => |state| state.pending_consolidations.items,

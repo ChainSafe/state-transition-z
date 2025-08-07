@@ -18,7 +18,7 @@ const getPendingBalanceToWithdraw = validator_utils.getPendingBalanceToWithdraw;
 const isActiveValidator = validator_utils.isActiveValidator;
 
 // TODO Electra: Clean up necessary as there is a lot of overlap with isValidSwitchToCompoundRequest
-pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) void {
+pub fn processConsolidationRequest(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
@@ -27,15 +27,14 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     const target_pubkey = consolidation.target_pubkey;
     const source_address = consolidation.source_address;
 
-    if (!isPubkeyKnown(cached_state, source_pubkey) or !isPubkeyKnown(cached_state, target_pubkey)) {
-        return;
-    }
+    if (!isPubkeyKnown(cached_state, source_pubkey)) return;
+    if (!isPubkeyKnown(cached_state, target_pubkey)) return;
 
-    const source_index = epoch_cache.pubkey_to_index.get(source_pubkey) orelse return;
-    const target_index = epoch_cache.pubkey_to_index.get(target_pubkey) orelse return;
+    const source_index = epoch_cache.pubkey_to_index.get(&source_pubkey) orelse return;
+    const target_index = epoch_cache.pubkey_to_index.get(&target_pubkey) orelse return;
 
     if (isValidSwitchToCompoundRequest(cached_state, consolidation)) {
-        switchToCompoundingValidator(cached_state, source_index);
+        try switchToCompoundingValidator(allocator, cached_state, source_index);
         // Early return since we have already switched validator to compounding
         return;
     }
@@ -46,7 +45,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     }
 
     // If the pending consolidations queue is full, consolidation requests are ignored
-    if (state.pending_consolidations.len() >= preset.PENDING_CONSOLIDATIONS_LIMIT) {
+    if (state.pendingConsolidations().items.len >= preset.PENDING_CONSOLIDATIONS_LIMIT) {
         return;
     }
 
@@ -62,7 +61,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
 
     // Verify source withdrawal credentials
     const has_correct_credential = hasExecutionWithdrawalCredential(source_validator.withdrawal_credentials);
-    const is_correct_source_address = std.mem.eql(u8, source_withdrawal_address, source_address);
+    const is_correct_source_address = std.mem.eql(u8, source_withdrawal_address, &source_address);
     if (!(has_correct_credential and is_correct_source_address)) {
         return;
     }
@@ -88,7 +87,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     }
 
     // Verify the source has no pending withdrawals in the queue
-    if (getPendingBalanceToWithdraw(cached_state, source_index) > 0) {
+    if (getPendingBalanceToWithdraw(cached_state.state, source_index) > 0) {
         return;
     }
 
@@ -102,7 +101,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
         .source_index = source_index,
         .target_index = target_index,
     };
-    try state.appendPendingConsolidation(&pending_consolidation);
+    try state.pendingConsolidations().append(allocator, pending_consolidation);
 }
 
 fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) bool {
@@ -110,8 +109,8 @@ fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks
     const epoch_cache = cached_state.getEpochCache();
 
     // this check is mainly to make the compiler happy, pubkey is checked by the consumer already
-    const source_index = epoch_cache.pubkey_to_index.get(consolidation.source_pubkey) orelse return false;
-    const target_index = epoch_cache.pubkey_to_index.get(consolidation.target_pubkey) orelse return false;
+    const source_index = epoch_cache.pubkey_to_index.get(&consolidation.source_pubkey) orelse return false;
+    const target_index = epoch_cache.pubkey_to_index.get(&consolidation.target_pubkey) orelse return false;
 
     // Switch to compounding requires source and target be equal
     if (source_index != target_index) {
@@ -122,7 +121,7 @@ fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks
     const source_withdrawal_address = source_validator.withdrawal_credentials[12..];
 
     // Verify request has been authorized
-    if (std.mem.eql(u8, source_withdrawal_address, consolidation.source_address) == false) {
+    if (std.mem.eql(u8, source_withdrawal_address, &consolidation.source_address) == false) {
         return false;
     }
 
