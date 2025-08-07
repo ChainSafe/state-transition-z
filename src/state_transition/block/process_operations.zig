@@ -66,7 +66,7 @@ pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeac
         }
 
         for (body.withdrawalRequests()) |*withdrawal_request| {
-            try processWithdrawalRequest(cached_state, withdrawal_request);
+            try processWithdrawalRequest(allocator, cached_state, withdrawal_request);
         }
 
         for (body.consolidationRequests()) |*consolidation_request| {

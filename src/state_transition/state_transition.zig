@@ -19,6 +19,8 @@ const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const Deposit = ssz.phase0.Deposit.Type;
 const DepositRequest = ssz.electra.DepositRequest.Type;
+const WithdrawalRequest = ssz.electra.WithdrawalRequest.Type;
+const ConsolidationRequest = ssz.electra.ConsolidationRequest.Type;
 const Attestation = @import("types/attestation.zig").Attestation;
 const Attestations = @import("types/attestation.zig").Attestations;
 const SignedBLSToExecutionChange = ssz.capella.SignedBLSToExecutionChange.Type;
@@ -81,6 +83,16 @@ pub const SignedBlock = union(enum) {
         pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
             return switch (self.*) {
                 inline .unblinded, .blinded => |b| b.getDepositRequests(),
+            };
+        }
+        pub fn withdrawalRequests(self: *const BeaconBlockBody_) []WithdrawalRequest {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getWithdrawalRequests(),
+            };
+        }
+        pub fn consolidationRequests(self: *const BeaconBlockBody_) []ConsolidationRequest {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getConsolidationRequests(),
             };
         }
 

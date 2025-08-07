@@ -955,7 +955,14 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []*PendingPartialWithdrawal {
+    pub fn pendingPartialWithdrawals(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingPartialWithdrawal) {
+        return switch (self.*) {
+            .electra => |state| &state.pending_partial_withdrawals,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
+        };
+    }
+
+    pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []PendingPartialWithdrawal {
         return switch (self.*) {
             .electra => |state| state.pending_partial_withdrawals.items,
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
