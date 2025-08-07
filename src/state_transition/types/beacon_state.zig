@@ -561,6 +561,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn previousEpochParticipations(self: *BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
+        return switch (self.*) {
+            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.previous_epoch_participation,
+        };
+    }
+
     // from altair
     pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []u8 {
         return switch (self.*) {
@@ -886,7 +893,7 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn pendingDeposits(self: *const BeaconStateAllForks) *std.ArrayList(PendingDeposit) {
+    pub fn pendingDeposits(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingDeposit) {
         return switch (self.*) {
             .electra => |state| &state.pending_deposits,
             else => panic("pending_deposits is not available in {}", .{self}),

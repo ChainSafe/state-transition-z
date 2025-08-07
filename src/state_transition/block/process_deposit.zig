@@ -116,15 +116,21 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
                 try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
-                try state.pendingDeposits().append(pending_deposit);
+                try state.pendingDeposits().append(allocator, pending_deposit);
             }
         } else {
-            try state.pendingDeposits().append(pending_deposit);
+            try state.pendingDeposits().append(allocator, pending_deposit);
         }
     }
 }
 
-pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
+pub fn addValidatorToRegistry(
+    allocator: Allocator,
+    cached_state: *CachedBeaconStateAllForks,
+    pubkey: BLSPubkey,
+    withdrawal_credentials: WithdrawalCredentials,
+    amount: u64,
+) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const validators = state.getValidators();
@@ -160,7 +166,7 @@ pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconS
         try state.appendInactivityScore(allocator, 0);
 
         // add participation caches
-        try state.appendPreviousEpochParticipation(allocator, 0);
+        try state.previousEpochParticipations().append(allocator, 0);
         try state.appendCurrentEpochParticipation(allocator, 0);
     }
 

@@ -12,7 +12,7 @@ pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
     }
 
     const validator = cached_state.state.getValidator(signed_voluntary_exit.message.validator_index);
-    initiateValidatorExit(cached_state, validator);
+    try initiateValidatorExit(cached_state, validator);
 }
 
 pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) bool {
