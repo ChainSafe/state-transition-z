@@ -77,6 +77,11 @@ pub const SignedBlock = union(enum) {
                 inline .unblinded, .blinded => |b| b.getDeposits(),
             };
         }
+        pub fn depositRequests(self: *const BeaconBlockBody_) []Deposit {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getDepositRequests(),
+            };
+        }
 
         pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
             return switch (self.*) {

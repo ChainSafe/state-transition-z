@@ -11,23 +11,23 @@ const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAt
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 
-pub fn verifyVoluntaryExitSignature(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) bool {
-    const signature_set = getVoluntaryExitSignatureSet(cached_state, signed_voluntary_exit);
-    return verifySingleSignatureSet(&signature_set);
+pub fn verifyVoluntaryExitSignature(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) !bool {
+    const signature_set = try getVoluntaryExitSignatureSet(cached_state, signed_voluntary_exit);
+    return try verifySingleSignatureSet(&signature_set);
 }
 
-pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) SingleSignatureSet {
+pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit) !SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
 
     const slot = computeStartSlotAtEpoch(signed_voluntary_exit.message.epoch);
-    const domain = config.getDomainForVoluntaryExit(state.getSlot(), slot);
-    var signing_root: Root = undefined;
-    try computeSigningRoot(ssz.phase0.VoluntaryExit, signed_voluntary_exit.message, domain, &signing_root);
+    const domain = try config.getDomainForVoluntaryExit(state.getSlot(), slot);
+    var signing_root: [32]u8 = undefined;
+    try computeSigningRoot(ssz.phase0.VoluntaryExit, &signed_voluntary_exit.message, domain, &signing_root);
 
     return .{
-        .pubkey = epoch_cache.index_to_pubkey(signed_voluntary_exit.message.validatorIndex),
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_voluntary_exit.message.validator_index].*,
         .signing_root = signing_root,
         .signature = signed_voluntary_exit.signature,
     };
