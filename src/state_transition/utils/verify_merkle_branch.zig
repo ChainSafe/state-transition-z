@@ -7,16 +7,16 @@ pub fn verifyMerkleBranch(leaf: Root, proof: *const [33]Root, depth: usize, inde
     var value = leaf;
     var tmp: [64]u8 = undefined;
     for (0..depth) |i| {
-        if (@divFloor(index, 2 ** i) % 2 != 0) {
-            @memcpy(tmp, proof[i]);
-            @memcpy(tmp[32..], value);
+        if (@divFloor(index, std.math.powi(usize, 2, i) catch unreachable) % 2 != 0) {
+            @memcpy(tmp[0..32], &proof[i]);
+            @memcpy(tmp[32..], &value);
         } else {
-            @memcpy(tmp, value);
-            @memcpy(tmp[32..], proof[i]);
+            @memcpy(tmp[0..32], &value);
+            @memcpy(tmp[32..], &proof[i]);
         }
         digest(&tmp, &value);
     }
-    return std.mem.allEqual(u8, &root, &value);
+    return std.mem.eql(u8, &root, &value);
 }
 
 // TODO: unit tests
