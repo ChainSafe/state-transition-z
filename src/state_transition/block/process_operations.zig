@@ -62,7 +62,7 @@ pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeac
 
     if (state.isPostElectra()) {
         for (body.depositRequests()) |*deposit_request| {
-            try processDepositRequest(cached_state, deposit_request);
+            try processDepositRequest(allocator, cached_state, deposit_request);
         }
 
         for (body.withdrawalRequests()) |*withdrawal_request| {

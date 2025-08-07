@@ -18,6 +18,7 @@ const BlockExternalData = @import("./block/external_data.zig").BlockExternalData
 const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const Deposit = ssz.phase0.Deposit.Type;
+const DepositRequest = ssz.electra.DepositRequest.Type;
 const Attestation = @import("types/attestation.zig").Attestation;
 const Attestations = @import("types/attestation.zig").Attestations;
 const SignedBLSToExecutionChange = ssz.capella.SignedBLSToExecutionChange.Type;
@@ -77,7 +78,7 @@ pub const SignedBlock = union(enum) {
                 inline .unblinded, .blinded => |b| b.getDeposits(),
             };
         }
-        pub fn depositRequests(self: *const BeaconBlockBody_) []Deposit {
+        pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
             return switch (self.*) {
                 inline .unblinded, .blinded => |b| b.getDepositRequests(),
             };
