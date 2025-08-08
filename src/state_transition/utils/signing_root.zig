@@ -10,7 +10,7 @@ const Block = @import("../state_transition.zig").Block;
 const SignedBlock = @import("../state_transition.zig").SignedBlock;
 
 /// Return the signing root of an object by calculating the root of the object-domain tree.
-pub fn computeSigningRoot(comptime T: type, ssz_object: *const T, domain: Domain, out: *[32]u8) !void {
+pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: Domain, out: *[32]u8) !void {
     var object_root: Root = undefined;
     try T.hashTreeRoot(ssz_object, &object_root);
     const domain_wrapped_object: SigningData = .{

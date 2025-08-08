@@ -10,6 +10,7 @@ const preset = ssz.preset;
 const Root = ssz.primitive.Root.Type;
 const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
 const params = @import("params");
+const blst = @import("blst_min_pk");
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
@@ -39,7 +40,7 @@ pub fn processSyncAggregate(
         const signature_set = try getSyncCommitteeSignatureSet(allocator, cached_state, block, participant_indices.items);
         // When there's no participation we consider the signature valid and just ignore it
         if (signature_set) |set| {
-            if (!verifyAggregatedSignatureSet(set)) {
+            if (!try verifyAggregatedSignatureSet(allocator, &set)) {
                 return error.SyncCommitteeSignatureInvalid;
             }
         }
@@ -48,13 +49,13 @@ pub fn processSyncAggregate(
     const sync_participant_reward = epoch_cache.sync_participant_reward;
     const sync_proposer_reward = epoch_cache.sync_proposer_reward;
     const sync_comittee_bits = block.getBeaconBlockBody().syncAggregate().sync_committee_bits;
-    const proposer_index = epoch_cache.getBeaconProposer(state.getSlot());
-    const proposer_balance = state.getBalance(proposer_index);
+    const proposer_index = try epoch_cache.getBeaconProposer(state.getSlot());
+    var proposer_balance = state.getBalance(proposer_index);
 
     for (0..preset.SYNC_COMMITTEE_SIZE) |i| {
         const index = committee_indices[i];
 
-        if (sync_comittee_bits.get(i)) {
+        if (try sync_comittee_bits.get(i)) {
             // Positive rewards for participants
             if (index == proposer_index) {
                 proposer_balance += sync_participant_reward;
@@ -125,12 +126,12 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
 
     const domain = try cached_state.config.getDomain(state.getSlot(), params.DOMAIN_SYNC_COMMITTEE, previous_slot);
 
-    const pubkeys = try allocator.alloc(BLSPubkey, participant_indices_.len);
+    const pubkeys = try allocator.alloc(*const blst.PublicKey, participant_indices_.len);
     for (0..participant_indices_.len) |i| {
-        pubkeys[i] = epoch_cache.index_to_pubkey.items[participant_indices_[i]].toBytes();
+        pubkeys[i] = epoch_cache.index_to_pubkey.items[participant_indices_[i]];
     }
     var signing_root: Root = undefined;
-    try computeSigningRoot(Root, root_signed, domain, &signing_root);
+    try computeSigningRoot(ssz.primitive.Root, &root_signed, domain, &signing_root);
 
     return .{
         .pubkeys = pubkeys,
