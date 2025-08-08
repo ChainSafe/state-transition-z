@@ -296,7 +296,7 @@ pub fn stateTransition(
             .block => |b| b.getStateRoot(),
             .blinded_block => |b| b.getStateRoot(),
         };
-        if (!std.mem.eql(u8, &out, block_state_root)) {
+        if (!std.mem.eql(u8, &out, &block_state_root)) {
             return error.InvalidStateRoot;
         }
     }

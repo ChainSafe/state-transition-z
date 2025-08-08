@@ -45,7 +45,6 @@ pub fn assertValidAttesterSlashing(comptime AS: type, allocator: std.mem.Allocat
     }
 
     inline for (@typeInfo(AS).@"struct".fields, 0..2) |f, i| {
-        @compileLog(f.type);
         if (!try isValidIndexedAttestation(f.type, allocator, cached_state, &attestations[i], verify_signatures)) {
             return error.InvalidAttesterSlashingAttestationInvalid;
         }
