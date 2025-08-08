@@ -227,16 +227,10 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getGenesisTime(self: *const BeaconStateAllForks) u64 {
+    pub fn genesisTime(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.genesis_time,
         };
-    }
-
-    pub fn setGenesisTime(self: *BeaconStateAllForks, genesis_time: u64) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.genesis_time = genesis_time,
-        }
     }
 
     pub fn getGenesisValidatorsRoot(self: *const BeaconStateAllForks) Root {
@@ -1009,13 +1003,6 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getPendingConsolidation(self: *const BeaconStateAllForks, index: usize) *const PendingConsolidation {
-        return switch (self.*) {
-            .electra => |state| &state.pending_consolidations[index],
-            else => panic("pending_consolidations is not available in {}", .{self}),
-        };
-    }
-
     pub fn pendingConsolidations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingConsolidation) {
         return switch (self.*) {
             .electra => |state| &state.pending_consolidations,
@@ -1023,43 +1010,15 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getPendingConsolidations(self: *const BeaconStateAllForks) []const PendingConsolidation {
-        return switch (self.*) {
-            .electra => |state| state.pending_consolidations.items,
-            else => panic("pending_consolidations is not available in {}", .{self}),
-        };
-    }
-
-    pub fn setPendingConsolidation(self: *BeaconStateAllForks, index: usize, consolidation: *const PendingConsolidation) void {
-        switch (self.*) {
-            .electra => |state| state.pending_consolidations[index] = *consolidation,
-            else => panic("pending_consolidations is not available in {}", .{self}),
-        }
-    }
-
-    pub fn appendPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
-        switch (self.*) {
-            .electra => |state| state.pending_consolidations.append(*pending_consolidation),
-            else => panic("pending_consolidations is not available in {}", .{self}),
-        }
-    }
-
     // TODO: implement sliceFrom api for TreeView
-    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type) {
+    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) ![]ssz.electra.PendingConsolidation.Type {
         switch (self.*) {
             .electra => |state| {
                 if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
                 var new_array = try std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
                 try new_array.appendSlice(allocator, state.pending_consolidations.items[start_index..]);
-                return new_array;
+                return try new_array.toOwnedSlice(allocator);
             },
-            else => panic("pending_consolidations is not available in {}", .{self}),
-        }
-    }
-
-    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(ssz.electra.PendingConsolidation.Type)) void {
-        switch (self.*) {
-            .electra => |state| state.pending_consolidations = consolidations,
             else => panic("pending_consolidations is not available in {}", .{self}),
         }
     }
@@ -1072,7 +1031,7 @@ test "electra - sanity" {
         .electra = &electra_state,
     };
 
-    try std.testing.expect(beacon_state.getGenesisTime() == 0);
+    try std.testing.expect(beacon_state.genesisTime() == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_state.getGenesisValidatorsRoot());
     try std.testing.expect(beacon_state.getSlot() == 12345);
     beacon_state.setSlot(2025);

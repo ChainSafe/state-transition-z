@@ -5,7 +5,7 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
-const SignedBlock = @import("../state_transition.zig").SignedBlock;
+const SignedBlock = @import("../signed_block.zig").SignedBlock;
 const ExecutionPayloadStatus = @import("./external_data.zig").ExecutionPayloadStatus;
 const SignedBlindedBeaconBlock = @import("../types/beacon_block.zig").SignedBlindedBeaconBlock;
 const BlockExternalData = @import("./external_data.zig").BlockExternalData;
@@ -71,7 +71,7 @@ pub fn processExecutionPayload(
     // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
     //   slots_since_genesis = slot - GENESIS_SLOT
     //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (partial_payload.timestamp != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
+    if (partial_payload.timestamp != state.genesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
         return error.InvalidExecutionPayloadTimestamp;
     }
 

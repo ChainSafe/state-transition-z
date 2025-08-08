@@ -9,7 +9,7 @@ const Root = ssz.primitive.Root;
 const computeBlockSigningRoot = @import("../utils/signing_root.zig").computeBlockSigningRoot;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifySignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
-const SignedBlock = @import("../state_transition.zig").SignedBlock;
+const SignedBlock = @import("../signed_block.zig").SignedBlock;
 
 pub fn verifyProposerSignature(cached_state: *CachedBeaconStateAllForks, signed_block: *const SignedBlock) !bool {
     const signature_set = try getBlockProposerSignatureSet(cached_state.allocator, cached_state, signed_block);

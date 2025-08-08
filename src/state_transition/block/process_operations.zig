@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const params = @import("params");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const BeaconBlockBody_ = @import("../state_transition.zig").SignedBlock.BeaconBlockBody_;
+const BeaconBlockBody_ = @import("../signed_block.zig").SignedBlock.BeaconBlockBody_;
 
 const getEth1DepositCount = @import("../utils/deposit.zig").getEth1DepositCount;
 const processAttestations = @import("./process_attestations.zig").processAttestations;
