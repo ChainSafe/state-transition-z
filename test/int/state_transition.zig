@@ -18,6 +18,6 @@ test "stf" {
     defer test_state.deinit();
     const block = &ssz.electra.SignedBeaconBlock.default_value;
     const signed_beacon_block = SignedBeaconBlock{ .electra = block };
-    const signed_block = SignedBlock{ .signed_beacon_block = &signed_beacon_block };
+    const signed_block = SignedBlock{ .regular = &signed_beacon_block };
     _ = try stateTransition(allocator, test_state.cached_state, signed_block, .{});
 }

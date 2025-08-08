@@ -15,11 +15,11 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Signe
     if (isMergeTransitionComplete(state)) return true;
 
     switch (block.*) {
-        .signed_blinded_beacon_block => |b| {
+        .blinded => |b| {
             _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayloadHeader();
             // TODO(bing) equals
         },
-        .signed_beacon_block => |b| {
+        .regular => |b| {
             _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayload();
             // TODO(bing) equals
         },

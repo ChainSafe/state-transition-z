@@ -50,8 +50,8 @@ pub const Block = union(enum) {
 };
 
 pub const SignedBlock = union(enum) {
-    signed_beacon_block: *const SignedBeaconBlock,
-    signed_blinded_beacon_block: *const SignedBlindedBeaconBlock,
+    regular: *const SignedBeaconBlock,
+    blinded: *const SignedBlindedBeaconBlock,
 
     pub const BeaconBlockBody_ = union(enum) {
         regular: BeaconBlockBody,
@@ -135,56 +135,56 @@ pub const SignedBlock = union(enum) {
 
     pub fn getMessage(self: *const SignedBlock) Block {
         return switch (self.*) {
-            .signed_beacon_block => |b| .{ .regular = b.getBeaconBlock() },
-            .signed_blinded_beacon_block => |b| .{ .blinded = b.getBeaconBlock() },
+            .regular => |b| .{ .regular = b.getBeaconBlock() },
+            .blinded => |b| .{ .blinded = b.getBeaconBlock() },
         };
     }
     pub fn getBeaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
         return switch (self.*) {
-            .signed_beacon_block => |b| .{ .regular = b.getBeaconBlock().getBeaconBlockBody() },
-            .signed_blinded_beacon_block => |b| .{ .blinded = b.getBeaconBlock().getBeaconBlockBody() },
+            .regular => |b| .{ .regular = b.getBeaconBlock().getBeaconBlockBody() },
+            .blinded => |b| .{ .blinded = b.getBeaconBlock().getBeaconBlockBody() },
         };
     }
 
     pub fn getParentRoot(self: *const SignedBlock) [32]u8 {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getBeaconBlock().getParentRoot(),
-            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getParentRoot(),
+            .regular => |b| b.getBeaconBlock().getParentRoot(),
+            .blinded => |b| b.getBeaconBlock().getParentRoot(),
         };
     }
 
     pub fn getStateRoot(self: *const SignedBlock) [32]u8 {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getBeaconBlock().getStateRoot(),
-            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getStateRoot(),
+            .regular => |b| b.getBeaconBlock().getStateRoot(),
+            .blinded => |b| b.getBeaconBlock().getStateRoot(),
         };
     }
 
     pub fn getSlot(self: *const SignedBlock) Slot {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getBeaconBlock().getSlot(),
-            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getSlot(),
+            .regular => |b| b.getBeaconBlock().getSlot(),
+            .blinded => |b| b.getBeaconBlock().getSlot(),
         };
     }
 
     pub fn hashTreeRoot(self: *const SignedBlock, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
-            .signed_blinded_beacon_block => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
+            .regular => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
+            .blinded => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
         };
     }
 
     pub fn getProposerIndex(self: *const SignedBlock) u64 {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getBeaconBlock().getProposerIndex(),
-            .signed_blinded_beacon_block => |b| b.getBeaconBlock().getProposerIndex(),
+            .regular => |b| b.getBeaconBlock().getProposerIndex(),
+            .blinded => |b| b.getBeaconBlock().getProposerIndex(),
         };
     }
 
     pub fn getSignature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
-            .signed_beacon_block => |b| b.getSignature(),
-            .signed_blinded_beacon_block => |b| b.getSignature(),
+            .regular => |b| b.getSignature(),
+            .blinded => |b| b.getSignature(),
         };
     }
 };
