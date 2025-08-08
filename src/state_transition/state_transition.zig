@@ -45,8 +45,8 @@ const Options = struct {
 };
 
 pub const Block = union(enum) {
-    block: BeaconBlock,
-    blinded_block: BlindedBeaconBlock,
+    regular: BeaconBlock,
+    blinded: BlindedBeaconBlock,
 };
 
 pub const SignedBlock = union(enum) {
@@ -54,94 +54,94 @@ pub const SignedBlock = union(enum) {
     signed_blinded_beacon_block: *const SignedBlindedBeaconBlock,
 
     pub const BeaconBlockBody_ = union(enum) {
-        unblinded: BeaconBlockBody,
+        regular: BeaconBlockBody,
         blinded: BlindedBeaconBlockBody,
 
         pub fn blobKzgCommitmentsLen(self: *const BeaconBlockBody_) usize {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getBlobKzgCommitments().items.len,
+                inline .regular, .blinded => |b| b.getBlobKzgCommitments().items.len,
             };
         }
 
         pub fn getEth1Data(self: *const BeaconBlockBody_) *const ssz.phase0.Eth1Data.Type {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getEth1Data(),
+                inline .regular, .blinded => |b| b.getEth1Data(),
             };
         }
 
         pub fn getRandaoReveal(self: *const BeaconBlockBody_) ssz.primitive.BLSSignature.Type {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getRandaoReveal(),
+                inline .regular, .blinded => |b| b.getRandaoReveal(),
             };
         }
 
         pub fn deposits(self: *const BeaconBlockBody_) []Deposit {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getDeposits(),
+                inline .regular, .blinded => |b| b.getDeposits(),
             };
         }
         pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getDepositRequests(),
+                inline .regular, .blinded => |b| b.getDepositRequests(),
             };
         }
         pub fn withdrawalRequests(self: *const BeaconBlockBody_) []WithdrawalRequest {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getWithdrawalRequests(),
+                inline .regular, .blinded => |b| b.getWithdrawalRequests(),
             };
         }
         pub fn consolidationRequests(self: *const BeaconBlockBody_) []ConsolidationRequest {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getConsolidationRequests(),
+                inline .regular, .blinded => |b| b.getConsolidationRequests(),
             };
         }
 
         pub fn syncAggregate(self: *const BeaconBlockBody_) *const ssz.altair.SyncAggregate.Type {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getSyncAggregate(),
+                inline .regular, .blinded => |b| b.getSyncAggregate(),
             };
         }
 
         pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getAttesterSlashings(),
+                inline .regular, .blinded => |b| b.getAttesterSlashings(),
             };
         }
 
         pub fn attestations(self: *const BeaconBlockBody_) Attestations {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getAttestations(),
+                inline .regular, .blinded => |b| b.getAttestations(),
             };
         }
 
         pub fn voluntaryExits(self: *const BeaconBlockBody_) []SignedVoluntaryExit {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getVoluntaryExits(),
+                inline .regular, .blinded => |b| b.getVoluntaryExits(),
             };
         }
 
         pub fn proposerSlashings(self: *const BeaconBlockBody_) []ProposerSlashing {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getProposerSlashings(),
+                inline .regular, .blinded => |b| b.getProposerSlashings(),
             };
         }
 
         pub fn blsToExecutionChanges(self: *const BeaconBlockBody_) []SignedBLSToExecutionChange {
             return switch (self.*) {
-                inline .unblinded, .blinded => |b| b.getBlsToExecutionChanges(),
+                inline .regular, .blinded => |b| b.getBlsToExecutionChanges(),
             };
         }
     };
 
     pub fn getMessage(self: *const SignedBlock) Block {
         return switch (self.*) {
-            .signed_beacon_block => |b| .{ .block = b.getBeaconBlock() },
-            .signed_blinded_beacon_block => |b| .{ .blinded_block = b.getBeaconBlock() },
+            .signed_beacon_block => |b| .{ .regular = b.getBeaconBlock() },
+            .signed_blinded_beacon_block => |b| .{ .blinded = b.getBeaconBlock() },
         };
     }
     pub fn getBeaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
         return switch (self.*) {
-            .signed_beacon_block => |b| .{ .unblinded = b.getBeaconBlock().getBeaconBlockBody() },
+            .signed_beacon_block => |b| .{ .regular = b.getBeaconBlock().getBeaconBlockBody() },
             .signed_blinded_beacon_block => |b| .{ .blinded = b.getBeaconBlock().getBeaconBlockBody() },
         };
     }
@@ -237,8 +237,8 @@ pub fn stateTransition(
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.getMessage();
     const block_slot = switch (block) {
-        .block => |b| b.getSlot(),
-        .blinded_block => |b| b.getSlot(),
+        .regular => |b| b.getSlot(),
+        .blinded => |b| b.getSlot(),
     };
 
     //TODO(bing): deep clone
@@ -293,8 +293,8 @@ pub fn stateTransition(
         //    hashTreeRootTimer?.();
 
         const block_state_root = switch (block) {
-            .block => |b| b.getStateRoot(),
-            .blinded_block => |b| b.getStateRoot(),
+            .regular => |b| b.getStateRoot(),
+            .blinded => |b| b.getStateRoot(),
         };
         if (!std.mem.eql(u8, &out, &block_state_root)) {
             return error.InvalidStateRoot;

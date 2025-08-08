@@ -44,7 +44,7 @@ pub fn processBlock(
             const expected_withdrawals_result = try getExpectedWithdrawals(allocator, cached_state);
             const body = block.getBeaconBlockBody();
             switch (body) {
-                .unblinded => |b| {
+                .regular => |b| {
                     const actual_withdrawals = b.getExecutionPayload().getWithdrawals();
                     std.debug.assert(expected_withdrawals_result.withdrawals.items.len == actual_withdrawals.items.len);
                     for (expected_withdrawals_result.withdrawals.items, actual_withdrawals.items) |ew, pw| {

@@ -33,7 +33,7 @@ pub fn processExecutionPayload(
     const config = epoch_cache.config;
     var partial_payload = PartialPayload{};
     switch (body) {
-        .unblinded => |b| {
+        .regular => |b| {
             partial_payload = .{
                 .parent_hash = b.getExecutionPayload().getParentHash(),
                 .block_hash = b.getExecutionPayload().getBlockHash(),
@@ -96,7 +96,7 @@ pub fn processExecutionPayload(
     }
 
     const payload_header = switch (body) {
-        .unblinded => |b| try b.getExecutionPayload().toPayloadHeader(allocator),
+        .regular => |b| try b.getExecutionPayload().toPayloadHeader(allocator),
         .blinded => |b| b.getExecutionPayloadHeader(),
     };
     state.setLatestExecutionPayloadHeader(&payload_header);
