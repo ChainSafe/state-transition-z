@@ -96,6 +96,12 @@ pub const SignedBlock = union(enum) {
             };
         }
 
+        pub fn syncAggregate(self: *const BeaconBlockBody_) *const ssz.altair.SyncAggregate.Type {
+            return switch (self.*) {
+                inline .unblinded, .blinded => |b| b.getSyncAggregate(),
+            };
+        }
+
         pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
             return switch (self.*) {
                 inline .unblinded, .blinded => |b| b.getAttesterSlashings(),

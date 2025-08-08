@@ -81,7 +81,7 @@ pub fn processBlock(
     try processEth1Data(allocator, cached_state, block.getBeaconBlockBody().getEth1Data());
     try processOperations(allocator, cached_state, &block.getBeaconBlockBody(), opts);
     if (state.isPostAltair()) {
-        try processSyncAggregate(cached_state, block, opts.verify_signature);
+        try processSyncAggregate(allocator, cached_state, block, opts.verify_signature);
     }
 
     if (state.isPostDeneb()) {
