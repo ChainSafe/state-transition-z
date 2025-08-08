@@ -85,10 +85,10 @@ pub fn processBlock(
     }
 
     if (state.isPostDeneb()) {
-        try processBlobKzgCommitments(allocator, external_data);
+        try processBlobKzgCommitments(external_data);
         // Only throw PreData so beacon can also sync/process blocks optimistically
         // and let forkChoice handle it
-        if (external_data.data_availability_status == .PreData) {
+        if (external_data.data_availability_status == .pre_data) {
             return error.DataAvailabilityPreData;
         }
     }
