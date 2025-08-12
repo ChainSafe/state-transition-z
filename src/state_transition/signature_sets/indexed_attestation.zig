@@ -45,14 +45,14 @@ pub fn getAttestationWithIndicesSignatureSet(
     var signing_root: Root = undefined;
     try getAttestationDataSigningRoot(cached_state, data, &signing_root);
 
-    return createAggregateSignatureSetFromComponents(pubkeys, signing_root, signature);
+    return .{ .pubkeys = pubkeys, .signing_root = signing_root, .signature = signature };
 }
 
 pub fn getIndexedAttestationSignatureSet(comptime IA: type, allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IA) !AggregatedSignatureSet {
     return try getAttestationWithIndicesSignatureSet(allocator, cached_state, &indexed_attestation.data, indexed_attestation.signature, indexed_attestation.attesting_indices.items);
 }
 
-pub fn getAttestationsSignatureSets(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(AggregatedSignatureSet)) !void {
+pub fn getAttestationsSignatureSets(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: *std.ArrayList(AggregatedSignatureSet)) !void {
     const epoch_cache = cached_state.getEpochCache();
     const attestation_items = signed_block.getBeaconBlock().getBeaconBlockBody().getAttestations().items();
 
@@ -60,14 +60,14 @@ pub fn getAttestationsSignatureSets(allocator: Allocator, cached_state: *const C
         .phase0 => |phase0_attestations| {
             for (phase0_attestations) |attestation| {
                 const indexed_attestation = try epoch_cache.getIndexedAttestation(.{ .phase0 = attestation });
-                const signature_set = try getIndexedAttestationSignatureSet(allocator, cached_state, indexed_attestation);
+                const signature_set = try getIndexedAttestationSignatureSet(ssz.phase0.IndexedAttestation.Type, allocator, cached_state, &indexed_attestation.phase0.*);
                 try out.append(signature_set);
             }
         },
         .electra => |electra_attestations| {
             for (electra_attestations) |attestation| {
                 const indexed_attestation = try epoch_cache.getIndexedAttestation(.{ .electra = attestation });
-                const signature_set = try getIndexedAttestationSignatureSet(allocator, cached_state, indexed_attestation);
+                const signature_set = try getIndexedAttestationSignatureSet(ssz.electra.IndexedAttestation.Type, allocator, cached_state, &indexed_attestation.electra.*);
                 try out.append(signature_set);
             }
         },

@@ -38,10 +38,12 @@ pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
 pub const state_transition = @import("./state_transition.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");
+const signature_sets_block = @import("./signature_sets/block.zig");
 
 test {
     testing.refAllDecls(@This());
     testing.refAllDecls(seed);
+    testing.refAllDecls(signature_sets_block);
     testing.refAllDecls(state_transition);
     testing.refAllDecls(EpochShuffling);
 }

@@ -1,0 +1,53 @@
+const std = @import("std");
+const ssz = @import("consensus_types");
+
+const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
+const AggregatedSignatureSet = @import("../utils/signature_sets.zig").AggregatedSignatureSet;
+const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const SignedBlock = @import("../signed_block.zig").SignedBlock;
+const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
+const TestCachedBeaconStateAllForks = @import("../test_utils/cached_beacon_state.zig").TestCachedBeaconStateAllForks;
+const getRandaoRevealSignatureSet = @import("./randao.zig").getRandaoRevealSignatureSet;
+const getProposerSlashingsSignatureSets = @import("./proposer_slashings.zig").getProposerSlashingsSignatureSets;
+const getAttesterSlashingsSignatureSets = @import("./attester_slashings.zig").getAttesterSlashingsSignatureSets;
+const getAttestationsSignatureSets = @import("./indexed_attestation.zig").getAttestationsSignatureSets;
+const getVoluntaryExitsSignatureSets = @import("./voluntary_exits.zig").getVoluntaryExitsSignatureSets;
+
+const SignatureSetOpt = struct {
+    skip_proposer_signature: bool = true,
+};
+pub fn blockSignatureSets(
+    allocator: std.mem.Allocator,
+    state: *const CachedBeaconStateAllForks,
+    signed_block: SignedBlock,
+    opt: SignatureSetOpt,
+) !SingleSignatureSet {
+    std.debug.assert(false);
+    var single_signature_sets = std.ArrayList(SingleSignatureSet).init(allocator);
+    var aggregated_signature_sets = std.ArrayList(AggregatedSignatureSet).init(allocator);
+    try single_signature_sets.append(try getRandaoRevealSignatureSet(state, &signed_block.getBeaconBlockBody(), signed_block.getSlot(), signed_block.getProposerIndex()));
+    try getProposerSlashingsSignatureSets(state, signed_block.regular, &single_signature_sets);
+    try getAttesterSlashingsSignatureSets(state, signed_block.regular, &aggregated_signature_sets);
+    try getAttestationsSignatureSets(allocator, state, signed_block.regular, &aggregated_signature_sets);
+    try getVoluntaryExitsSignatureSets(state, signed_block.regular, &single_signature_sets);
+
+    if (!opt.skip_proposer_signature) {}
+
+    return signature_sets;
+}
+
+test "blockSignatureSets" {
+    const allocator = std.testing.allocator;
+    const validator_count = 256;
+    const test_state = try TestCachedBeaconStateAllForks.init(allocator, validator_count);
+
+    var signature_sets = std.ArrayList(SingleSignatureSet).init(allocator);
+
+    const block = &ssz.electra.SignedBeaconBlock.default_value;
+    const signed_beacon_block = SignedBeaconBlock{ .electra = block };
+    const signed_block = SignedBlock{ .regular = &signed_beacon_block };
+
+    try getProposerSlashingsSignatureSets(test_state.cached_state, signed_block.regular, &signature_sets);
+
+    try blockSignatureSets(allocator, test_state.cached_state, signed_block);
+}

@@ -36,21 +36,3 @@ pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const Aggregated
     const signature = try Signature.fromBytes(&set.signature);
     return fastAggregateVerify(allocator, &set.signing_root, set.pubkeys, &signature, null);
 }
-
-pub fn createSingleSignatureSetFromComponents(pubkey: *const PublicKey, signing_root: Root, signature: BLSSignature) SingleSignatureSet {
-    return .{
-        .pubkey = pubkey,
-        .signing_root = signing_root,
-        .signature = signature,
-    };
-}
-
-pub fn createAggregateSignatureSetFromComponents(pubkeys: []*const PublicKey, signing_root: Root, signature: BLSSignature) AggregatedSignatureSet {
-    return .{
-        .pubkeys = pubkeys,
-        .signing_root = signing_root,
-        .signature = signature,
-    };
-}
-
-// TODO: unit tests

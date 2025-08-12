@@ -41,6 +41,7 @@ pub fn processSyncAggregate(
         // When there's no participation we consider the signature valid and just ignore it
         if (signature_set) |set| {
             if (!try verifyAggregatedSignatureSet(allocator, &set)) {
+                allocator.free(set.pubkeys);
                 return error.SyncCommitteeSignatureInvalid;
             }
         }
@@ -93,8 +94,10 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
         //
         // return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, validator_indices);
 
-        break :blk (try sync_aggregate.sync_committee_bits.intersectValues(ValidatorIndex, allocator, committee_indices)).items;
+        var intersect = try sync_aggregate.sync_committee_bits.intersectValues(ValidatorIndex, allocator, committee_indices);
+        break :blk try intersect.toOwnedSlice();
     };
+    defer allocator.free(participant_indices_);
     // When there's no participation we consider the signature valid and just ignore it
     if (participant_indices_.len == 0) {
         // Must set signature as G2_POINT_AT_INFINITY when participating bits are empty

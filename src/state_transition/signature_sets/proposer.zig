@@ -17,7 +17,7 @@ pub fn verifyProposerSignature(cached_state: *CachedBeaconStateAllForks, signed_
 }
 
 // TODO: support SignedBlindedBeaconBlock
-pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, signed_block: *const SignedBlock) !SingleSignatureSet {
+pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBlock) !SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();

@@ -191,14 +191,13 @@ pub const BeaconConfig = struct {
         if (@intFromEnum(fork_seq) >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
 
         var domain_by_type = self.domain_cache.items[@intFromEnum(fork_seq)];
+        defer domain_by_type.deinit();
         var domain: [32]u8 = undefined;
 
         if (domain_by_type.get(&domain_type)) |d| @memcpy(&domain, d) else {
-            const out = try self.allocator.create([32]u8);
             const fork_info = self.forks_ascending_epoch_order[@intFromEnum(fork_seq)];
-            try computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
-            try domain_by_type.put(&domain_type, out);
-            @memcpy(&domain, out);
+            try computeDomain(domain_type, fork_info.version, self.genesis_validator_root, &domain);
+            try domain_by_type.put(&domain_type, &domain);
         }
 
         return domain;

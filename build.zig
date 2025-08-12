@@ -170,7 +170,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .filters = filters orelse &.{},
     });
-    state_transition_unit_tests.root_module.addImport("ssz", module_ssz);
+
     state_transition_unit_tests.root_module.addImport("consensus_types", module_consensus_types);
     state_transition_unit_tests.root_module.addImport("blst_min_pk", module_blst_min_pk);
     state_transition_unit_tests.root_module.addImport("config", module_config);

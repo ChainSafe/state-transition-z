@@ -1,3 +1,4 @@
+const std = @import("std");
 const ssz = @import("consensus_types");
 const Slot = ssz.primitive.Slot.Type;
 const types = @import("../type.zig");
@@ -38,6 +39,6 @@ pub fn getRandaoRevealSignatureSet(
     return .{
         .pubkey = epoch_cache.index_to_pubkey.items[proposer_idx].*,
         .signing_root = signing_root,
-        .signature = body.getRandaoReveal(),
+        .signature = body.*.regular.getRandaoReveal(),
     };
 }
