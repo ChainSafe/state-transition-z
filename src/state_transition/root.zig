@@ -36,6 +36,8 @@ pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_
 
 // Block
 pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
+pub const processWithdrawals = @import("./block/process_withdrawals.zig").processWithdrawals;
+pub const getExpectedWithdrawalsResult = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");

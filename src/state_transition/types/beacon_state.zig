@@ -973,7 +973,7 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         switch (self.*) {
             .electra => |state| {
-                if (start_index >= state.pending_partial_withdrawals.items.len) return error.IndexOutOfBounds;
+                if (start_index > state.pending_partial_withdrawals.items.len) return error.IndexOutOfBounds;
                 var new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(allocator, state.pending_partial_withdrawals.items.len - start_index);
                 try new_array.appendSlice(allocator, state.pending_partial_withdrawals.items[start_index..]);
                 return new_array;

@@ -39,4 +39,5 @@ test {
     testing.refAllDecls(state_transition);
 
     testing.refAllDecls(@import("./process_block_header.zig"));
+    testing.refAllDecls(@import("./process_withdrawals.zig"));
 }
