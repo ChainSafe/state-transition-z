@@ -37,4 +37,6 @@ test {
     testing.refAllDecls(process_epoch);
     testing.refAllDecls(epoch_transition_cache);
     testing.refAllDecls(state_transition);
+
+    testing.refAllDecls(@import("./process_block_header.zig"));
 }

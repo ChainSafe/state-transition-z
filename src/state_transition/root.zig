@@ -34,10 +34,15 @@ pub const processParticipationRecordUpdates = @import("./epoch/process_participa
 pub const processParticipationFlagUpdates = @import("./epoch/process_participation_flag_updates.zig").processParticipationFlagUpdates;
 pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 
+// Block
+pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
+
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
 pub const state_transition = @import("./state_transition.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");
+pub const SignedBlock = @import("./signed_block.zig").SignedBlock;
+pub const SignedBeaconBlock = @import("./signed_block.zig").SignedBeaconBlock;
 
 test {
     testing.refAllDecls(@This());
