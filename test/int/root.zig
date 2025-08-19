@@ -43,4 +43,5 @@ test {
     testing.refAllDecls(@import("./process_execution_payload.zig"));
     testing.refAllDecls(@import("./process_randao.zig"));
     testing.refAllDecls(@import("./process_eth1_data.zig"));
+    testing.refAllDecls(@import("./process_operations.zig"));
 }
