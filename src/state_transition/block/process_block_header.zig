@@ -28,7 +28,6 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaco
     // verify that proposer index is the correct index
     const proposer_index = try epoch_cache.getBeaconProposer(slot);
     if (block.getProposerIndex() != proposer_index) {
-        std.debug.print("block.getSlot() = {}, slot = {}", .{ block.getProposerIndex(), proposer_index });
         return error.BlockProposerIndexMismatch;
     }
 
