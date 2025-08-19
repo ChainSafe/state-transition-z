@@ -35,7 +35,7 @@ const WithdrawalsResult = struct {
 
 // TODO: support capella.FullOrBlindedExecutionPayload
 pub fn processWithdrawals(
-    allocator: Allocator,
+    _: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
     expected_withdrawals_result: WithdrawalsResult,
 ) !void {
@@ -51,7 +51,8 @@ pub fn processWithdrawals(
     }
 
     if (state.isPostElectra()) {
-        state.setPendingPartialWithdrawals(try state.sliceFromPendingPartialWithdrawals(allocator, processed_partial_withdrawals_count));
+        const pending_partial_withdrawals = state.pendingPartialWithdrawals();
+        @memcpy(pending_partial_withdrawals.items, state.pendingPartialWithdrawals().items[processed_partial_withdrawals_count..]);
     }
 
     // Update the nextWithdrawalIndex
