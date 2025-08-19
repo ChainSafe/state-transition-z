@@ -39,6 +39,7 @@ pub const processBlockHeader = @import("./block/process_block_header.zig").proce
 pub const processWithdrawals = @import("./block/process_withdrawals.zig").processWithdrawals;
 pub const getExpectedWithdrawalsResult = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
 pub const processExecutionPayload = @import("./block/process_execution_payload.zig").processExecutionPayload;
+pub const processRandao = @import("./block/process_randao.zig").processRandao;
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
