@@ -40,4 +40,5 @@ test {
 
     testing.refAllDecls(@import("./process_block_header.zig"));
     testing.refAllDecls(@import("./process_withdrawals.zig"));
+    testing.refAllDecls(@import("./process_execution_payload.zig"));
 }
