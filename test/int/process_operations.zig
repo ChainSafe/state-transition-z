@@ -1,18 +1,3 @@
-const std = @import("std");
-const ssz = @import("consensus_types");
-const config = @import("config");
-
-const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const chain_config = config.mainnet_chain_config;
-const preset = ssz.preset;
-
-const processOperations = @import("state_transition").processOperations;
-
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
-
 test "process operations" {
     const allocator = std.testing.allocator;
 
@@ -24,3 +9,13 @@ test "process operations" {
     const block = SignedBlock{ .regular = &signed_beacon_block };
     try processOperations(allocator, test_state.cached_state, &block.getBeaconBlockBody(), .{});
 }
+
+const std = @import("std");
+const ssz = @import("consensus_types");
+
+const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+
+const processOperations = @import("state_transition").processOperations;
+
+const SignedBlock = @import("state_transition").SignedBlock;
+const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;

@@ -1,22 +1,8 @@
-const std = @import("std");
-const ssz = @import("consensus_types");
-const config = @import("config");
-
-const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const chain_config = config.mainnet_chain_config;
-const preset = ssz.preset;
-
-const processBlockHeader = @import("state_transition").processBlockHeader;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
-
 test "process block header - sanity" {
     const allocator = std.testing.allocator;
 
     var test_state = try TestCachedBeaconStateAllForks.init(allocator, 256);
-    const slot = chain_config.ELECTRA_FORK_EPOCH * preset.SLOTS_PER_EPOCH + 2025 * preset.SLOTS_PER_EPOCH - 1;
+    const slot = config.mainnet_chain_config.ELECTRA_FORK_EPOCH * preset.SLOTS_PER_EPOCH + 2025 * preset.SLOTS_PER_EPOCH - 1;
     defer test_state.deinit();
 
     const proposers = test_state.cached_state.getEpochCache().proposers;
@@ -37,3 +23,15 @@ test "process block header - sanity" {
     const block = SignedBlock{ .regular = &signed_beacon_block };
     try processBlockHeader(allocator, test_state.cached_state, &block);
 }
+
+const std = @import("std");
+const ssz = @import("consensus_types");
+const config = @import("config");
+
+const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+
+const preset = ssz.preset;
+
+const processBlockHeader = @import("state_transition").processBlockHeader;
+const SignedBlock = @import("state_transition").SignedBlock;
+const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;

@@ -1,24 +1,3 @@
-const std = @import("std");
-const ssz = @import("consensus_types");
-const config = @import("config");
-
-const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const chain_config = config.mainnet_chain_config;
-const preset = ssz.preset;
-
-const processSyncAggregate = @import("state_transition").processSyncAggregate;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
-const G2_POINT_AT_INFINITY = blk: {
-    const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
-    const byte_array_len = hex_string.len / 2;
-    var bytes: [byte_array_len]u8 = undefined;
-    _ = std.fmt.hexToBytes(&bytes, hex_string) catch unreachable;
-    break :blk bytes;
-};
-
 test "process sync aggregate - sanity" {
     const allocator = std.testing.allocator;
 
@@ -40,3 +19,21 @@ test "process sync aggregate - sanity" {
 
     try processSyncAggregate(allocator, test_state.cached_state, &block, null);
 }
+
+const std = @import("std");
+const ssz = @import("consensus_types");
+const config = @import("config");
+
+const Allocator = std.mem.Allocator;
+const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+
+const processSyncAggregate = @import("state_transition").processSyncAggregate;
+const SignedBlock = @import("state_transition").SignedBlock;
+const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
+const G2_POINT_AT_INFINITY = blk: {
+    const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
+    const byte_array_len = hex_string.len / 2;
+    var bytes: [byte_array_len]u8 = undefined;
+    _ = std.fmt.hexToBytes(&bytes, hex_string) catch unreachable;
+    break :blk bytes;
+};

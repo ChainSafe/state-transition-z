@@ -1,17 +1,3 @@
-const std = @import("std");
-const ssz = @import("consensus_types");
-const config = @import("config");
-
-const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const chain_config = config.mainnet_chain_config;
-const preset = ssz.preset;
-
-const processExecutionPayload = @import("state_transition").processExecutionPayload;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
-
 test "process execution payload - sanity" {
     const allocator = std.testing.allocator;
 
@@ -39,3 +25,13 @@ test "process execution payload - sanity" {
         .{ .execution_payload_status = .valid, .data_availability_status = .available },
     );
 }
+
+const std = @import("std");
+const ssz = @import("consensus_types");
+const config = @import("config");
+
+const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+
+const processExecutionPayload = @import("state_transition").processExecutionPayload;
+const SignedBlock = @import("state_transition").SignedBlock;
+const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
