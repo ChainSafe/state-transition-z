@@ -44,4 +44,6 @@ test {
     testing.refAllDecls(@import("./process_randao.zig"));
     testing.refAllDecls(@import("./process_eth1_data.zig"));
     testing.refAllDecls(@import("./process_operations.zig"));
+    testing.refAllDecls(@import("./process_sync_aggregate.zig"));
+    testing.refAllDecls(@import("./process_blob_kzg_commitments.zig"));
 }

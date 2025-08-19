@@ -42,6 +42,8 @@ pub const processExecutionPayload = @import("./block/process_execution_payload.z
 pub const processRandao = @import("./block/process_randao.zig").processRandao;
 pub const processEth1Data = @import("./block/process_eth1_data.zig").processEth1Data;
 pub const processOperations = @import("./block/process_operations.zig").processOperations;
+pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
+pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");

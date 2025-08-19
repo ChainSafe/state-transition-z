@@ -1,18 +1,3 @@
-const std = @import("std");
-const ssz = @import("consensus_types");
-const config = @import("config");
-
-const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const chain_config = config.mainnet_chain_config;
-const preset = ssz.preset;
-
-const processWithdrawals = @import("state_transition").processWithdrawals;
-const getExpectedWithdrawalsResult = @import("state_transition").getExpectedWithdrawalsResult;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
-
 test "process withdrawals - sanity" {
     const allocator = std.testing.allocator;
 
@@ -23,3 +8,10 @@ test "process withdrawals - sanity" {
     defer ewr.deinit(allocator);
     try processWithdrawals(allocator, test_state.cached_state, ewr);
 }
+
+const std = @import("std");
+
+const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+
+const processWithdrawals = @import("state_transition").processWithdrawals;
+const getExpectedWithdrawalsResult = @import("state_transition").getExpectedWithdrawalsResult;
