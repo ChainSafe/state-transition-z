@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.settings.bun-target }}
-          path: 'zig-out/lib/*state-transition-utils.*'
+          path: 'zig-out/lib/*state_transition_utils.*'
           if-no-files-found: error
 
   bun-benchmark:

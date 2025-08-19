@@ -32,7 +32,7 @@
 		"lint:fix": "yarn lint --write"
 	},
 	"bun-ffi-z": {
-		"name": "state-transition-utils",
+		"name": "state_transition_utils",
 		"targets": [
 			"linux-x64-gnu",
 			"linux-arm64-gnu",
