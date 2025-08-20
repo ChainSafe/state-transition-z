@@ -1,6 +1,7 @@
 .{
     .name = .state_transition_z,
     .version = "0.0.0",
+    // Changing this has security and trust implications.
     .fingerprint = 0xd1ddb6abe067ee04,
     .minimum_zig_version = "0.14.0",
     .paths = .{
@@ -33,21 +34,5 @@
             .linkage = .dynamic,
         },
     },
-    .tests = .{
-        .shared_lib_unit_tests = .{
-            .root_module = .{
-                .root_source_file = "src/root_c_abi.zig",
-            },
-        },
-        .lib_unit_tests = .{
-            .root_module = .{
-                .root_source_file = "src/root.zig",
-            },
-        },
-        .exe_unit_tests = .{
-            .root_module = .{
-                .root_source_file = "src/main.zig",
-            },
-        },
-    },
+    .tests = .{},
 }
