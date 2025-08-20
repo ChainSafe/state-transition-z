@@ -19,13 +19,13 @@
         },
     },
     .libraries = .{
-        .state_transition = .{
+        .@"state-transition" = .{
             .root_module = .{
                 .root_source_file = "src/root.zig",
             },
             .linkage = .static,
         },
-        .state_transition_utils = .{
+        .@"state-transition-utils" = .{
             .root_module = .{
                 .root_source_file = "src/root_c_abi.zig",
                 .link_libc = true,

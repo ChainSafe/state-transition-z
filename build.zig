@@ -29,44 +29,44 @@ pub fn build(b: *std.Build) void {
     const tls_run_exe_main = b.step("run:main", "Run the main executable");
     tls_run_exe_main.dependOn(&run_exe_main.step);
 
-    const module_state_transition = b.createModule(.{
+    const @"module_state-transition" = b.createModule(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    b.modules.put(b.dupe("state_transition"), module_state_transition) catch @panic("OOM");
+    b.modules.put(b.dupe("state-transition"), @"module_state-transition") catch @panic("OOM");
 
-    const lib_state_transition = b.addLibrary(.{
-        .name = "state_transition",
-        .root_module = module_state_transition,
+    const @"lib_state-transition" = b.addLibrary(.{
+        .name = "state-transition",
+        .root_module = @"module_state-transition",
         .linkage = .static,
     });
 
-    const install_lib_state_transition = b.addInstallArtifact(lib_state_transition, .{});
+    const @"install_lib_state-transition" = b.addInstallArtifact(@"lib_state-transition", .{});
 
-    const tls_install_lib_state_transition = b.step("build-lib:state_transition", "Install the state_transition library");
-    tls_install_lib_state_transition.dependOn(&install_lib_state_transition.step);
-    b.getInstallStep().dependOn(&install_lib_state_transition.step);
+    const @"tls_install_lib_state-transition" = b.step("build-lib:state-transition", "Install the state-transition library");
+    @"tls_install_lib_state-transition".dependOn(&@"install_lib_state-transition".step);
+    b.getInstallStep().dependOn(&@"install_lib_state-transition".step);
 
-    const module_state_transition_utils = b.createModule(.{
+    const @"module_state-transition-utils" = b.createModule(.{
         .root_source_file = b.path("src/root_c_abi.zig"),
         .target = target,
         .optimize = optimize,
         .link_libc = true,
     });
-    b.modules.put(b.dupe("state_transition_utils"), module_state_transition_utils) catch @panic("OOM");
+    b.modules.put(b.dupe("state-transition-utils"), @"module_state-transition-utils") catch @panic("OOM");
 
-    const lib_state_transition_utils = b.addLibrary(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
+    const @"lib_state-transition-utils" = b.addLibrary(.{
+        .name = "state-transition-utils",
+        .root_module = @"module_state-transition-utils",
         .linkage = .dynamic,
     });
 
-    const install_lib_state_transition_utils = b.addInstallArtifact(lib_state_transition_utils, .{});
+    const @"install_lib_state-transition-utils" = b.addInstallArtifact(@"lib_state-transition-utils", .{});
 
-    const tls_install_lib_state_transition_utils = b.step("build-lib:state_transition_utils", "Install the state_transition_utils library");
-    tls_install_lib_state_transition_utils.dependOn(&install_lib_state_transition_utils.step);
-    b.getInstallStep().dependOn(&install_lib_state_transition_utils.step);
+    const @"tls_install_lib_state-transition-utils" = b.step("build-lib:state-transition-utils", "Install the state-transition-utils library");
+    @"tls_install_lib_state-transition-utils".dependOn(&@"install_lib_state-transition-utils".step);
+    b.getInstallStep().dependOn(&@"install_lib_state-transition-utils".step);
 
     const tls_run_test = b.step("test", "Run all tests");
 
@@ -84,33 +84,33 @@ pub fn build(b: *std.Build) void {
     tls_run_test_main.dependOn(&run_test_main.step);
     tls_run_test.dependOn(&run_test_main.step);
 
-    const test_state_transition = b.addTest(.{
-        .name = "state_transition",
-        .root_module = module_state_transition,
+    const @"test_state-transition" = b.addTest(.{
+        .name = "state-transition",
+        .root_module = @"module_state-transition",
         .filters = &[_][]const u8{},
     });
-    const install_test_state_transition = b.addInstallArtifact(test_state_transition, .{});
-    const tls_install_test_state_transition = b.step("build-test:state_transition", "Install the state_transition test");
-    tls_install_test_state_transition.dependOn(&install_test_state_transition.step);
+    const @"install_test_state-transition" = b.addInstallArtifact(@"test_state-transition", .{});
+    const @"tls_install_test_state-transition" = b.step("build-test:state-transition", "Install the state-transition test");
+    @"tls_install_test_state-transition".dependOn(&@"install_test_state-transition".step);
 
-    const run_test_state_transition = b.addRunArtifact(test_state_transition);
-    const tls_run_test_state_transition = b.step("test:state_transition", "Run the state_transition test");
-    tls_run_test_state_transition.dependOn(&run_test_state_transition.step);
-    tls_run_test.dependOn(&run_test_state_transition.step);
+    const @"run_test_state-transition" = b.addRunArtifact(@"test_state-transition");
+    const @"tls_run_test_state-transition" = b.step("test:state-transition", "Run the state-transition test");
+    @"tls_run_test_state-transition".dependOn(&@"run_test_state-transition".step);
+    tls_run_test.dependOn(&@"run_test_state-transition".step);
 
-    const test_state_transition_utils = b.addTest(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
+    const @"test_state-transition-utils" = b.addTest(.{
+        .name = "state-transition-utils",
+        .root_module = @"module_state-transition-utils",
         .filters = &[_][]const u8{},
     });
-    const install_test_state_transition_utils = b.addInstallArtifact(test_state_transition_utils, .{});
-    const tls_install_test_state_transition_utils = b.step("build-test:state_transition_utils", "Install the state_transition_utils test");
-    tls_install_test_state_transition_utils.dependOn(&install_test_state_transition_utils.step);
+    const @"install_test_state-transition-utils" = b.addInstallArtifact(@"test_state-transition-utils", .{});
+    const @"tls_install_test_state-transition-utils" = b.step("build-test:state-transition-utils", "Install the state-transition-utils test");
+    @"tls_install_test_state-transition-utils".dependOn(&@"install_test_state-transition-utils".step);
 
-    const run_test_state_transition_utils = b.addRunArtifact(test_state_transition_utils);
-    const tls_run_test_state_transition_utils = b.step("test:state_transition_utils", "Run the state_transition_utils test");
-    tls_run_test_state_transition_utils.dependOn(&run_test_state_transition_utils.step);
-    tls_run_test.dependOn(&run_test_state_transition_utils.step);
+    const @"run_test_state-transition-utils" = b.addRunArtifact(@"test_state-transition-utils");
+    const @"tls_run_test_state-transition-utils" = b.step("test:state-transition-utils", "Run the state-transition-utils test");
+    @"tls_run_test_state-transition-utils".dependOn(&@"run_test_state-transition-utils".step);
+    tls_run_test.dependOn(&@"run_test_state-transition-utils".step);
 
     const module_shared_lib_unit_tests = b.createModule(.{
         .root_source_file = b.path("src/root_c_abi.zig"),
