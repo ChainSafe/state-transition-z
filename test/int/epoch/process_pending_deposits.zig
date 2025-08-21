@@ -4,8 +4,15 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessPendingDeposits = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processPendingDeposits, false, false, false).testProcessEpochFn;
+const TestRunner = @import("./test_runner.zig").TestRunner;
 
 test "processPendingDeposits - sanity" {
-    try testProcessPendingDeposits();
+    try TestRunner(state_transition.processPendingDeposits, .{
+        // .no_alloc = false,
+        .alloc = true,
+        // .no_err_return = false,
+        .err_return = true,
+        // .no_void_return = false,
+        .void_return = true,
+    }).testProcessEpochFn();
 }

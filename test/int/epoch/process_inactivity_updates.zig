@@ -4,8 +4,12 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessInactivityUpdates = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processInactivityUpdates, true, false, false).testProcessEpochFn;
+const TestRunner = @import("./test_runner.zig").TestRunner;
 
 test "processInactivityUpdates - sanity" {
-    try testProcessInactivityUpdates();
+    try TestRunner(state_transition.processInactivityUpdates, .{
+        .alloc = false,
+        .err_return = true,
+        .void_return = true,
+    }).testProcessEpochFn();
 }

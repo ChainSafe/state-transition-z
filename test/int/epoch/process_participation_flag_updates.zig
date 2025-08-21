@@ -6,7 +6,6 @@ const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 const processParticipationFlagUpdates = state_transition.processParticipationFlagUpdates;
 // this function runs without EpochTransionCache so cannot use getTestProcessFn
-// const testProcessParticipationFlagUpdates = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processParticipationFlagUpdates, false, true, false).testProcessEpochFn;
 
 test "processParticipationFlagUpdates - sanity" {
     const allocator = std.testing.allocator;

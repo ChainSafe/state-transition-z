@@ -44,17 +44,12 @@ pub fn processSlashings(
 
     for (cache.indices_to_slash.items) |index| {
         const effective_balance_increment = effective_balance_increments[index];
-        var penalty: ?u64 = penalties_by_effective_balance_increment.get(effective_balance_increment);
-        if (penalty == null) {
-            if (!fork.isPostElectra()) {
-                const penalty_numerator_by_increment = effective_balance_increment * adjusted_total_slashing_balance_by_increment;
-                penalty = @divFloor(penalty_numerator_by_increment, total_balance_by_increment) * increment;
-            } else {
-                penalty = penalty_per_effective_balance_increment * effective_balance_increment;
-            }
-            try penalties_by_effective_balance_increment.put(effective_balance_increment, penalty.?);
-        }
-        decreaseBalance(state, index, penalty.?);
+        const penalty: u64 = if (penalties_by_effective_balance_increment.get(effective_balance_increment)) |penalty| penalty else blk: {
+            const p = if (fork.isPostElectra()) penalty_per_effective_balance_increment * effective_balance_increment else @divFloor(effective_balance_increment * adjusted_total_slashing_balance_by_increment, total_balance_by_increment) * increment;
+            try penalties_by_effective_balance_increment.put(effective_balance_increment, p);
+            break :blk p;
+        };
+        decreaseBalance(state, index, penalty);
     }
 }
 

@@ -4,8 +4,15 @@ const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStat
 const state_transition = @import("state_transition");
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
-const testProcessRandaoMixesReset = @import("./process_epoch_fn.zig").getTestProcessFn(state_transition.processRandaoMixesReset, true, true, false).testProcessEpochFn;
+const TestRunner = @import("./test_runner.zig").TestRunner;
 
 test "processRandaoMixesReset - sanity" {
-    try testProcessRandaoMixesReset();
+    try TestRunner(
+        state_transition.processRandaoMixesReset,
+        .{
+            .alloc = false,
+            .err_return = false,
+            .void_return = true,
+        },
+    ).testProcessEpochFn();
 }
