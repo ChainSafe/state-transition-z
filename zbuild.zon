@@ -1,0 +1,38 @@
+.{
+    .name = .state_transition_z,
+    .version = "0.0.0",
+    // Changing this has security and trust implications.
+    .fingerprint = 0xd1ddb6abe067ee04,
+    .minimum_zig_version = "0.14.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+    .dependencies = .{},
+    .options_modules = .{},
+    .modules = .{},
+    .executables = .{
+        .main = .{
+            .root_module = .{
+                .root_source_file = "src/main.zig",
+            },
+        },
+    },
+    .libraries = .{
+        .@"state-transition" = .{
+            .root_module = .{
+                .root_source_file = "src/root.zig",
+            },
+            .linkage = .static,
+        },
+        .@"state-transition-utils" = .{
+            .root_module = .{
+                .root_source_file = "src/root_c_abi.zig",
+                .link_libc = true,
+            },
+            .linkage = .dynamic,
+        },
+    },
+    .tests = .{},
+}
