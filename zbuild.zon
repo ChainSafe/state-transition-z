@@ -9,9 +9,25 @@
         "build.zig.zon",
         "src",
     },
-    .dependencies = .{},
-    .options_modules = .{},
-    .modules = .{},
+    .dependencies = .{
+        .ssz = .{
+            .url = "git+https://github.com/chainsafe/ssz-z.git#0ce9e59d2ade40d6cf5008ab34e6f59825b14c21",
+        },
+    },
+    .options_modules = .{
+        .build_options = .{
+            .preset = .{
+                .default = "mainnet",
+                .type = "string",
+            },
+        },
+    },
+    .modules = .{
+        .consensus_types = .{
+            .root_source_file = "src/consensus_types/root.zig",
+            .imports = .{ .build_options, .ssz },
+        },
+    },
     .executables = .{
         .main = .{
             .root_module = .{
