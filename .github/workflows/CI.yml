@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - te/naive_state_transition
 
 jobs:
   zig-build-upload:
@@ -21,8 +22,8 @@ jobs:
             bun-target: linux-x64-musl
           - os: ubuntu-24.04-arm
             bun-target: linux-arm64-musl
-          - os: macos-13
-            bun-target: darwin-x64
+          # - os: macos-13 # skip because hashtree does not support macos x64 yet
+          #   bun-target: darwin-x64
           - os: macos-latest
             bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
@@ -40,9 +41,12 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
-      - name: Build and Test
+      - name: Build and Unit Tests
         run: |
-          zig build test
+          zig build test:unit
+      - name: Build and Int Tests
+        run: |
+          zig build test:int
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -194,8 +198,9 @@ jobs:
     strategy:
       matrix:
         settings:
-          - os: macos-13
-            bun-target: darwin-x64
+          # skip because hashtree does not support macos x64 yet
+          # - os: macos-13
+          #   bun-target: darwin-x64
           - os: macos-latest
             bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10

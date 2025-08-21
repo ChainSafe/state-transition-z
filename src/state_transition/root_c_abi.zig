@@ -4,7 +4,8 @@ pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
 const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
 const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
 const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
-const committee_indices = @import("utils/committee_indices.zig");
+const committee_indices = @import("utils/committee_indices.zig").ComputeIndexUtils(u32);
+const ByteCount = @import("utils/committee_indices.zig").ByteCount;
 
 pub const ErrorCode = struct {
     pub const Success: c_uint = 0;
@@ -22,19 +23,20 @@ pub const NOT_FOUND_INDEX = 0xffffffff;
 pub const ERROR_INDEX = 0xffffffff;
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+const PubkeyIndexMapU32 = PubkeyIndexMap(u32);
 
 /// C-ABI functions for PubkeyIndexMap
 /// create an instance of PubkeyIndexMap
 /// this returns a pointer to the instance in the heap which we can use in the following functions
 export fn createPubkeyIndexMap() u64 {
     const allocator = gpa.allocator();
-    const instance_ptr = PubkeyIndexMap.init(allocator) catch return 0;
+    const instance_ptr = PubkeyIndexMapU32.init(allocator) catch return 0;
     return @intFromPtr(instance_ptr);
 }
 
 /// destroy an instance of PubkeyIndexMap
 export fn destroyPubkeyIndexMap(nbr_ptr: u64) void {
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     instance_ptr.deinit();
 }
 
@@ -52,7 +54,7 @@ export fn pubkeyIndexMapSet(nbr_ptr: u64, key: [*c]const u8, key_length: c_uint,
     if (key_length != PUBKEY_INDEX_MAP_KEY_SIZE) {
         return ErrorCode.InvalidInput;
     }
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     instance_ptr.set(key[0..key_length], value) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
@@ -62,21 +64,21 @@ export fn pubkeyIndexMapGet(nbr_ptr: u64, key: [*c]const u8, key_length: c_uint)
     if (key_length != PUBKEY_INDEX_MAP_KEY_SIZE) {
         return NOT_FOUND_INDEX;
     }
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     const value = instance_ptr.get(key[0..key_length]) orelse return NOT_FOUND_INDEX;
     return value;
 }
 
 /// clear all values from the specified PubkeyIndexMap instance
 export fn pubkeyIndexMapClear(nbr_ptr: u64) void {
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     instance_ptr.clear();
 }
 
 /// clone the specified PubkeyIndexMap instance
 /// this returns a pointer to the new instance in the heap
 export fn pubkeyIndexMapClone(nbr_ptr: u64) u64 {
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     const clone_ptr = instance_ptr.clone() catch return 0;
     return @intFromPtr(clone_ptr);
 }
@@ -86,7 +88,7 @@ export fn pubkeyIndexMapHas(nbr_ptr: u64, key: [*c]const u8, key_length: c_uint)
     if (key_length != PUBKEY_INDEX_MAP_KEY_SIZE) {
         return false;
     }
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     return instance_ptr.has(key[0..key_length]);
 }
 
@@ -95,13 +97,13 @@ export fn pubkeyIndexMapDelete(nbr_ptr: u64, key: [*c]const u8, key_length: c_ui
     if (key_length != PUBKEY_INDEX_MAP_KEY_SIZE) {
         return false;
     }
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     return instance_ptr.delete(key[0..key_length]);
 }
 
 /// get the size of the specified PubkeyIndexMap instance
 export fn pubkeyIndexMapSize(nbr_ptr: u64) c_uint {
-    const instance_ptr: *PubkeyIndexMap = @ptrFromInt(nbr_ptr);
+    const instance_ptr: *PubkeyIndexMapU32 = @ptrFromInt(nbr_ptr);
     return instance_ptr.size();
 }
 
@@ -190,6 +192,7 @@ fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, s
     const thread = std.Thread.spawn(.{}, struct {
         pub fn run(_active_indices: [*c]u32, _len: usize, _seed: [*c]const u8, _seed_len: usize, _rounds: u8, _forwards: bool, _result: *AsyncResult) void {
             innerShuffleList(
+                u32,
                 _active_indices[0.._len],
                 _seed[0.._seed_len],
                 _rounds,
@@ -265,6 +268,7 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
     }
 
     innerShuffleList(
+        u32,
         active_indices[0..len],
         seed[0..seed_len],
         rounds,
@@ -280,7 +284,7 @@ export fn computeProposerIndexElectra(seed: [*c]u8, seed_len: usize, active_indi
     return proposer_index;
 }
 
-export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
+export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
     const proposer_index = committee_indices.computeProposerIndex(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return ERROR_INDEX;
@@ -293,7 +297,7 @@ export fn computeSyncCommitteeIndicesElectra(seed: [*c]u8, seed_len: usize, acti
     return ErrorCode.Success;
 }
 
-export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
+export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
     committee_indices.computeSyncCommitteeIndices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
