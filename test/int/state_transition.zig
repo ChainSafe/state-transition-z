@@ -9,7 +9,7 @@ const state_transition = @import("state_transition");
 const stateTransition = state_transition.state_transition.stateTransition;
 const SignedBeaconBlock = state_transition.state_transition.SignedBeaconBlock;
 const CachedBeaconStateAllForks = state_transition.CachedBeaconStateAllForks;
-const SignedBlock = state_transition.state_transition.SignedBlock;
+const SignedBlock = state_transition.SignedBlock;
 
 test "stf" {
     const allocator = std.testing.allocator;

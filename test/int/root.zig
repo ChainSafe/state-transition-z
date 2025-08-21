@@ -37,4 +37,13 @@ test {
     testing.refAllDecls(process_epoch);
     testing.refAllDecls(epoch_transition_cache);
     testing.refAllDecls(state_transition);
+
+    testing.refAllDecls(@import("./process_block_header.zig"));
+    testing.refAllDecls(@import("./process_withdrawals.zig"));
+    testing.refAllDecls(@import("./process_execution_payload.zig"));
+    testing.refAllDecls(@import("./process_randao.zig"));
+    testing.refAllDecls(@import("./process_eth1_data.zig"));
+    testing.refAllDecls(@import("./process_operations.zig"));
+    testing.refAllDecls(@import("./process_sync_aggregate.zig"));
+    testing.refAllDecls(@import("./process_blob_kzg_commitments.zig"));
 }

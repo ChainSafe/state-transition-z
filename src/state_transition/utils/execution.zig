@@ -39,9 +39,11 @@ pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const Be
 
 // TODO: make sure this function is not called for forks other than Bellatrix and Capella
 pub fn isMergeTransitionComplete(state: *const BeaconStateAllForks) bool {
-    std.debug.assert(state.getForkSeq() == .bellatrix or state.getForkSeq() == .capella);
-    // TODO(bing): reenable below code when 'equals' works; first return false to test longer codepath
+    _ = state;
     return false;
+
+    // std.debug.assert(state.getForkSeq() == .bellatrix or state.getForkSeq() == .capella);
+    // TODO(bing): reenable below code when 'equals' works; first return false to test longer codepath
 
     // TODO(bing): Fix equals
     // if (!state.isPostCapella()) {

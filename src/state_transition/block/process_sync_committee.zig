@@ -37,6 +37,7 @@ pub fn processSyncAggregate(
             allocator,
             committee_indices,
         );
+        defer participant_indices.deinit();
         const signature_set = try getSyncCommitteeSignatureSet(allocator, cached_state, block, participant_indices.items);
         // When there's no participation we consider the signature valid and just ignore it
         if (signature_set) |set| {

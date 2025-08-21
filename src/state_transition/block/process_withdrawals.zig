@@ -89,6 +89,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
 
     var withdrawals_result = try WithdrawalsResult.init(allocator);
     var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
+    defer withdrawal_balances.deinit();
     // partial_withdrawals_count is withdrawals coming from EL since electra (EIP-7002)
     var processed_partial_withdrawals_count: u64 = 0;
 
