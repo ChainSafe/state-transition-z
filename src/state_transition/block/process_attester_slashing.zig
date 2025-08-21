@@ -13,7 +13,7 @@ const slashValidator = @import("./slash_validator.zig").slashValidator;
 /// - for electra it is `ssz.electra.AttesterSlashing.Type`
 pub fn processAttesterSlashing(comptime AS: type, cached_state: *CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signature: ?bool) !void {
     const state = cached_state.state;
-    const epoch = cached_state.epoch_cache.epoch;
+    const epoch = cached_state.getEpochCache().epoch;
     try assertValidAttesterSlashing(AS, cached_state, attester_slashing, verify_signature);
 
     const intersecting_indices = try getAttesterSlashableIndices(cached_state.allocator, attester_slashing);

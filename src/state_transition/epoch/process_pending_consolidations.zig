@@ -1,20 +1,22 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ForkSeq = @import("params").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 
-pub fn processPendingConsolidations(cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
+/// also modify balances inside EpochTransitionCache
+pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
     var next_pending_consolidation: usize = 0;
     const validators = state.getValidators();
 
-    var chunk_start_index = 0;
+    var chunk_start_index: usize = 0;
     const chunk_size = 100;
-    const pending_consolidations_length = state.pending_consolidations.len;
+    const pending_consolidations_length = state.getPendingConsolidations().len;
     outer: while (chunk_start_index < pending_consolidations_length) : (chunk_start_index += chunk_size) {
         // TODO(ssz): implement getReadonlyByRange api for TreeView
         const consolidation_chunk = state.getPendingConsolidations()[chunk_start_index..@min(chunk_start_index + chunk_size, pending_consolidations_length)];
@@ -46,5 +48,9 @@ pub fn processPendingConsolidations(cached_state: *CachedBeaconStateAllForks, ca
             next_pending_consolidation += 1;
         }
     }
-    cached_state.setPendingConsolidations(state.sliceFromPendingConsolidations(next_pending_consolidation));
+
+    if (next_pending_consolidation > 0) {
+        const new_pending_consolidations = try state.sliceFromPendingConsolidations(allocator, next_pending_consolidation);
+        state.setPendingConsolidations(new_pending_consolidations);
+    }
 }

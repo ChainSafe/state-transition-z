@@ -14,7 +14,7 @@ const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
 const ForkSeq = @import("params").ForkSeq;
 const BeaconConfig = @import("config").BeaconConfig;
-const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap;
+const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const Index2PubkeyCache = @import("./pubkey_cache.zig").Index2PubkeyCache;
 const EpochShuffling = @import("../utils//epoch_shuffling.zig").EpochShuffling;
 const EpochShufflingRc = @import("../utils/epoch_shuffling.zig").EpochShufflingRc;
@@ -377,6 +377,30 @@ pub const EpochCache = struct {
         return epoch_cache_ptr;
     }
 
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    /// TODO: @spiral-ladder prefer `self.previous_shuffling.get()` pattern instead, same to below
+    pub fn getPreviousShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.previous_shuffling.get();
+    }
+
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    pub fn getCurrentShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.current_shuffling.get();
+    }
+
+    /// Utility method to return EpochShuffling so that consumers don't have to deal with ".get()" call
+    /// Consumers borrow value, so they must not either modify or deinit it.
+    pub fn getNextEpochShuffling(self: *const EpochCache) *const EpochShuffling {
+        return self.next_shuffling.get();
+    }
+
+    /// Utility method to return SyncCommitteeCache so that consumers don't have to deal with ".get()" call
+    pub fn getEffectiveBalanceIncrements(self: *const EpochCache) *const EffectiveBalanceIncrements {
+        return &self.effective_balance_increment.get();
+    }
+
     pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {
         const state = cached_state.state;
         const upcoming_epoch = self.next_epoch;
@@ -558,26 +582,30 @@ pub const EpochCache = struct {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: BLSPubkey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: Publickey) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
-    pub fn addPubkey(self: *EpochCache, index: ValidatorIndex, pubkey: Publickey) !void {
-        self.pubkey_to_index.set(pubkey[0..], index);
-        self.index_to_pubkey.set(index, try BLSPubkey.fromBytes(pubkey));
+    /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
+        try self.pubkey_to_index.set(pubkey[0..], index);
+        // this is deinit() by application
+        const pk_ptr = try allocator.create(BLSPubkey);
+        pk_ptr.* = try BLSPubkey.fromBytes(&pubkey);
+        self.index_to_pubkey.items[index] = pk_ptr;
     }
 
     // TODO: getBeaconCommittee
-    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*EpochShuffling {
+    pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*const EpochShuffling {
         const epoch = computeEpochAtSlot(slot);
         return self.getShufflingAtEpochOrNull(epoch);
     }
 
-    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*EpochShuffling {
+    pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
         const shuffling = if (epoch == self.epoch - 1)
-            self.previous_shuffling.get()
-        else if (epoch == self.epoch) self.current_shuffling.get() else if (epoch == self.next_epoch)
-            self.next_shuffling.get()
+            self.getPreviousShuffling()
+        else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
+            self.getNextEpochShuffling()
         else
             null;
 
@@ -601,13 +629,14 @@ pub const EpochCache = struct {
         }
     }
 
-    pub fn rotateSyncCommitteeIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
+    pub fn rotateSyncCommitteeIndexed(self: *EpochCache, allocator: Allocator, next_sync_committee_indices: []const ValidatorIndex) !void {
         // unref the old instance
         self.current_sync_committee_indexed.release();
         // this is the transfer of reference count
         // should not do an release() then acquire() here as it may trigger a deinit()
         self.current_sync_committee_indexed = self.next_sync_committee_indexed;
-        self.next_sync_committee_indexed = SyncCommitteeCacheRc.acquire(try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices.items));
+        const next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(allocator, next_sync_committee_indices);
+        self.next_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, next_sync_committee_indexed);
     }
 
     // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead
@@ -618,15 +647,15 @@ pub const EpochCache = struct {
     // }
 
     /// This is different from typescript version: only allocate new EffectiveBalanceIncrements if needed
-    pub fn effectiveBalanceIncrementsSet(self: *const EpochCache, index: usize, effective_balance: u64) void {
+    pub fn effectiveBalanceIncrementsSet(self: *EpochCache, allocator: Allocator, index: usize, effective_balance: u64) !void {
         var effective_balance_increments = self.effective_balance_increment.get();
         if (index >= effective_balance_increments.items.len) {
             // Clone and extend effectiveBalanceIncrements
-            effective_balance_increments = getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
+            effective_balance_increments = try getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
             self.effective_balance_increment.release();
-            self.effective_balance_increment = EffectiveBalanceIncrementsRc.init(effective_balance_increments);
+            self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(allocator, effective_balance_increments);
         }
-        self.effective_balance_increment.get().items[index] = @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
+        self.effective_balance_increment.get().items[index] = @intCast(@divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
     }
 
     pub fn isPostElectra(self: *const EpochCache) bool {

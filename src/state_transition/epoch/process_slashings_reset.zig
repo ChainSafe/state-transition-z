@@ -10,7 +10,7 @@ const preset = ssz.preset;
 pub fn processSlashingsReset(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const next_epoch = cache.epoch + 1;
+    const next_epoch = cache.current_epoch + 1;
 
     // reset slashings
     const slash_index = next_epoch % preset.EPOCHS_PER_SLASHINGS_VECTOR;

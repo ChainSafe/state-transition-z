@@ -1,20 +1,25 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ForkSeq = @import("params").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
+const Root = ssz.primitive.Root.Type;
 const preset = ssz.preset;
 
-pub fn processHistoricalSummariesUpdate(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
+pub fn processHistoricalSummariesUpdate(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const state = cached_state.state;
     const next_epoch = cache.current_epoch + 1;
 
     // set historical root accumulator
     if (next_epoch % @divFloor(preset.SLOTS_PER_HISTORICAL_ROOT, preset.SLOTS_PER_EPOCH) == 0) {
-        state.addHistoricalSummary(.{
-            // TODO(ssz) define ssz.BlockRoots
-            .block_summary_root = ssz.phase0.BlockRoots.hashTreeRoot(),
-            .state_summary_root = ssz.phase0.BlockRoots.hashTreeRoot(),
+        var block_summary_root: Root = undefined;
+        try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.getBlockRoots(), &block_summary_root);
+        var state_summary_root: Root = undefined;
+        try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.getStateRoots(), &state_summary_root);
+        try state.appendHistoricalSummary(allocator, &.{
+            .block_summary_root = block_summary_root,
+            .state_summary_root = state_summary_root,
         });
     }
 }

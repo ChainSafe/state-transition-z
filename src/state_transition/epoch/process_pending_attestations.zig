@@ -15,7 +15,7 @@ pub fn processPendingAttestations(allocator: Allocator, cached_state: *CachedBea
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const state_slot = state.getSlot();
-    const prev_epoch = epoch_cache.previous_shuffling.get().epoch;
+    const prev_epoch = epoch_cache.getPreviousShuffling().epoch;
     if (attestations.len == 0) {
         return;
     }

@@ -1,6 +1,4 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const types = @import("../types.zig");
-const Epoch = types.Epoch;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const params = @import("params");
 const GENESIS_EPOCH = params.GENESIS_EPOCH;
@@ -11,7 +9,7 @@ const getBlockRoot = @import("../utils/block_root.zig").getBlockRoot;
 /// Update justified and finalized checkpoints depending on network participation.
 ///
 /// PERF: Very low (constant) cost. Persist small objects to the tree.
-pub fn processJustificationAndFinalization(cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     // Initial FFG checkpoint values have a `0x00` stub for `root`.
     // Skip FFG updates in the first two epochs to avoid corner cases that might result in modifying this stub.
     if (cache.current_epoch <= GENESIS_EPOCH + 1) {
@@ -20,7 +18,7 @@ pub fn processJustificationAndFinalization(cached_state: CachedBeaconStateAllFor
     try weighJustificationAndFinalization(cached_state, cache.total_active_stake_by_increment, cache.prev_epoch_unslashed_stake_target_by_increment, cache.curr_epoch_unslashed_target_stake_by_increment);
 }
 
-pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
+pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
     const state = cached_state.state;
     const current_epoch = computeEpochAtSlot(state.getSlot());
     const previous_epoch = current_epoch - 1;
@@ -31,7 +29,7 @@ pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks
     // Process justifications
     state.setPreviousJustifiedCheckpoint(state.getCurrentJustifiedCheckpoint());
     const justification_bits = state.getJustificationBits();
-    const bits = [_]bool{false} ** ssz.phase0.JustificationBits.length;
+    var bits = [_]bool{false} ** ssz.phase0.JustificationBits.length;
     for (0..bits.len) |i| {
         bits[i] = try justification_bits.get(i);
     }
@@ -44,7 +42,7 @@ pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks
     bits[0] = false;
 
     if (previous_epoch_target_balance * 3 > total_active_balance * 2) {
-        state.setCurrentJustifiedCheckpoint(.{
+        state.setCurrentJustifiedCheckpoint(&.{
             .epoch = previous_epoch,
             .root = try getBlockRoot(state, previous_epoch),
         });
@@ -52,14 +50,14 @@ pub fn weighJustificationAndFinalization(cached_state: CachedBeaconStateAllForks
     }
 
     if (current_epoch_target_balance * 3 > total_active_balance * 2) {
-        state.setCurrentJustifiedCheckpoint(.{
+        state.setCurrentJustifiedCheckpoint(&.{
             .epoch = current_epoch,
             .root = try getBlockRoot(state, current_epoch),
         });
         bits[0] = true;
     }
 
-    state.setJustificationBits(ssz.phase0.JustificationBits.Type.fromBoolArray(bits));
+    state.setJustificationBits(try ssz.phase0.JustificationBits.Type.fromBoolArray(bits));
 
     // TODO: Consider rendering bits as array of boolean for faster repeated access here
 

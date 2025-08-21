@@ -1,13 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const blst = @import("blst_min_pk");
-const aggregateSerializedPublicKeys = blst.AggregatePublicKey.aggregateSerialized;
 const MemoryPool = blst.MemoryPool;
 const initializeThreadPool = blst.initializeThreadPool;
 const deinitializeThreadPool = blst.deinitializeThreadPool;
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
 const SecretKey = blst.SecretKey;
+
+pub const aggregateSerializedPublicKeys = blst.AggregatePublicKey.aggregateSerialized;
 
 /// See https://github.com/ethereum/consensus-specs/blob/v1.4.0/specs/phase0/beacon-chain.md#bls-signatures
 const DST: []const u8 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";

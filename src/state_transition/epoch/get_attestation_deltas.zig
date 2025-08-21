@@ -35,29 +35,22 @@ const RewardPenaltyItem = struct {
     finality_delay_penalty: u64,
 };
 
-const U64Array = std.ArrayList(u64);
-
-// TODO: reuse it in EpochTransitionCache
-pub const RewardsPenaltiesArray = struct {
-    rewards: U64Array,
-    penalties: U64Array,
-};
-
-/// consumer should deinit `rewards` and `penalties` arrays
-pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStateAllForks, cache: EpochTransitionCache) RewardsPenaltiesArray {
+pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
 
     const flags = cache.flags;
     const proposer_indices = cache.proposer_indices;
     const inclusion_delays = cache.inclusion_delays;
-    const validator_count = flags.items.len;
-    const rewards = U64Array.init(allocator);
-    rewards.resize(validator_count);
-    @memset(rewards.items, 0);
-    const penalties = U64Array.init(allocator);
-    penalties.resize(validator_count);
-    @memset(penalties.items, 0);
+    const validator_count = flags.len;
+    if (rewards.len != validator_count) {
+        return error.InvalidRewardsArrayLength;
+    }
+    if (penalties.len != validator_count) {
+        return error.InvalidPenaltiesArrayLength;
+    }
+    @memset(rewards, 0);
+    @memset(penalties, 0);
 
     const total_balance = cache.total_active_stake_by_increment;
     const total_balance_in_gwei = total_balance * preset.EFFECTIVE_BALANCE_INCREMENT;
@@ -68,7 +61,9 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStat
     const prev_epoch_head_stake_by_increment = cache.prev_epoch_unslashed_stake_head_by_increment;
 
     // sqrt first, before factoring out the increment for later usage
-    const balance_sq_root = @sqrt(total_balance_in_gwei);
+    const total_balance_in_gwei_f64: f64 = @floatFromInt(total_balance_in_gwei);
+    const total_balance_in_gwei_sqrt: f64 = @sqrt(total_balance_in_gwei_f64);
+    const balance_sq_root: u64 = @intFromFloat(total_balance_in_gwei_sqrt);
     const finality_delay = cache.prev_epoch - state.getFinalizedCheckpoint().epoch;
 
     const BASE_REWARDS_PER_EPOCH = BASE_REWARDS_PER_EPOCH_CONST;
@@ -77,20 +72,20 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStat
 
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
     // so there are limited values of them like 32, 31, 30
-    const reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 
-    const effective_balance_increments = epoch_cache.effective_balance_increment;
-    for (0..flags.items.len) |i| {
-        const flag = flags.items[i];
+    const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();
+    std.debug.assert(flags.len == effective_balance_increments.items.len);
+    for (0..flags.len) |i| {
+        const flag = flags[i];
         const effective_balance_increment = effective_balance_increments.items[i];
-        const effective_balance = effective_balance_increment * preset.EFFECTIVE_BALANCE_INCREMENT;
+        const effective_balance: u64 = @as(u64, effective_balance_increment) * preset.EFFECTIVE_BALANCE_INCREMENT;
 
-        var reward_item = reward_penalty_item_cache.get(effective_balance_increment);
-        if (reward_item == null) {
+        const rewards_items = if (reward_penalty_item_cache.get(effective_balance_increment)) |ri| ri else blk: {
             const base_reward = @divFloor(@divFloor(effective_balance * BASE_REWARD_FACTOR, balance_sq_root), BASE_REWARDS_PER_EPOCH);
             const proposer_reward = @divFloor(base_reward, proposer_reward_quotient);
-            reward_item = .{
+            const ri = RewardPenaltyItem{
                 .base_reward = base_reward,
                 .proposer_reward = proposer_reward,
                 .max_attester_reward = base_reward - proposer_reward,
@@ -100,17 +95,18 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStat
                 .base_penalty = base_reward * BASE_REWARDS_PER_EPOCH_CONST - proposer_reward,
                 .finality_delay_penalty = @divFloor((effective_balance * finality_delay), INACTIVITY_PENALTY_QUOTIENT),
             };
-            try reward_penalty_item_cache.put(effective_balance_increment, reward_item);
-        }
+            try reward_penalty_item_cache.put(effective_balance_increment, ri);
+            break :blk ri;
+        };
 
-        const base_reward = reward_item.?.base_reward;
-        const proposer_reward = reward_item.?.proposer_reward;
-        const max_attester_reward = reward_item.?.max_attester_reward;
-        const source_checkpoint_reward = reward_item.?.source_checkpoint_reward;
-        const target_checkpoint_reward = reward_item.?.target_checkpoint_reward;
-        const head_reward = reward_item.?.head_reward;
-        const base_penalty = reward_item.?.base_penalty;
-        const finality_delay_penalty = reward_item.?.finality_delay_penalty;
+        const base_reward = rewards_items.base_reward;
+        const proposer_reward = rewards_items.proposer_reward;
+        const max_attester_reward = rewards_items.max_attester_reward;
+        const source_checkpoint_reward = rewards_items.source_checkpoint_reward;
+        const target_checkpoint_reward = rewards_items.target_checkpoint_reward;
+        const head_reward = rewards_items.head_reward;
+        const base_penalty = rewards_items.base_penalty;
+        const finality_delay_penalty = rewards_items.finality_delay_penalty;
 
         // inclusion speed bonus
         if (hasMarkers(flag, FLAG_PREV_SOURCE_ATTESTER_OR_UNSLASHED)) {
@@ -154,10 +150,5 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: CachedBeaconStat
                 }
             }
         }
-
-        return .{
-            .rewards = rewards,
-            .penalties = penalties,
-        };
     }
 }

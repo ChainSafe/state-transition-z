@@ -51,7 +51,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
     }
 
     // If there is too little available consolidation churn limit, consolidation requests are ignored
-    if (getConsolidationChurnLimit(cached_state.epoch_cache) <= preset.MIN_ACTIVATION_BALANCE) {
+    if (getConsolidationChurnLimit(epoch_cache) <= preset.MIN_ACTIVATION_BALANCE) {
         return;
     }
 
@@ -102,7 +102,7 @@ pub fn processConsolidationRequest(cached_state: *CachedBeaconStateAllForks, con
         .source_index = source_index,
         .target_index = target_index,
     };
-    try state.addPendingConsolidation(&pending_consolidation);
+    try state.appendPendingConsolidation(&pending_consolidation);
 }
 
 fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks, consolidation: *const ConsolidationRequest) bool {

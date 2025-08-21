@@ -30,12 +30,12 @@ pub fn processAttestationPhase0(cached_state: *CachedBeaconStateAllForks, attest
         if (!ssz.phase0.Checkpoint.equals(data.source, state.getCurrentJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToCurrentJustifiedCheckpoint;
         }
-        state.addCurrentEpochPendingAttestation(pending_attestation);
+        state.appendCurrentEpochPendingAttestation(pending_attestation);
     } else {
         if (!ssz.phase0.Checkpoint.equals(data.source, state.getPreviousJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToPreviousJustifiedCheckpoint;
         }
-        state.addPreviousEpochPendingAttestation(pending_attestation);
+        state.appendPreviousEpochPendingAttestation(pending_attestation);
     }
 
     const indexed_attestation = try epoch_cache.getIndexedAttestation(&.{

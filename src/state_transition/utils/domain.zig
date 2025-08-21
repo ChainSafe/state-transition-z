@@ -25,9 +25,9 @@ pub fn getForkVersion(fork: Fork, epoch: Epoch) Version {
 
 /// Used primarily in signature domains to avoid collisions across forks/chains.
 pub fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, out: *Root) !void {
-    const fork_data: ssz.phase0.ForkData = .{
+    const fork_data: ssz.phase0.ForkData.Type = .{
         .current_version = current_version,
-        .genesis_validator_root = genesis_validators_root,
+        .genesis_validators_root = genesis_validators_root,
     };
-    try ssz.phase0.ForkData.hashTreeRoot(fork_data, out);
+    try ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
 }

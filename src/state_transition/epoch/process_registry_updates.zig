@@ -1,12 +1,12 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const types = @import("../types.zig");
-const Epoch = types.Epoch;
+const ssz = @import("consensus_types");
+const Epoch = ssz.primitive.Epoch.Type;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ForkSeq = @import("params").ForkSeq;
 const computeActivationExitEpoch = @import("../utils/epoch.zig").computeActivationExitEpoch;
-const initiateValidatorExit = @import("../utils/validator.zig").initiateValidatorExit;
+const initiateValidatorExit = @import("../block/initiate_validator_exit.zig").initiateValidatorExit;
 
-pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, cache: EpochTransitionCache) !void {
+pub fn processRegistryUpdates(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
 
@@ -16,17 +16,17 @@ pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, ca
     // TODO: Batch set this properties in the tree at once with setMany() or setNodes()
 
     // process ejections
-    for (cache.indices_to_eject) |index| {
+    for (cache.indices_to_eject.items) |index| {
         // set validator exit epoch and withdrawable epoch
         // TODO: Figure out a way to quickly set properties on the validators tree
-        const validator = validators.get(index);
-        initiateValidatorExit(state, &validator);
-        state.setValidator(index, validator);
+        var validator = validators.items[index];
+        try initiateValidatorExit(cached_state, &validator);
+        state.setValidator(index, &validator);
     }
 
     // set new activation eligibilities
-    for (cache.indices_eligible_for_activation_queue) |index| {
-        validators.get(index).activation_eligibility_epoch = epoch_cache.epoch + 1;
+    for (cache.indices_eligible_for_activation_queue.items) |index| {
+        validators.items[index].activation_eligibility_epoch = epoch_cache.epoch + 1;
     }
 
     const finality_epoch = state.getFinalizedCheckpoint().epoch;
@@ -36,7 +36,7 @@ pub fn processRegistryUpdates(cached_state: *const CachedBeaconStateAllForks, ca
     // dequeue validators for activation up to churn limit
     for (0..len) |i| {
         const validator_index = cache.indices_eligible_for_activation.items[i];
-        const validator = validators[validator_index];
+        var validator = validators.items[validator_index];
         // placement in queue is finalized
         if (validator.activation_eligibility_epoch > finality_epoch) {
             // remaining validators all have an activationEligibilityEpoch that is higher anyway, break early

@@ -70,7 +70,7 @@ pub fn processWithdrawalRequest(cached_state: *CachedBeaconStateAllForks, withdr
             .amount = amount_to_withdraw,
             .withdrawable_epoch = withdrawable_epoch,
         };
-        try state.addPendingPartialWithdrawal(&pending_partial_withdrawal);
+        try state.appendPendingPartialWithdrawal(&pending_partial_withdrawal);
     }
 }
 

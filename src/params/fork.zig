@@ -32,10 +32,24 @@ pub const ForkSeq = enum(u8) {
         };
     }
 
+    pub fn isPhase0(self: ForkSeq) bool {
+        return switch (self) {
+            .phase0 => true,
+            else => false,
+        };
+    }
+
     pub fn isPostAltair(self: ForkSeq) bool {
         return switch (self) {
             inline .phase0 => false,
             else => true,
+        };
+    }
+
+    pub fn isAltair(self: ForkSeq) bool {
+        return switch (self) {
+            .altair => true,
+            else => false,
         };
     }
 
@@ -46,10 +60,24 @@ pub const ForkSeq = enum(u8) {
         };
     }
 
+    pub fn isBellatrix(self: ForkSeq) bool {
+        return switch (self) {
+            .bellatrix => true,
+            else => false,
+        };
+    }
+
     pub fn isPostCapella(self: ForkSeq) bool {
         return switch (self) {
             inline .phase0, .altair, .bellatrix => false,
             else => true,
+        };
+    }
+
+    pub fn isCapella(self: ForkSeq) bool {
+        return switch (self) {
+            .capella => true,
+            else => false,
         };
     }
 
@@ -60,10 +88,24 @@ pub const ForkSeq = enum(u8) {
         };
     }
 
+    pub fn isDeneb(self: ForkSeq) bool {
+        return switch (self) {
+            .deneb => true,
+            else => false,
+        };
+    }
+
     pub fn isPostElectra(self: ForkSeq) bool {
         return switch (self) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => false,
             else => true,
+        };
+    }
+
+    pub fn isElectra(self: ForkSeq) bool {
+        return switch (self) {
+            .electra => true,
+            else => false,
         };
     }
 };

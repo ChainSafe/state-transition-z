@@ -1,3 +1,5 @@
+const std = @import("std");
+const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
@@ -14,7 +16,8 @@ const types = @import("../type.zig");
 const PendingDeposit = types.PendingDeposit;
 const params = @import("params");
 
-pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
+/// we append EpochTransitionCache.is_compounding_validator_arr in this flow
+pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
@@ -58,7 +61,7 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
             // Read validator state
             var is_validator_exited = false;
             var is_validator_withdrawn = false;
-            const validator_index = epoch_cache.getValidatorIndex(&deposit.pubkey);
+            const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey);
 
             if (isValidatorKnown(state, validator_index)) {
                 const validator = state.getValidator(validator_index.?);
@@ -68,10 +71,10 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
 
             if (is_validator_withdrawn) {
                 // Deposited balance will never become active. Increase balance but do not consume churn
-                try applyPendingDeposit(state, deposit, cache);
+                try applyPendingDeposit(allocator, cached_state, deposit, cache);
             } else if (is_validator_exited) {
                 // TODO: typescript version accumulate to temp array while in zig we append directly
-                state.addPendingDeposit(deposit);
+                try state.appendPendingDeposit(allocator, &deposit);
             } else {
                 // Check if deposit fits in the churn, otherwise, do no more deposit processing in this epoch.
                 is_churn_limit_reached = processed_amount + deposit.amount > available_for_processing;
@@ -80,7 +83,7 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
                 }
                 // Consume churn and apply deposit.
                 processed_amount += deposit.amount;
-                try applyPendingDeposit(state, deposit, cache);
+                try applyPendingDeposit(allocator, cached_state, deposit, cache);
             }
 
             // Regardless of how the deposit was handled, we move on in the queue.
@@ -88,8 +91,10 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
         }
     }
 
-    const remaining_pending_deposits = try state.sliceFromPendingDeposits(next_deposit_index);
-    state.setPendingDeposits(remaining_pending_deposits);
+    if (next_deposit_index > 0) {
+        const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
+        state.setPendingDeposits(remaining_pending_deposits);
+    }
 
     // TODO: consider doing this for TreeView
     //   for (const deposit of depositsToPostpone) {
@@ -105,37 +110,39 @@ pub fn processPendingDeposits(cached_state: *CachedBeaconStateAllForks, cache: *
     }
 }
 
-fn applyPendingDeposit(cached_state: *CachedBeaconStateAllForks, deposit: PendingDeposit, cache: *const EpochTransitionCache) !void {
+/// we append EpochTransitionCache.is_compounding_validator_arr in this flow
+fn applyPendingDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: PendingDeposit, cache: *EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey);
+    const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey) orelse return error.ValidatorNotFound;
     const pubkey = deposit.pubkey;
-    const withdrawal_credential = deposit.withdrawal_credential;
+    // TODO: is this withdrawal_credential(s) the same to spec?
+    const withdrawal_credential = deposit.withdrawal_credentials;
     const amount = deposit.amount;
     const signature = deposit.signature;
-    const is_validator_known = isValidatorKnown(cached_state, validator_index);
+    const is_validator_known = isValidatorKnown(state, validator_index);
 
     if (!is_validator_known) {
         // Verify the deposit signature (proof of possession) which is not checked by the deposit contract
         if (try isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
-            try addValidatorToRegistry(ForkSeq.electra, state, pubkey, withdrawal_credential, amount);
+            try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credential, amount);
         }
 
-        if (isValidDepositSignature(state.config, pubkey, withdrawal_credential, amount, signature)) {
-            try addValidatorToRegistry(ForkSeq.electra, state, pubkey, withdrawal_credential, amount);
-            cache.is_compounding_validator_arr.append(hasCompoundingWithdrawalCredential(withdrawal_credential));
+        if (try isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
+            try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credential, amount);
+            try cache.is_compounding_validator_arr.append(hasCompoundingWithdrawalCredential(withdrawal_credential));
             // set balance, so that the next deposit of same pubkey will increase the balance correctly
             // this is to fix the double deposit issue found in mekong
             // see https://github.com/ChainSafe/lodestar/pull/7255
-            if (cache.balances) |balances| {
+            if (cache.balances) |*balances| {
                 try balances.append(amount);
             }
         }
     } else {
         // Increase balance
         increaseBalance(state, validator_index, amount);
-        if (cache.balances) |balances| {
-            balances[validator_index] += amount;
+        if (cache.balances) |*balances| {
+            balances.items[validator_index] += amount;
         }
     }
 }

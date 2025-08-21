@@ -58,6 +58,8 @@ pub const ReusedEpochTransitionCache = struct {
 
     previous_epoch_participation: U8Array,
     current_epoch_participation: U8Array,
+    rewards: U64Array,
+    penalties: U64Array,
 
     pub fn init(allocator: Allocator, validator_count: usize) !ReusedEpochTransitionCache {
         // TODO: should we allocate more than validator_count?
@@ -72,6 +74,8 @@ pub const ReusedEpochTransitionCache = struct {
             .is_compounding_validator_arr = try BoolArray.initCapacity(allocator, validator_count),
             .previous_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
             .current_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
+            .rewards = try U64Array.initCapacity(allocator, validator_count),
+            .penalties = try U64Array.initCapacity(allocator, validator_count),
         };
     }
 
@@ -86,6 +90,8 @@ pub const ReusedEpochTransitionCache = struct {
         self.is_compounding_validator_arr.deinit();
         self.previous_epoch_participation.deinit();
         self.current_epoch_participation.deinit();
+        self.rewards.deinit();
+        self.penalties.deinit();
     }
 };
 
@@ -108,8 +114,10 @@ pub const EpochTransitionCache = struct {
     inclusion_delays: []const usize,
     // this is borrowed from ReusedEpochTransitionCache
     flags: []const u8,
-    // this is borrowed from ReusedEpochTransitionCache
-    is_compounding_validator_arr: []const bool,
+    // this is borrowed from ReusedEpochTransitionCache, we append it in processPendingDeposits()
+    is_compounding_validator_arr: BoolArray,
+    rewards: []u64,
+    penalties: []u64,
     balances: ?U64Array,
     next_shuffling_active_indices: []const ValidatorIndex,
     // TODO: nextShufflingDecisionRoot may not needed as we don't use ShufflingCache
@@ -121,13 +129,13 @@ pub const EpochTransitionCache = struct {
     is_active_next_epoch: []const bool,
 
     // TODO: no need EpochTransitionCacheOpts for zig version
-    pub fn initBeforeProcessEpoch(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache) !EpochTransitionCache {
+    pub fn beforeProcessEpoch(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, reused_cache: *ReusedEpochTransitionCache, out: *EpochTransitionCache) !void {
         const config = cached_state.config;
         var epoch_cache = cached_state.getEpochCache();
         const state = cached_state.state;
         const fork_seq = config.getForkSeq(state.getSlot());
         const current_epoch = epoch_cache.epoch;
-        const prev_epoch = epoch_cache.previous_shuffling.get().epoch;
+        const prev_epoch = epoch_cache.getPreviousShuffling().epoch;
         const next_epoch = current_epoch + 1;
         // active validator indices for nextShuffling is ready, we want to precalculate for the one after that
         const next_epoch_2 = current_epoch + 2;
@@ -152,6 +160,10 @@ pub const EpochTransitionCache = struct {
         @memset(reused_cache.is_active_current_epoch.items, true);
         @memset(reused_cache.is_active_next_epoch.items, true);
 
+        // this will be populated in processRewardsAndPenalties()
+        try reused_cache.rewards.resize(validator_count);
+        try reused_cache.penalties.resize(validator_count);
+
         // During the epoch transition, additional data is precomputed to avoid traversing any state a second
         // time. Attestations are a big part of this, and each validator has a "status" to represent its
         // precomputed participation.
@@ -173,7 +185,7 @@ pub const EpochTransitionCache = struct {
         // Clone before being mutated in processEffectiveBalanceUpdates
         try epoch_cache.beforeEpochTransition();
 
-        const effective_balances_by_increments = epoch_cache.effective_balance_increment.get().items;
+        const effective_balances_by_increments = epoch_cache.getEffectiveBalanceIncrements().items;
 
         for (0..validator_count) |i| {
             const validator = state.getValidator(i);
@@ -381,7 +393,7 @@ pub const EpochTransitionCache = struct {
             try indices_eligible_for_activation.append(activation.validator_index);
         }
 
-        return .{
+        out.* = .{
             .prev_epoch = prev_epoch,
             .current_epoch = current_epoch,
             .total_active_stake_by_increment = total_active_stake_by_increment,
@@ -403,7 +415,9 @@ pub const EpochTransitionCache = struct {
             .proposer_indices = reused_cache.proposer_indices.items,
             .inclusion_delays = reused_cache.inclusion_delays.items,
             .flags = reused_cache.flags.items,
-            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr.items,
+            .is_compounding_validator_arr = reused_cache.is_compounding_validator_arr,
+            .rewards = reused_cache.rewards.items,
+            .penalties = reused_cache.penalties.items,
             // Will be assigned in processRewardsAndPenalties()
             .balances = null,
         };
@@ -421,6 +435,7 @@ pub const EpochTransitionCache = struct {
         self.indices_eligible_for_activation_queue.deinit();
         self.indices_eligible_for_activation.deinit();
         self.indices_to_eject.deinit();
+        // rewards and penalties are from reused_cache
         if (self.balances) |balances| {
             balances.deinit();
         }

@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap;
+const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
@@ -45,9 +45,9 @@ pub const SyncCommitteeCacheAllForks = union(enum) {
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
 
-    pub fn initValidatorIndices(allocator: Allocator, indices: []ValidatorIndex) !SyncCommitteeCacheAllForks {
+    pub fn initValidatorIndices(allocator: Allocator, indices: []const ValidatorIndex) !SyncCommitteeCacheAllForks {
         const cloned_indices = try allocator.alloc(ValidatorIndex, indices.len);
-        try std.mem.copyForwards(ValidatorIndex, cloned_indices, indices);
+        std.mem.copyForwards(ValidatorIndex, cloned_indices, indices);
         const cache = try SyncCommitteeCache.initValidatorIndices(allocator, cloned_indices);
         return SyncCommitteeCacheAllForks{ .altair = cache };
     }
