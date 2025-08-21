@@ -1,3 +1,3 @@
 pub const ProcessBlockOpts = struct {
-    verify_signature: ?bool,
+    verify_signature: bool = true,
 };

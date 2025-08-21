@@ -1,4 +1,6 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const types = @import("../type.zig");
+const Epoch = types.Epoch;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const params = @import("params");
 const GENESIS_EPOCH = params.GENESIS_EPOCH;

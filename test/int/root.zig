@@ -1,5 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
+const state_transition = @import("./state_transition.zig");
 const epoch_transition_cache = @import("./cache/epoch_transition_cache.zig");
 const process_justification_and_finalization = @import("./epoch/process_justification_and_finalization.zig");
 const process_inactivity_updates = @import("./epoch/process_inactivity_updates.zig");
@@ -34,4 +35,15 @@ test {
     testing.refAllDecls(process_participation_flag_updates);
     testing.refAllDecls(process_sync_committee_updates);
     testing.refAllDecls(process_epoch);
+    testing.refAllDecls(epoch_transition_cache);
+    testing.refAllDecls(state_transition);
+
+    testing.refAllDecls(@import("./process_block_header.zig"));
+    testing.refAllDecls(@import("./process_withdrawals.zig"));
+    testing.refAllDecls(@import("./process_execution_payload.zig"));
+    testing.refAllDecls(@import("./process_randao.zig"));
+    testing.refAllDecls(@import("./process_eth1_data.zig"));
+    testing.refAllDecls(@import("./process_operations.zig"));
+    testing.refAllDecls(@import("./process_sync_aggregate.zig"));
+    testing.refAllDecls(@import("./process_blob_kzg_commitments.zig"));
 }

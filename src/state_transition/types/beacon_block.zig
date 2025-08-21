@@ -40,6 +40,43 @@ pub const SignedBeaconBlock = union(enum) {
             .electra => |block| .{ .electra = &block.message },
         };
     }
+
+    pub fn getSignature(self: *const SignedBeaconBlock) ssz.primitive.BLSSignature.Type {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.signature,
+        };
+    }
+};
+
+pub const SignedBlindedBeaconBlock = union(enum) {
+    capella: *const ssz.capella.SignedBlindedBeaconBlock.Type,
+    deneb: *const ssz.deneb.SignedBlindedBeaconBlock.Type,
+    electra: *const ssz.electra.SignedBlindedBeaconBlock.Type,
+
+    pub fn getBeaconBlock(self: *const SignedBlindedBeaconBlock) BlindedBeaconBlock {
+        return switch (self.*) {
+            .capella => |block| .{ .capella = &block.message },
+            .deneb => |block| .{ .deneb = &block.message },
+            .electra => |block| .{ .electra = &block.message },
+        };
+    }
+
+    pub fn getSignature(self: *const SignedBlindedBeaconBlock) ssz.primitive.BLSSignature.Type {
+        return switch (self.*) {
+            inline .capella, .deneb, .electra => |block| block.signature,
+        };
+    }
+
+    // pub fn getSignature(self: *const SignedBlindedBeaconBlock) ssz.primitive.BLSSignature {
+    //     return switch (self.*) {
+    //         .phase0 => |block| .{ .phase0 = &block.signature },
+    //         .altair => |block| .{ .altair = &block.signature },
+    //         .bellatrix => |block| .{ .bellatrix = &block.signature },
+    //         .capella => |block| .{ .capella = &block.signature },
+    //         .deneb => |block| .{ .deneb = &block.signature },
+    //         .electra => |block| .{ .electra = &block.signature },
+    //     };
+    // }
 };
 
 pub const SignedBlindedBeaconBlock = union(enum) {
@@ -57,7 +94,6 @@ pub const SignedBlindedBeaconBlock = union(enum) {
 };
 
 // TODO: also model BlindedBeaconBlock in this enum?
-
 pub const BeaconBlock = union(enum) {
     phase0: *const ssz.phase0.BeaconBlock.Type,
     altair: *const ssz.altair.BeaconBlock.Type,

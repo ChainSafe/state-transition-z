@@ -1,7 +1,7 @@
 const std = @import("std");
+const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
-const panic = std.debug.panic;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
@@ -215,7 +215,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn isPreElectra(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => true,
+            .phase0, .altair, .bellatrix, .capella, .deneb => true,
             else => false,
         };
     }
@@ -227,16 +227,10 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getGenesisTime(self: *const BeaconStateAllForks) u64 {
+    pub fn genesisTime(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
             inline else => |state| state.genesis_time,
         };
-    }
-
-    pub fn setGenesisTime(self: *BeaconStateAllForks, genesis_time: u64) void {
-        switch (self.*) {
-            inline else => |state| state.genesis_time = genesis_time,
-        }
     }
 
     pub fn getGenesisValidatorsRoot(self: *const BeaconStateAllForks) Root {
@@ -281,9 +275,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn setLatestBlockHeader(self: *BeaconStateAllForks, header: *BeaconBlockHeader) void {
+    pub fn setLatestBlockHeader(self: *BeaconStateAllForks, header: BeaconBlockHeader) void {
         switch (self.*) {
-            inline else => |state| state.latest_block_header = *header,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.latest_block_header = header,
         }
     }
 
@@ -301,7 +295,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setBlockRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
         switch (self.*) {
-            inline else => |state| state.block_roots.items[index] = root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots[index] = root,
         }
     }
 
@@ -319,7 +313,7 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn setStateRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
         switch (self.*) {
-            inline else => |state| state.state_roots.items[index] = root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.state_roots[index] = root,
         }
     }
 
@@ -347,13 +341,14 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: *const Eth1Data) void {
+    pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: Eth1Data) void {
         switch (self.*) {
-            inline else => |state| state.eth1_data = *eth1_data,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_data = eth1_data,
+
         }
     }
 
-    pub fn getEth1DataVotes(self: *const BeaconStateAllForks) *const Eth1DataVotes {
+    pub fn getEth1DataVotes(self: *const BeaconStateAllForks) *Eth1DataVotes {
         return switch (self.*) {
             inline else => |state| &state.eth1_data_votes,
         };
@@ -476,6 +471,12 @@ pub const BeaconStateAllForks = union(enum) {
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         };
     }
+    pub fn previousEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
+        return switch (self.*) {
+            .phase0 => |state| &state.previous_epoch_attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        };
+    }
 
     /// only for phase0
     pub fn getPreviousEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
@@ -485,9 +486,9 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
         switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations.append(attestation),
+            .phase0 => |state| state.previous_epoch_attestations.append(allocator, attestation),
             else => @panic("previous_epoch_pending_attestations is not available post phase0"),
         }
     }
@@ -507,6 +508,13 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
+    pub fn currentEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
+        return switch (self.*) {
+            .phase0 => |state| &state.current_epoch_attestations,
+            else => @panic("current_epoch_pending_attestations is not available post phase0"),
+        };
+    }
+
     // only for phase0
     pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
         return switch (self.*) {
@@ -522,9 +530,9 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, attestation: PendingAttestation) void {
+    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
         switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations.append(attestation),
+            .phase0 => |state| state.current_epoch_attestations.append(allocator, attestation),
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
         }
     }
@@ -548,8 +556,15 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn previousEpochParticipations(self: *BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
+        return switch (self.*) {
+            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
+            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.previous_epoch_participation,
+        };
+    }
+
     // from altair
-    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []u8 {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
             inline else => |state| state.previous_epoch_participation.items,
@@ -571,7 +586,7 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []const u8 {
+    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []u8 {
         return switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
             inline else => |state| state.current_epoch_participation.items,
@@ -727,7 +742,8 @@ pub const BeaconStateAllForks = union(enum) {
         switch (self.*) {
             .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
             .capella => |state| state.latest_execution_payload_header = header.*.capella,
-            .deneb, .electra => |state| state.latest_execution_payload_header = header.*.deneb,
+            .deneb => |state| state.latest_execution_payload_header = header.*.deneb,
+            .electra => |state| state.latest_execution_payload_header = header.*.electra,
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         }
     }
@@ -872,6 +888,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn pendingDeposits(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingDeposit) {
+        return switch (self.*) {
+            .electra => |state| &state.pending_deposits,
+            else => panic("pending_deposits is not available in {}", .{self}),
+        };
+    }
+
     pub fn getPendingDeposits(self: *const BeaconStateAllForks) []PendingDeposit {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_deposits is not available in {}", .{self}),
@@ -922,12 +945,20 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getPendingPartialWithdrawal(self: *const BeaconStateAllForks, index: usize) *const PendingPartialWithdrawal {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_partial_withdrawals is not available in {}", .{self}),
-            inline else => |state| &state.pending_partial_withdrawals[index],
+            .electra => |state| &state.pending_partial_withdrawals.items[index],
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
+
         };
     }
 
-    pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []*PendingPartialWithdrawal {
+    pub fn pendingPartialWithdrawals(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingPartialWithdrawal) {
+        return switch (self.*) {
+            .electra => |state| &state.pending_partial_withdrawals,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
+        };
+    }
+
+    pub fn getPendingPartialWithdrawals(self: *const BeaconStateAllForks) []PendingPartialWithdrawal {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_partial_withdrawals is not available in {}", .{self}),
             inline else => |state| state.pending_partial_withdrawals.items,
@@ -941,13 +972,12 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
+    pub fn sliceFromPendingPartialWithdrawals(self: *const BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_partial_withdrawals is not available in {}", .{self}),
-            inline else => |state| {
-                if (start_index >= state.pending_partial_withdrawals.len) return error.IndexOutOfBounds;
-                const new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(state.pending_partial_withdrawals.items.len - start_index);
-                try new_array.appendSlice(state.pending_partial_withdrawals.items[start_index..]);
+            .electra => |state| {
+                if (start_index > state.pending_partial_withdrawals.items.len) return error.IndexOutOfBounds;
+                var new_array = try std.ArrayListUnmanaged(PendingPartialWithdrawal).initCapacity(allocator, state.pending_partial_withdrawals.items.len - start_index);
+                try new_array.appendSlice(allocator, state.pending_partial_withdrawals.items[start_index..]);
                 return new_array;
             },
         }
@@ -955,8 +985,8 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn getPendingPartialWithdrawalCount(self: *const BeaconStateAllForks) usize {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_partial_withdrawals is not available in {}", .{self}),
-            inline else => |state| state.pending_partial_withdrawals.len,
+            .electra => |state| state.pending_partial_withdrawals.items.len,
+            else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
 
@@ -974,51 +1004,23 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getPendingConsolidation(self: *const BeaconStateAllForks, index: usize) *const PendingConsolidation {
+    pub fn pendingConsolidations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingConsolidation) {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
-            inline else => |state| &state.pending_consolidations[index],
+            .electra => |state| &state.pending_consolidations,
+            else => panic("pending_consolidations is not available in {}", .{self}),
         };
-    }
-
-    pub fn getPendingConsolidations(self: *const BeaconStateAllForks) []const PendingConsolidation {
-        return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
-            inline else => |state| state.pending_consolidations.items,
-        };
-    }
-
-    pub fn setPendingConsolidation(self: *BeaconStateAllForks, index: usize, consolidation: *const PendingConsolidation) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
-            inline else => |state| state.pending_consolidations[index] = *consolidation,
-        }
-    }
-
-    pub fn appendPendingConsolidation(self: *BeaconStateAllForks, pending_consolidation: *const PendingConsolidation) !void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
-            inline else => |state| state.pending_consolidations.append(*pending_consolidation),
-        }
     }
 
     // TODO: implement sliceFrom api for TreeView
-    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) !std.ArrayListUnmanaged(PendingConsolidation) {
+    pub fn sliceFromPendingConsolidations(self: *BeaconStateAllForks, allocator: Allocator, start_index: usize) ![]ssz.electra.PendingConsolidation.Type {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
             inline else => |state| {
                 if (start_index >= state.pending_consolidations.items.len) return error.IndexOutOfBounds;
                 var new_array = try std.ArrayListUnmanaged(PendingConsolidation).initCapacity(allocator, state.pending_consolidations.items.len - start_index);
                 try new_array.appendSlice(allocator, state.pending_consolidations.items[start_index..]);
-                return new_array;
+                return try new_array.toOwnedSlice(allocator);
             },
-        }
-    }
-
-    pub fn setPendingConsolidations(self: *BeaconStateAllForks, consolidations: std.ArrayListUnmanaged(PendingConsolidation)) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_consolidations is not available in {}", .{self}),
-            inline else => |state| state.pending_consolidations = consolidations,
         }
     }
 };
@@ -1030,7 +1032,7 @@ test "electra - sanity" {
         .electra = &electra_state,
     };
 
-    try std.testing.expect(beacon_state.getGenesisTime() == 0);
+    try std.testing.expect(beacon_state.genesisTime() == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_state.getGenesisValidatorsRoot());
     try std.testing.expect(beacon_state.getSlot() == 12345);
     beacon_state.setSlot(2025);

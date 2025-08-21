@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const Validator = ssz.phase0.Validator.Type;
+
 const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
@@ -75,12 +76,12 @@ pub fn getMaxEffectiveBalance(withdrawal_credentials: WithdrawalCredentials) u64
     return preset.MIN_ACTIVATION_BALANCE;
 }
 
-pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validatorIndex: ValidatorIndex) u64 {
+pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validator_index: ValidatorIndex) u64 {
     var total: u64 = 0;
     const count = state.getPendingPartialWithdrawalCount();
     for (0..count) |i| {
         const item = state.getPendingPartialWithdrawal(i);
-        if (item.validatorIndex == validatorIndex) {
+        if (item.validator_index == validator_index) {
             total += item.amount;
         }
     }

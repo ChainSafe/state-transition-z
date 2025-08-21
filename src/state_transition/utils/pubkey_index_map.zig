@@ -11,16 +11,14 @@ pub fn PubkeyIndexMap(comptime T: type) type {
     const Val = T;
     const Key = [PUBKEY_INDEX_MAP_KEY_SIZE]u8;
 
-    const AutoHashMap = std.AutoHashMap(Key, Val);
-
     return struct {
         // this HashMap copies key/value using its own allocator
         // this duplicates all items at Bun side
-        map: AutoHashMap,
+        map: std.AutoHashMap(Key, Val),
 
         pub fn init(allocator: Allocator) !*@This() {
             const instance = try allocator.create(@This());
-            instance.* = .{ .map = AutoHashMap.init(allocator) };
+            instance.* = .{ .map = std.AutoHashMap(Key, Val).init(allocator) };
             return instance;
         }
 

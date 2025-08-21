@@ -95,6 +95,13 @@ pub const ReusedEpochTransitionCache = struct {
     }
 };
 
+pub const EpochTransitionCacheOpts = struct {
+    /// Assert progressive balances the same in the cache.
+    assert_correct_progressive_balances: bool = false,
+    ///  Do not queue shuffling calculation async. Forces sync JIT calculation in afterProcessEpoch
+    async_shuffling_calculation: bool = false,
+};
+
 pub const EpochTransitionCache = struct {
     prev_epoch: Epoch,
     current_epoch: Epoch,

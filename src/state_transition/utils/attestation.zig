@@ -10,9 +10,10 @@ const ValidatorIndex = @import("../type.zig").ValidatorIndex;
 
 pub fn isSlashableAttestationData(data1: *const AttestationData, data2: *const AttestationData) bool {
     // Double vote
-    if (!ssz.phase0.AttestationData.equals(data1, data2) and data1.target.epoch == data2.target.epoch) {
-        return true;
-    }
+    // TODO(bing): implement equals API. For now return skip
+    // if (!ssz.phase0.AttestationData.equals(data1, data2) and data1.target.epoch == data2.target.epoch) {
+    //     return true;
+    // }
     // Surround vote
     if (data1.source.epoch < data2.source.epoch and data2.target.epoch < data1.target.epoch) {
         return true;
@@ -27,15 +28,15 @@ pub fn isValidAttestationSlot(attestation_slot: Slot, current_slot: Slot) bool {
 
 // consumer takes the ownership of the returned array
 pub fn getAttesterSlashableIndices(allocator: Allocator, attester_slashing: *const AttesterSlashing) !ValidatorIndices {
-    var att_set_1 = std.ArrayHashMap(ValidatorIndex, bool).init(allocator);
+    var att_set_1 = std.AutoArrayHashMap(ValidatorIndex, bool).init(allocator);
     defer att_set_1.deinit();
 
-    for (attester_slashing.attestation_1.attesting_indices) |validator_index| {
+    for (attester_slashing.attestation_1.attesting_indices.items) |validator_index| {
         try att_set_1.put(validator_index, true);
     }
 
     var result = std.ArrayList(ValidatorIndex).init(allocator);
-    for (attester_slashing.attestation_2.attesting_indices) |validator_index| {
+    for (attester_slashing.attestation_2.attesting_indices.items) |validator_index| {
         if (att_set_1.get(validator_index)) |_| {
             try result.append(validator_index);
         }

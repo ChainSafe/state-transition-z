@@ -6,7 +6,7 @@ const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const Root = ssz.primitive.Root.Type;
 const params = @import("params");
 
-pub fn processDepositRequest(cached_state: *CachedBeaconStateAllForks, deposit_request: *const DepositRequest) !void {
+pub fn processDepositRequest(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, deposit_request: *const DepositRequest) !void {
     const state = cached_state.state;
     if (state.getDepositRequestsStartIndex() == params.UNSET_DEPOSIT_REQUESTS_START_INDEX) {
         state.setDepositRequestsStartIndex(deposit_request.index);
@@ -21,5 +21,5 @@ pub fn processDepositRequest(cached_state: *CachedBeaconStateAllForks, deposit_r
         .slot = state.getSlot(),
     };
 
-    try state.appendPendingDeposit(&pending_deposit);
+    try state.pendingDeposits().append(allocator, pending_deposit);
 }

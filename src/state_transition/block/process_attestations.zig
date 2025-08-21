@@ -20,7 +20,7 @@ pub fn processAttestations(allocator: Allocator, cached_state: *CachedBeaconStat
             } else {
                 // phase0
                 for (attestations_phase0.items) |attestation| {
-                    try processAttestationPhase0(cached_state, attestation, verify_signatures);
+                    try processAttestationPhase0(allocator, cached_state, &attestation, verify_signatures);
                 }
             }
         },

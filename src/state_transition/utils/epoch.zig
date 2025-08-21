@@ -34,7 +34,7 @@ pub fn computeActivationExitEpoch(epoch: Epoch) Epoch {
     return epoch + 1 + preset.MAX_SEED_LOOKAHEAD;
 }
 
-pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, exit_balance: Gwei) u64 {
+pub fn computeExitEpochAndUpdateChurn(cached_state: *const CachedBeaconStateAllForks, exit_balance: Gwei) u64 {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     var earliest_exit_epoch = @max(state.getEarliestExitEpoch(), computeActivationExitEpoch(epoch_cache.epoch));

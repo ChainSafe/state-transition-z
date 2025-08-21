@@ -6,7 +6,7 @@ const preset = ssz.preset;
 const Root = ssz.primitive.Root.Type;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 
-pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) void {
+pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !void {
     const state = cached_state.state;
 
     // Cache state root
@@ -16,7 +16,7 @@ pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllFork
 
     // Cache latest block header state root
     var latest_block_header = state.getLatestBlockHeader();
-    if (!std.mem.allEqual(u8, &latest_block_header.state_root, &ZERO_HASH)) {
+    if (!std.mem.eql(u8, &latest_block_header.state_root, &ZERO_HASH)) {
         latest_block_header.state_root = previous_state_root;
     }
 
