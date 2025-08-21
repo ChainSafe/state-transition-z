@@ -75,21 +75,21 @@ pub const BlobIdentifier = ssz.FixedContainerType(struct {
 pub const LightClientHeader = ssz.VariableContainerType(struct {
     beacon: BeaconBlockHeader,
     execution: ExecutionPayloadHeader,
-    execution_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.EXECUTION_PAYLOAD_GINDEX))))),
+    execution_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.EXECUTION_PAYLOAD_GINDEX)),
 });
 
 pub const LightClientBootstrap = ssz.VariableContainerType(struct {
     header: LightClientHeader,
     current_sync_committee: SyncCommittee,
-    current_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.CURRENT_SYNC_COMMITTEE_GINDEX))))),
+    current_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.CURRENT_SYNC_COMMITTEE_GINDEX)),
 });
 
 pub const LightClientUpdate = ssz.VariableContainerType(struct {
     attested_header: LightClientHeader,
     next_sync_committee: SyncCommittee,
-    next_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.NEXT_SYNC_COMMITTEE_GINDEX))))),
+    next_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.NEXT_SYNC_COMMITTEE_GINDEX)),
     finalized_header: LightClientHeader,
-    finality_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.FINALIZED_ROOT_GINDEX))))),
+    finality_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.FINALIZED_ROOT_GINDEX)),
     sync_aggregate: SyncAggregate,
     signature_slot: p.Slot,
 });
@@ -97,7 +97,7 @@ pub const LightClientUpdate = ssz.VariableContainerType(struct {
 pub const LightClientFinalityUpdate = ssz.VariableContainerType(struct {
     attested_header: LightClientHeader,
     finalized_header: LightClientHeader,
-    finality_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.FINALIZED_ROOT_GINDEX))))),
+    finality_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.FINALIZED_ROOT_GINDEX)),
     sync_aggregate: SyncAggregate,
     signature_slot: p.Slot,
 });

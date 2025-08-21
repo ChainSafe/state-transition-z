@@ -149,21 +149,21 @@ pub const BlobSidecar = ssz.FixedContainerType(struct {
 pub const LightClientHeader = ssz.VariableContainerType(struct {
     beacon: BeaconBlockHeader,
     execution: ExecutionPayloadHeader,
-    execution_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.EXECUTION_PAYLOAD_GINDEX))))),
+    execution_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.EXECUTION_PAYLOAD_GINDEX)),
 });
 
 pub const LightClientBootstrap = ssz.VariableContainerType(struct {
     header: LightClientHeader,
     current_sync_committee: SyncCommittee,
-    current_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.CURRENT_SYNC_COMMITTEE_GINDEX_ELECTRA))))),
+    current_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.CURRENT_SYNC_COMMITTEE_GINDEX_ELECTRA)),
 });
 
 pub const LightClientUpdate = ssz.VariableContainerType(struct {
     attested_header: LightClientHeader,
     next_sync_committee: SyncCommittee,
-    next_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.NEXT_SYNC_COMMITTEE_GINDEX_ELECTRA))))),
+    next_sync_committee_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.NEXT_SYNC_COMMITTEE_GINDEX_ELECTRA)),
     finalized_header: LightClientHeader,
-    finality_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.FINALIZED_ROOT_GINDEX_ELECTRA))))),
+    finality_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.FINALIZED_ROOT_GINDEX_ELECTRA)),
     sync_aggregate: SyncAggregate,
     signature_slot: p.Slot,
 });
@@ -171,7 +171,7 @@ pub const LightClientUpdate = ssz.VariableContainerType(struct {
 pub const LightClientFinalityUpdate = ssz.VariableContainerType(struct {
     attested_header: LightClientHeader,
     finalized_header: LightClientHeader,
-    finality_branch: ssz.FixedVectorType(p.Bytes32, @floor(@log2(@as(f32, @floatFromInt(c.FINALIZED_ROOT_GINDEX_ELECTRA))))),
+    finality_branch: ssz.FixedVectorType(p.Bytes32, std.math.log2_int(c.FINALIZED_ROOT_GINDEX_ELECTRA)),
     sync_aggregate: SyncAggregate,
     signature_slot: p.Slot,
 });
