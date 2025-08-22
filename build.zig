@@ -6,6 +6,20 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const dep_ssz = b.dependency("ssz", .{});
+
+    const options_build_options = b.addOptions();
+    const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
+    options_build_options.addOption([]const u8, "preset", option_preset);
+    const options_module_build_options = options_build_options.createModule();
+
+    const module_consensus_types = b.createModule(.{
+        .root_source_file = b.path("src/consensus_types/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("consensus_types"), module_consensus_types) catch @panic("OOM");
+
     const module_main = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
@@ -70,6 +84,20 @@ pub fn build(b: *std.Build) void {
 
     const tls_run_test = b.step("test", "Run all tests");
 
+    const test_consensus_types = b.addTest(.{
+        .name = "consensus_types",
+        .root_module = module_consensus_types,
+        .filters = &[_][]const u8{},
+    });
+    const install_test_consensus_types = b.addInstallArtifact(test_consensus_types, .{});
+    const tls_install_test_consensus_types = b.step("build-test:consensus_types", "Install the consensus_types test");
+    tls_install_test_consensus_types.dependOn(&install_test_consensus_types.step);
+
+    const run_test_consensus_types = b.addRunArtifact(test_consensus_types);
+    const tls_run_test_consensus_types = b.step("test:consensus_types", "Run the consensus_types test");
+    tls_run_test_consensus_types.dependOn(&run_test_consensus_types.step);
+    tls_run_test.dependOn(&run_test_consensus_types.step);
+
     const test_main = b.addTest(.{
         .name = "main",
         .root_module = module_main,
@@ -111,4 +139,7 @@ pub fn build(b: *std.Build) void {
     const @"tls_run_test_state-transition-utils" = b.step("test:state-transition-utils", "Run the state-transition-utils test");
     @"tls_run_test_state-transition-utils".dependOn(&@"run_test_state-transition-utils".step);
     tls_run_test.dependOn(&@"run_test_state-transition-utils".step);
+
+    module_consensus_types.addImport("build_options", options_module_build_options);
+    module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
 }

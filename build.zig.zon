@@ -5,6 +5,11 @@
     .version = "0.0.0",
     .fingerprint = 0xd1ddb6abe067ee04,
     .minimum_zig_version = "0.14.0",
-    .dependencies = .{},
+    .dependencies = .{
+        .ssz = .{
+            .url = "git+https://github.com/chainsafe/ssz-z.git#0ce9e59d2ade40d6cf5008ab34e6f59825b14c21",
+            .hash = "ssz-0.1.0-yORmzFS_BAAKlIsLQVVuYdWCcQ4vR5Fuocndt5H-5Oky",
+        },
+    },
     .paths = .{ "build.zig", "build.zig.zon", "src" },
 }
