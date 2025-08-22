@@ -1,3 +1,4 @@
+///! This file provides C-ABI functions for the PubkeyIndexMap and shuffle list utilities suitable for use in Bun.
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
 pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
