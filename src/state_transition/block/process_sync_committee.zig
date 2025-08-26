@@ -26,7 +26,7 @@ pub fn processSyncAggregate(
 ) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const committee_indices = epoch_cache.current_sync_committee_indexed.get().getValidatorIndices();
+    const committee_indices = @as(*const [preset.SYNC_COMMITTEE_SIZE]u64, @ptrCast(epoch_cache.current_sync_committee_indexed.get().getValidatorIndices()));
 
     // different from the spec but not sure how to get through signature verification for default/empty SyncAggregate in the spec test
     if (verify_signatures orelse true) {
@@ -89,7 +89,7 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
     const signature = sync_aggregate.sync_committee_signature;
 
     const participant_indices_ = if (participant_indices) |pi| pi else blk: {
-        const committee_indices = epoch_cache.current_sync_committee_indexed.get().getValidatorIndices();
+        const committee_indices = @as(*const [preset.SYNC_COMMITTEE_SIZE]u64, @ptrCast(epoch_cache.current_sync_committee_indexed.get().getValidatorIndices()));
         // TODO(ssz) implement intersectValues
         //
         // return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, validator_indices);

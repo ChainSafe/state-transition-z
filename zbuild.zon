@@ -10,7 +10,10 @@
     },
     .dependencies = .{
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z.git#0ce9e59d2ade40d6cf5008ab34e6f59825b14c21",
+            .url = "git+https://github.com/chainsafe/ssz-z.git#46c205e7844002c353d176c5f57863ce8a37f99f",
+        },
+        .blst_z = .{
+            .url = "git+https://github.com/ChainSafe/blst-z.git?ref=te/fix_state_transition#d32eae183f19e5171fcb95a9d9fff6b7a8a7e4f7",
         },
     },
     .options_modules = .{
@@ -22,9 +25,41 @@
         },
     },
     .modules = .{
+        .hex = .{
+            .root_source_file = "src/hex.zig",
+        },
+        .config = .{
+            .root_source_file = "src/config/root.zig",
+            .imports = .{ .build_options, .params, .consensus_types, .hex },
+        },
         .consensus_types = .{
             .root_source_file = "src/consensus_types/root.zig",
             .imports = .{ .build_options, .ssz },
+        },
+        .params = .{
+            .root_source_file = "src/params/root.zig",
+            .imports = .{ .build_options, .consensus_types },
+        },
+        .state_transition = .{
+            .root_source_file = "src/state_transition/root.zig",
+            .imports = .{
+                .build_options,
+                .ssz,
+                .config,
+                .consensus_types,
+                .blst_min_pk,
+                .params,
+            },
+        },
+        .test_utils = .{
+            .root_source_file = "src/test_utils/root.zig",
+            .imports = .{
+                .build_options,
+                .config,
+                .state_transition,
+                .consensus_types,
+                .blst_min_pk,
+            },
         },
     },
     .libraries = .{
@@ -36,5 +71,20 @@
             .linkage = .dynamic,
         },
     },
-    .tests = .{},
+    .tests = .{
+        .int = .{
+            .root_module = .{
+                .root_source_file = "test/int/root.zig",
+                .imports = .{
+                    .build_options,
+                    .ssz,
+                    .state_transition,
+                    .test_utils,
+                    .config,
+                    .consensus_types,
+                },
+            },
+            .filters = .{},
+        },
+    },
 }

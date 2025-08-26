@@ -19,7 +19,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
     const slot = state.getSlot();
     const data = attestation.data;
 
-    try validateAttestation(*const Phase0Attestation, allocator, cached_state, attestation);
+    try validateAttestation(*const Phase0Attestation, cached_state, attestation);
 
     const pending_attestation = PendingAttestation{
         .data = data,
@@ -48,7 +48,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
-pub fn validateAttestation(comptime AT: type, allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
+pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const slot = state.getSlot();
@@ -74,9 +74,8 @@ pub fn validateAttestation(comptime AT: type, allocator: Allocator, cached_state
         if (data.index != 0) {
             return error.InvalidAttestationNonZeroDataIndex;
         }
-        // TODO(ssz): implement getTrueBitIndexes() api
         var committee_indices: []usize = undefined;
-        try attestation.committee_bits.getTrueBitIndexes(allocator, &committee_indices);
+        _ = try attestation.committee_bits.getTrueBitIndexes(committee_indices[0..]);
         if (committee_indices.len == 0) {
             return error.InvalidAttestationCommitteeBitsEmpty;
         }

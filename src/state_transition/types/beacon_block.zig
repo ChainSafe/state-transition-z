@@ -79,20 +79,6 @@ pub const SignedBlindedBeaconBlock = union(enum) {
     // }
 };
 
-pub const SignedBlindedBeaconBlock = union(enum) {
-    capella: *const ssz.capella.SignedBlindedBeaconBlock.Type,
-    deneb: *const ssz.deneb.SignedBlindedBeaconBlock.Type,
-    electra: *const ssz.electra.SignedBlindedBeaconBlock.Type,
-
-    pub fn getBeaconBlock(self: *const SignedBlindedBeaconBlock) BlindedBeaconBlock {
-        return switch (self.*) {
-            .capella => |block| .{ .capella = &block.message },
-            .deneb => |block| .{ .deneb = &block.message },
-            .electra => |block| .{ .electra = &block.message },
-        };
-    }
-};
-
 // TODO: also model BlindedBeaconBlock in this enum?
 pub const BeaconBlock = union(enum) {
     phase0: *const ssz.phase0.BeaconBlock.Type,

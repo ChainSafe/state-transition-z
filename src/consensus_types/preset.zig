@@ -70,6 +70,9 @@ const PresetMainnet = struct {
     pub const FIELD_ELEMENTS_PER_EXT_BLOB = 8192;
     pub const KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH = 4;
     pub const MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP = 8;
+    pub const DEPOSIT_CONTRACT_TREE_DEPTH = 32;
+    pub const GENESIS_SLOT = 0;
+    pub const FAR_FUTURE_EPOCH = 18_446_744_073_709_551_615; // 2*64 -1;
 };
 
 const PresetMinimal = struct {
