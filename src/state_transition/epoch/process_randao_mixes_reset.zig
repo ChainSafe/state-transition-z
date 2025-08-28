@@ -10,6 +10,7 @@ pub fn processRandaoMixesReset(cached_state: *CachedBeaconStateAllForks, cache: 
     const current_epoch = cache.current_epoch;
     const next_epoch = current_epoch + 1;
 
-    // reset randao mix
-    state.setRandaoMix(next_epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR, state.getRanDaoMix(current_epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR));
+    const state_randao_mixes = state.randaoMixes();
+    state_randao_mixes[next_epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR] =
+        state_randao_mixes[current_epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR];
 }

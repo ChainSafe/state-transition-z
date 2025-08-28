@@ -36,7 +36,8 @@ pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_in
     //  - with that and 32_000_000_000 MAX_EFFECTIVE_BALANCE or 2048_000_000_000 MAX_EFFECTIVE_BALANCE_ELECTRA, it still fits in a number given that Math.floor(Number.MAX_SAFE_INTEGER / 32_000_000_000) = 281474
     //  - we don't need to compute the total slashings from state.slashings, it's handled by totalSlashingsByIncrement in EpochCache
     const slashing_index = epoch % preset.EPOCHS_PER_SLASHINGS_VECTOR;
-    state.setSlashing(slashing_index, state.getSlashing(slashing_index) + effective_balance);
+    const slashings = state.slashings();
+    slashings[slashing_index] = state.slashings()[slashing_index] + effective_balance;
     epoch_cache.total_slashings_by_increment += effective_balance_increments.get().items[slashed_index];
 
     // TODO(ssz): define MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA
@@ -74,11 +75,11 @@ pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_in
     }
 
     if (state.isPostAltair()) {
-        if (state.getPreviousEpochParticipation(slashed_index) & TIMELY_TARGET == TIMELY_TARGET) {
+        if (state.previousEpochParticipations().items[slashed_index] & TIMELY_TARGET == TIMELY_TARGET) {
             epoch_cache.previous_target_unslashed_balance_increments -= @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
         }
 
-        if (state.getCurrentEpochParticipation(slashed_index) & TIMELY_TARGET == TIMELY_TARGET) {
+        if (state.currentEpochParticipations().items[slashed_index] & TIMELY_TARGET == TIMELY_TARGET) {
             epoch_cache.current_target_unslashed_balance_increments -= @divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
         }
     }

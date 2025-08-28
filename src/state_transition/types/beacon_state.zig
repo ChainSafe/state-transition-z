@@ -245,6 +245,12 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn slotPtr(self: *const BeaconStateAllForks) *u64 {
+        return switch (self.*) {
+            inline else => |state| &state.slot,
+        };
+    }
+
     pub fn fork(self: *const BeaconStateAllForks) Fork {
         return switch (self.*) {
             inline else => |state| state.fork,
@@ -257,13 +263,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn blockRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
+    pub fn blockRoots(self: *const BeaconStateAllForks) *[preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
             inline else => |state| &state.block_roots,
         };
     }
 
-    pub fn stateRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
+    pub fn stateRoots(self: *const BeaconStateAllForks) *[preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
             inline else => |state| &state.state_roots,
         };
@@ -318,43 +324,18 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getRanDaoMix(self: *const BeaconStateAllForks, index: usize) Bytes32 {
+    pub fn randaoMixes(self: *const BeaconStateAllForks) []Bytes32 {
         return switch (self.*) {
-            inline else => |state| state.randao_mixes[index],
+            inline else => |state| &state.randao_mixes,
         };
     }
 
-    pub fn setRandaoMix(self: *BeaconStateAllForks, index: usize, mix: Bytes32) void {
-        switch (self.*) {
-            inline else => |state| state.randao_mixes[index] = mix,
-        }
-    }
-
-    pub fn getSlashing(self: *const BeaconStateAllForks, index: usize) u64 {
+    pub fn slashings(self: *const BeaconStateAllForks) []u64 {
         return switch (self.*) {
-            inline else => |state| state.slashings[index],
+            inline else => |state| &state.slashings,
         };
     }
 
-    pub fn getSlashingCount(self: *const BeaconStateAllForks) usize {
-        return switch (self.*) {
-            inline else => |state| state.slashings.len,
-        };
-    }
-
-    pub fn setSlashing(self: *BeaconStateAllForks, index: usize, slashing: u64) void {
-        switch (self.*) {
-            inline else => |state| state.slashings[index] = slashing,
-        }
-    }
-
-    /// only for phase0
-    pub fn getPreviousEpochPendingAttestation(self: *const BeaconStateAllForks, index: usize) *const PendingAttestation {
-        return switch (self.*) {
-            .phase0 => |state| &state.previous_epoch_attestations[index],
-            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
-        };
-    }
     pub fn previousEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
         return switch (self.*) {
             .phase0 => |state| &state.previous_epoch_attestations,
@@ -362,63 +343,11 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    /// only for phase0
-    pub fn getPreviousEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
-        return switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations.items,
-            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
-        };
-    }
-
-    pub fn appendPreviousEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
-        switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations.append(allocator, attestation),
-            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
-        }
-    }
-
-    /// only for phase0
-    pub fn setPreviousEpochPendingAttestation(self: *BeaconStateAllForks, index: usize, attestation: *const PendingAttestation) void {
-        switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations[index] = *attestation,
-            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
-        }
-    }
-
-    pub fn setPreviousEpochPendingAttestations(self: *BeaconStateAllForks, attestations: std.ArrayListUnmanaged(PendingAttestation)) void {
-        switch (self.*) {
-            .phase0 => |state| state.previous_epoch_attestations = attestations,
-            else => @panic("previous_epoch_pending_attestations is not available post phase0"),
-        }
-    }
-
     pub fn currentEpochPendingAttestations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingAttestation) {
         return switch (self.*) {
             .phase0 => |state| &state.current_epoch_attestations,
             else => @panic("current_epoch_pending_attestations is not available post phase0"),
         };
-    }
-
-    // only for phase0
-    pub fn getCurrentEpochPendingAttestations(self: *const BeaconStateAllForks) []const PendingAttestation {
-        return switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations.items,
-            else => @panic("current_epoch_pending_attestations is not available post phase0"),
-        };
-    }
-
-    pub fn setCurrentEpochPendingAttestations(self: *BeaconStateAllForks, attestations: std.ArrayListUnmanaged(PendingAttestation)) void {
-        switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations = attestations,
-            else => @panic("current_epoch_pending_attestations is not available post phase0"),
-        }
-    }
-
-    pub fn appendCurrentEpochPendingAttestation(self: *BeaconStateAllForks, allocator: Allocator, attestation: PendingAttestation) void {
-        switch (self.*) {
-            .phase0 => |state| state.current_epoch_attestations.append(allocator, attestation),
-            else => @panic("current_epoch_pending_attestations is not available post phase0"),
-        }
     }
 
     pub fn rotateEpochPendingAttestations(self: *BeaconStateAllForks, allocator: Allocator) void {
@@ -432,77 +361,18 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    /// from altair, epoch pariticipation is just a byte
-    pub fn getPreviousEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
-        return switch (self.*) {
-            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            inline else => |state| state.previous_epoch_participation.items[index],
-        };
-    }
-
-    pub fn previousEpochParticipations(self: *BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
+    pub fn previousEpochParticipations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
             inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.previous_epoch_participation,
         };
     }
 
-    // from altair
-    pub fn getPreviousEpochParticipations(self: *const BeaconStateAllForks) []u8 {
-        return switch (self.*) {
-            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            inline else => |state| state.previous_epoch_participation.items,
-        };
-    }
-
-    pub fn appendPreviousEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
-        switch (self.*) {
-            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            inline else => |state| try state.previous_epoch_participation.append(allocator, participation),
-        }
-    }
-
-    /// from altair, epoch participation is just a byte
-    pub fn setPreviousEpochParticipation(self: *BeaconStateAllForks, index: usize, participation: u8) void {
-        switch (self.*) {
-            .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            inline else => |state| state.previous_epoch_participation.items[index] = participation,
-        }
-    }
-
-    pub fn getCurrentEpochParticipations(self: *const BeaconStateAllForks) []u8 {
+    pub fn currentEpochParticipations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
         return switch (self.*) {
             .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            inline else => |state| state.current_epoch_participation.items,
+            inline else => |state| &state.current_epoch_participation,
         };
-    }
-
-    pub fn getCurrentEpochParticipation(self: *const BeaconStateAllForks, index: usize) u8 {
-        return switch (self.*) {
-            .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            inline else => |state| state.current_epoch_participation.items[index],
-        };
-    }
-
-    pub fn setPreviousEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
-        switch (self.*) {
-            .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            inline else => |state| state.previous_epoch_participation = participations,
-        }
-    }
-
-    pub fn appendCurrentEpochParticipation(self: *BeaconStateAllForks, allocator: Allocator, participation: u8) !void {
-        switch (self.*) {
-            .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            inline else => |state| try state.current_epoch_participation.append(allocator, participation),
-        }
-    }
-
-    pub fn setCurrentEpochParticipations(self: *BeaconStateAllForks, participations: std.ArrayListUnmanaged(u8)) void {
-        switch (self.*) {
-            .phase0 => @panic("current_epoch_participation is not available in phase0"),
-            inline else => |state| state.current_epoch_participation = participations,
-        }
     }
 
     pub fn rotateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) void {
@@ -516,40 +386,22 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getJustificationBits(self: *const BeaconStateAllForks) JustificationBits {
+    pub fn justificationBits(self: *const BeaconStateAllForks) *JustificationBits {
         return switch (self.*) {
-            inline else => |state| state.justification_bits,
+            inline else => |state| &state.justification_bits,
         };
     }
 
-    pub fn setJustificationBits(self: *BeaconStateAllForks, bits: JustificationBits) void {
-        switch (self.*) {
-            inline else => |state| state.justification_bits = bits,
-        }
-    }
-
-    pub fn getPreviousJustifiedCheckpoint(self: *const BeaconStateAllForks) *const Checkpoint {
+    pub fn previousJustifiedCheckpoint(self: *const BeaconStateAllForks) *Checkpoint {
         return switch (self.*) {
             inline else => |state| &state.previous_justified_checkpoint,
         };
     }
 
-    pub fn setPreviousJustifiedCheckpoint(self: *BeaconStateAllForks, checkpoint: *const Checkpoint) void {
-        switch (self.*) {
-            inline else => |state| state.previous_justified_checkpoint = checkpoint.*,
-        }
-    }
-
-    pub fn getCurrentJustifiedCheckpoint(self: *const BeaconStateAllForks) *const Checkpoint {
+    pub fn currentJustifiedCheckpoint(self: *const BeaconStateAllForks) *Checkpoint {
         return switch (self.*) {
             inline else => |state| &state.current_justified_checkpoint,
         };
-    }
-
-    pub fn setCurrentJustifiedCheckpoint(self: *BeaconStateAllForks, checkpoint: *const Checkpoint) void {
-        switch (self.*) {
-            inline else => |state| state.current_justified_checkpoint = checkpoint.*,
-        }
     }
 
     pub fn getFinalizedCheckpoint(self: *const BeaconStateAllForks) *const Checkpoint {
@@ -918,7 +770,8 @@ test "electra - sanity" {
     try std.testing.expect(beacon_state.genesisTime() == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_state.genesisValidatorsRoot());
     try std.testing.expect(beacon_state.slot() == 12345);
-    beacon_state.setSlot(2025);
+    const slot = beacon_state.slotPtr();
+    slot.* = 2025;
     try std.testing.expect(beacon_state.slot() == 2025);
 
     var out: [32]u8 = undefined;

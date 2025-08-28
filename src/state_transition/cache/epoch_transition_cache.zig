@@ -38,6 +38,7 @@ const ValidatorActivation = struct {
     validator_index: ValidatorIndex,
     activation_eligibility_epoch: Epoch,
 };
+
 const ValidatorActivationList = std.ArrayList(ValidatorActivation);
 
 /// this is a cache that's never gc'd, it is used to store data that is reused across multiple epochs
@@ -321,14 +322,14 @@ pub const EpochTransitionCache = struct {
             @memset(reused_cache.proposer_indices.items, validator_count);
             try reused_cache.inclusion_delays.resize(validator_count);
             @memset(reused_cache.inclusion_delays.items, 0);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.getPreviousEpochPendingAttestations(), prev_epoch, FLAG_PREV_SOURCE_ATTESTER, FLAG_PREV_TARGET_ATTESTER, FLAG_PREV_HEAD_ATTESTER);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.getCurrentEpochPendingAttestations(), current_epoch, FLAG_CURR_SOURCE_ATTESTER, FLAG_CURR_TARGET_ATTESTER, FLAG_CURR_HEAD_ATTESTER);
+            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.previousEpochPendingAttestations().items, prev_epoch, FLAG_PREV_SOURCE_ATTESTER, FLAG_PREV_TARGET_ATTESTER, FLAG_PREV_HEAD_ATTESTER);
+            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.currentEpochPendingAttestations().items, current_epoch, FLAG_CURR_SOURCE_ATTESTER, FLAG_CURR_TARGET_ATTESTER, FLAG_CURR_HEAD_ATTESTER);
         } else {
             try reused_cache.previous_epoch_participation.resize(validator_count);
             try reused_cache.current_epoch_participation.resize(validator_count);
             // TODO: does not work for TreeView
-            @memcpy(reused_cache.previous_epoch_participation.items[0..validator_count], state.getPreviousEpochParticipations());
-            @memcpy(reused_cache.current_epoch_participation.items[0..validator_count], state.getCurrentEpochParticipations());
+            @memcpy(reused_cache.previous_epoch_participation.items[0..validator_count], state.previousEpochParticipations().items);
+            @memcpy(reused_cache.current_epoch_participation.items[0..validator_count], state.currentEpochParticipations().items);
             for (0..validator_count) |i| {
                 reused_cache.flags.items[i] |=
                     // checking active status first is required to pass random spec tests in altair

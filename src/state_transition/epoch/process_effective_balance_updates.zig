@@ -64,8 +64,8 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
             // Must update target balances for consistency, see comments below
             if (state.isPostAltair()) {
                 const delta_effective_balance_increment = new_effective_balance_increment - effective_balance_increment;
-                const previous_epoch_participation = state.getPreviousEpochParticipations();
-                const current_epoch_participation = state.getCurrentEpochParticipations();
+                const previous_epoch_participation = state.previousEpochParticipations().items;
+                const current_epoch_participation = state.currentEpochParticipations().items;
 
                 if (!validator.slashed and (previous_epoch_participation[i] & TIMELY_TARGET) == TIMELY_TARGET) {
                     epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;

@@ -34,7 +34,8 @@ pub fn processRandao(
     var randao_reveal_digest: [32]u8 = undefined;
     digest(&randao_reveal, &randao_reveal_digest);
     const randao_mix = xor(getRandaoMix(state, epoch), randao_reveal_digest);
-    state.setRandaoMix(epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR, randao_mix);
+    const state_randao_mixes = state.randaoMixes();
+    state_randao_mixes[epoch % preset.EPOCHS_PER_HISTORICAL_VECTOR] = randao_mix;
 }
 
 fn xor(a: Bytes32, b: Bytes32) Bytes32 {

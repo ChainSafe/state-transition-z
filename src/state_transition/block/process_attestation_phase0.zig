@@ -29,12 +29,12 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
     };
 
     if (data.target.epoch == epoch_cache.epoch) {
-        if (!ssz.phase0.Checkpoint.equals(&data.source, state.getCurrentJustifiedCheckpoint())) {
+        if (!ssz.phase0.Checkpoint.equals(&data.source, state.currentJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToCurrentJustifiedCheckpoint;
         }
         try state.currentEpochPendingAttestations().append(allocator, pending_attestation);
     } else {
-        if (!ssz.phase0.Checkpoint.equals(&data.source, state.getPreviousJustifiedCheckpoint())) {
+        if (!ssz.phase0.Checkpoint.equals(&data.source, state.previousJustifiedCheckpoint())) {
             return error.InvalidAttestationSourceNotEqualToPreviousJustifiedCheckpoint;
         }
         try state.previousEpochPendingAttestations().append(allocator, pending_attestation);

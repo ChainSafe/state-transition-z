@@ -65,7 +65,7 @@ pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconSta
 }
 
 pub fn getRandaoMix(state: *const BeaconStateAllForks, epoch: Epoch) Bytes32 {
-    return state.getRanDaoMix(epoch % EPOCHS_PER_HISTORICAL_VECTOR);
+    return state.randaoMixes()[epoch % EPOCHS_PER_HISTORICAL_VECTOR];
 }
 
 pub fn getSeed(state: *const BeaconStateAllForks, epoch: Epoch, domain_type: DomainType, out: *[32]u8) !void {

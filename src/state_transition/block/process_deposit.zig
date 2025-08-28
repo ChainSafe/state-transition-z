@@ -169,7 +169,8 @@ pub fn addValidatorToRegistry(
 
         // add participation caches
         try state.previousEpochParticipations().append(allocator, 0);
-        try state.appendCurrentEpochParticipation(allocator, 0);
+        const state_current_epoch_participations = state.currentEpochParticipations();
+        try state_current_epoch_participations.append(allocator, 0);
     }
     const balances = state.balances();
 

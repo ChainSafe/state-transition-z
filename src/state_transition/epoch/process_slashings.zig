@@ -55,10 +55,10 @@ pub fn processSlashings(
 
 pub fn getTotalSlashingsByIncrement(state: *const BeaconStateAllForks) u64 {
     var total_slashings_by_increment: u64 = 0;
-    const count = state.getSlashingCount();
+    const count = state.slashings().len;
 
     for (0..count) |i| {
-        const slashing = state.getSlashing(i);
+        const slashing = state.slashings()[i];
         total_slashings_by_increment += @divFloor(slashing, preset.EFFECTIVE_BALANCE_INCREMENT);
     }
 

@@ -244,7 +244,7 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getEth1Data(self: *const BeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
+    pub fn eth1Data(self: *const BeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.eth1_data,
         };
@@ -376,7 +376,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getEth1Data(self: *const BlindedBeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
+    pub fn eth1Data(self: *const BlindedBeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| &body.eth1_data,
         };
@@ -523,7 +523,7 @@ fn testBlockSanity(Block: type) !void {
     try expect(!std.mem.eql(u8, &[_]u8{0} ** 32, &out));
 
     try std.testing.expectEqualSlices(u8, &[_]u8{1} ** 96, &block_body.getRandaoReveal());
-    const eth1_data = block_body.getEth1Data();
+    const eth1_data = block_body.eth1Data();
     try expect(eth1_data.deposit_count == 0);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getGraffity());
     try expect(block_body.getProposerSlashings().len == 0);

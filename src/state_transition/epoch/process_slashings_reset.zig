@@ -14,7 +14,9 @@ pub fn processSlashingsReset(cached_state: *CachedBeaconStateAllForks, cache: *c
 
     // reset slashings
     const slash_index = next_epoch % preset.EPOCHS_PER_SLASHINGS_VECTOR;
-    const old_slashing_value_by_increment = state.getSlashing(slash_index) / preset.EFFECTIVE_BALANCE_INCREMENT;
-    state.setSlashing(slash_index, 0);
+    const slashings = state.slashings();
+    const slashing = slashings[slash_index];
+    const old_slashing_value_by_increment = slashing / preset.EFFECTIVE_BALANCE_INCREMENT;
+    slashings[slash_index] = 0;
     epoch_cache.total_slashings_by_increment = @max(0, epoch_cache.total_slashings_by_increment - old_slashing_value_by_increment);
 }

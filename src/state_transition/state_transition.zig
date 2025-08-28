@@ -51,7 +51,7 @@ fn processSlotsWithTransientCache(
     var post_state_slot = post_state.state.slot();
     if (post_state_slot > slot) return error.outdatedSlot;
 
-    const validator_count = post_state.epoch_cache_ref.get().current_shuffling.active_indices.len;
+    const validator_count = post_state.epoch_cache_ref.get().current_shuffling.get().active_indices.len;
 
     var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
     defer reused_epoch_transition_cache.deinit();
@@ -67,7 +67,7 @@ fn processSlotsWithTransientCache(
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
             try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache, &epoch_transition_cache);
-            processEpoch(allocator, post_state, epoch_transition_cache);
+            try processEpoch(allocator, post_state, &epoch_transition_cache);
 
             // registerValidatorStatuses
 

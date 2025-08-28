@@ -25,12 +25,12 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     const current_epoch = computeEpochAtSlot(state.slot());
     const previous_epoch = current_epoch - 1;
 
-    const old_previous_justified_checkpoint = state.getPreviousJustifiedCheckpoint();
-    const old_current_justified_checkpoint = state.getCurrentJustifiedCheckpoint();
+    const old_previous_justified_checkpoint = state.previousJustifiedCheckpoint();
+    const old_current_justified_checkpoint = state.currentJustifiedCheckpoint();
 
     // Process justifications
-    state.setPreviousJustifiedCheckpoint(state.getCurrentJustifiedCheckpoint());
-    const justification_bits = state.getJustificationBits();
+    old_previous_justified_checkpoint.* = old_current_justified_checkpoint.*;
+    const justification_bits = state.justificationBits();
     var bits = [_]bool{false} ** ssz.phase0.JustificationBits.length;
     for (0..bits.len) |i| {
         bits[i] = try justification_bits.get(i);
@@ -43,23 +43,24 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     }
     bits[0] = false;
 
+    const current_justified_checkpoint = state.currentJustifiedCheckpoint();
     if (previous_epoch_target_balance * 3 > total_active_balance * 2) {
-        state.setCurrentJustifiedCheckpoint(&.{
+        current_justified_checkpoint.* = ssz.phase0.Checkpoint.Type{
             .epoch = previous_epoch,
             .root = try getBlockRoot(state, previous_epoch),
-        });
+        };
         bits[1] = true;
     }
 
     if (current_epoch_target_balance * 3 > total_active_balance * 2) {
-        state.setCurrentJustifiedCheckpoint(&.{
+        current_justified_checkpoint.* = ssz.phase0.Checkpoint.Type{
             .epoch = current_epoch,
             .root = try getBlockRoot(state, current_epoch),
-        });
+        };
         bits[0] = true;
     }
 
-    state.setJustificationBits(try ssz.phase0.JustificationBits.Type.fromBoolArray(bits));
+    justification_bits.* = try ssz.phase0.JustificationBits.Type.fromBoolArray(bits);
 
     // TODO: Consider rendering bits as array of boolean for faster repeated access here
 

@@ -63,7 +63,7 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
         }
 
         const in_current_epoch = data.target.epoch == current_epoch;
-        var epoch_participation = if (in_current_epoch) state.getCurrentEpochParticipations() else state.getPreviousEpochParticipations();
+        var epoch_participation = if (in_current_epoch) state.currentEpochParticipations().items else state.previousEpochParticipations().items;
         const flags_attestation = try getAttestationParticipationStatus(state, data, state_slot - data.slot, current_epoch, root_cache);
 
         // For each participant, update their participation

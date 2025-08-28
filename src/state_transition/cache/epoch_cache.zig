@@ -276,8 +276,8 @@ pub const EpochCache = struct {
         var current_target_unslashed_balance_increments: u64 = 0;
 
         if (fork_seq.isPostAltair()) {
-            const previous_epoch_participation = state.getPreviousEpochParticipations();
-            const current_epoch_participation = state.getCurrentEpochParticipations();
+            const previous_epoch_participation = state.previousEpochParticipations().items;
+            const current_epoch_participation = state.currentEpochParticipations().items;
 
             previous_target_unslashed_balance_increments = sumTargetUnslashedBalanceIncrements(previous_epoch_participation, previous_epoch, validators);
             current_target_unslashed_balance_increments = sumTargetUnslashedBalanceIncrements(current_epoch_participation, current_epoch, validators);

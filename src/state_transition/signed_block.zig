@@ -17,9 +17,9 @@ pub const SignedBlock = union(enum) {
             };
         }
 
-        pub fn getEth1Data(self: *const BeaconBlockBody_) *const ssz.phase0.Eth1Data.Type {
+        pub fn eth1Data(self: *const BeaconBlockBody_) *const ssz.phase0.Eth1Data.Type {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getEth1Data(),
+                inline .regular, .blinded => |b| b.eth1Data(),
             };
         }
 
