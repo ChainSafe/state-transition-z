@@ -14,9 +14,9 @@ pub fn processHistoricalSummariesUpdate(allocator: Allocator, cached_state: *Cac
     // set historical root accumulator
     if (next_epoch % @divFloor(preset.SLOTS_PER_HISTORICAL_ROOT, preset.SLOTS_PER_EPOCH) == 0) {
         var block_summary_root: Root = undefined;
-        try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.getBlockRoots(), &block_summary_root);
+        try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.blockRoots(), &block_summary_root);
         var state_summary_root: Root = undefined;
-        try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.getStateRoots(), &state_summary_root);
+        try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.stateRoots(), &state_summary_root);
         try state.appendHistoricalSummary(allocator, &.{
             .block_summary_root = block_summary_root,
             .state_summary_root = state_summary_root,

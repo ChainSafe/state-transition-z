@@ -70,7 +70,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
         const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
 
-        try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, index_pubkey_cache);
+        try syncPubkeys(allocator, state.validators().items, pubkey_index_map, index_pubkey_cache);
 
         const immutable_data = state_transition.EpochCacheImmutableData{
             .config = config,

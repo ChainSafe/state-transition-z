@@ -11,7 +11,7 @@ pub fn processRegistryUpdates(cached_state: *CachedBeaconStateAllForks, cache: *
     const state = cached_state.state;
 
     // Get the validators sub tree once for all the loop
-    const validators = state.getValidators();
+    const validators = state.validators();
 
     // TODO: Batch set this properties in the tree at once with setMany() or setNodes()
 
@@ -21,7 +21,7 @@ pub fn processRegistryUpdates(cached_state: *CachedBeaconStateAllForks, cache: *
         // TODO: Figure out a way to quickly set properties on the validators tree
         var validator = validators.items[index];
         try initiateValidatorExit(cached_state, &validator);
-        state.setValidator(index, &validator);
+        validators.items[index] = validator;
     }
 
     // set new activation eligibilities

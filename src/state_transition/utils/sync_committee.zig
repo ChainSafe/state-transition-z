@@ -27,7 +27,7 @@ pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllFo
     // Using the index2pubkey cache is slower because it needs the serialized pubkey.
     var pubkeys: [preset.SYNC_COMMITTEE_SIZE]PublicKey = undefined;
     for (indices, 0..) |index, i| {
-        pubkeys[i] = state.getValidator(index).pubkey;
+        pubkeys[i] = state.validators()[index].pubkey;
     }
 
     const aggregated_pk = try AggregatePublicKey.aggregateSerialized(pubkeys[0..], false);

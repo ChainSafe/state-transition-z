@@ -41,7 +41,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
             // Is deposit request
             deposit.slot > params.GENESIS_SLOT and
                 // There are pending Eth1 bridge deposits
-                state.getEth1DepositIndex() < state.getDepositRequestsStartIndex())
+                state.eth1DepositIndex() < state.getDepositRequestsStartIndex())
             {
                 break :outer;
             }
@@ -64,7 +64,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
             const validator_index = epoch_cache.getValidatorIndex(&deposit.pubkey);
 
             if (isValidatorKnown(state, validator_index)) {
-                const validator = state.getValidator(validator_index.?);
+                const validator = state.validators().items[validator_index.?];
                 is_validator_exited = validator.exit_epoch < params.FAR_FUTURE_EPOCH;
                 is_validator_withdrawn = validator.withdrawable_epoch < next_epoch;
             }

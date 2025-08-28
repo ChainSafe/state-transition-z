@@ -18,7 +18,7 @@ pub fn getBlockRootAtSlot(state: *const BeaconStateAllForks, slot: Slot) !Root {
         return error.SlotTooSmall;
     }
 
-    return state.getBlockRoot(slot % SLOTS_PER_HISTORICAL_ROOT);
+    return state.blockRoots()[slot % SLOTS_PER_HISTORICAL_ROOT];
 }
 
 pub fn getBlockRoot(state: *const BeaconStateAllForks, epoch: Epoch) !Root {

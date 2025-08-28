@@ -14,7 +14,7 @@ pub fn processBlsToExecutionChange(state: *CachedBeaconStateAllForks, signed_bls
 
     var new_withdrawal_credentials: Root = undefined;
     const validator_index = address_change.validator_index;
-    const validator = state.state.getValidator(validator_index);
+    var validator = state.state.validators().items[validator_index];
     new_withdrawal_credentials[0] = params.ETH1_ADDRESS_WITHDRAWAL_PREFIX;
     @memcpy(new_withdrawal_credentials[12..], &address_change.to_execution_address);
 
@@ -26,11 +26,11 @@ pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, sig
     const state = cached_state.state;
     const address_change = signed_bls_to_execution_change.message;
     const validator_index = address_change.validator_index;
-    if (validator_index >= state.getValidatorsCount()) {
+    if (validator_index >= state.validators().items.len) {
         return error.InvalidBlsToExecutionChange;
     }
 
-    const validator = state.getValidator(validator_index);
+    const validator = state.validators().items[validator_index];
     const withdrawal_credentials = validator.withdrawal_credentials;
     if (withdrawal_credentials[0] != params.BLS_WITHDRAWAL_PREFIX) {
         return error.InvalidWithdrawalCredentialsPrefix;

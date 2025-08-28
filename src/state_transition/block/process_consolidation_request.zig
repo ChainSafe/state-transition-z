@@ -54,8 +54,8 @@ pub fn processConsolidationRequest(allocator: std.mem.Allocator, cached_state: *
         return;
     }
 
-    const source_validator = state.getValidator(source_index);
-    const target_validator = state.getValidator(target_index);
+    const source_validator = &state.validators().items[source_index];
+    const target_validator = &state.validators().items[target_index];
     const source_withdrawal_address = source_validator.withdrawal_credentials[12..];
     const current_epoch = epoch_cache.epoch;
 
@@ -117,7 +117,7 @@ fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks
         return false;
     }
 
-    const source_validator = state.getValidator(source_index);
+    const source_validator = state.validators().items[source_index];
     const source_withdrawal_address = source_validator.withdrawal_credentials[12..];
 
     // Verify request has been authorized
@@ -131,7 +131,7 @@ fn isValidSwitchToCompoundRequest(cached_state: *const CachedBeaconStateAllForks
     }
 
     // Verify the source is active
-    if (!isActiveValidator(source_validator, epoch_cache.epoch)) {
+    if (!isActiveValidator(&source_validator, epoch_cache.epoch)) {
         return false;
     }
 

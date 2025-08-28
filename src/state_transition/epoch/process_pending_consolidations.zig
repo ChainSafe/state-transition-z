@@ -12,7 +12,7 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
     var next_pending_consolidation: usize = 0;
-    const validators = state.getValidators();
+    const validators = state.validators();
 
     var chunk_start_index: usize = 0;
     const chunk_size = 100;
@@ -35,7 +35,7 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
             }
 
             // Calculate the consolidated balance
-            const source_effective_balance = @min(state.getBalance(source_index), source_validator.effective_balance);
+            const source_effective_balance = @min(state.balances().items[source_index], source_validator.effective_balance);
 
             // Move active balance to target. Excess balance is withdrawable.
             decreaseBalance(state, source_index, source_effective_balance);

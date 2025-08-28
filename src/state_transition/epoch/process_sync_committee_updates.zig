@@ -19,7 +19,7 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
         const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();
         var next_sync_committee_indices: [preset.SYNC_COMMITTEE_SIZE]ValidatorIndex = undefined;
         try getNextSyncCommitteeIndices(allocator, state, active_validator_indices, effective_balance_increments, &next_sync_committee_indices);
-        const validators = state.getValidators();
+        const validators = state.validators();
 
         // Using the index2pubkey cache is slower because it needs the serialized pubkey.
         var next_sync_committee_pubkeys: [preset.SYNC_COMMITTEE_SIZE]BLSPubkey = undefined;

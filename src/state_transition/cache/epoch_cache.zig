@@ -155,8 +155,8 @@ pub const EpochCache = struct {
         var exit_queue_epoch = computeActivationExitEpoch(current_epoch);
         var exit_queue_churn: u64 = 0;
 
-        const validators = state.getValidators().items;
-        const validator_count = state.getValidatorsCount();
+        const validators = state.validators().items;
+        const validator_count = validators.len;
 
         // syncPubkeys here to ensure EpochCacheImmutableData is popualted before computing the rest of caches
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
@@ -178,21 +178,21 @@ pub const EpochCache = struct {
         try next_active_indices_array_list.ensureTotalCapacity(validator_count);
 
         for (0..validator_count) |i| {
-            const validator = state.getValidator(i);
+            const validator = validators[i];
 
             // Note: Not usable for fork-choice balances since in-active validators are not zero'ed
             effective_balance_increment.items[i] = @intCast(@divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
 
-            if (isActiveValidator(validator, previous_epoch)) {
+            if (isActiveValidator(&validator, previous_epoch)) {
                 try previous_active_indices_array_list.append(i);
             }
 
-            if (isActiveValidator(validator, current_epoch)) {
+            if (isActiveValidator(&validator, current_epoch)) {
                 try current_active_indices_array_list.append(i);
                 total_active_balance_increments += effective_balance_increment.items[i];
             }
 
-            if (isActiveValidator(validator, next_epoch)) {
+            if (isActiveValidator(&validator, next_epoch)) {
                 try next_active_indices_array_list.append(i);
             }
 

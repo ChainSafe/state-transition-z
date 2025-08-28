@@ -25,7 +25,7 @@ pub fn hasExecutionWithdrawalCredential(withdrawal_credentials: WithdrawalCreden
 }
 
 pub fn switchToCompoundingValidator(allocator: Allocator, state_cache: *CachedBeaconStateAllForks, index: ValidatorIndex) !void {
-    const validator = state_cache.state.getValidator(index);
+    var validator = state_cache.state.validators().items[index];
 
     // directly modifying the byte leads to ssz missing the modification resulting into
     // wrong root compute, although slicing can be avoided but anyway this is not going
@@ -33,17 +33,17 @@ pub fn switchToCompoundingValidator(allocator: Allocator, state_cache: *CachedBe
     var new_withdrawal_credentials = [_]u8{0} ** WithdrawalCredentials.length;
     std.mem.copyForwards(u8, new_withdrawal_credentials[0..], validator.withdrawal_credentials[0..]);
     new_withdrawal_credentials[0] = COMPOUNDING_WITHDRAWAL_PREFIX;
-    validator.withdrawal_credentials = new_withdrawal_credentials;
+    @memcpy(validator.withdrawal_credentials[0..], new_withdrawal_credentials[0..]);
     try queueExcessActiveBalance(allocator, state_cache, index);
 }
 
 pub fn queueExcessActiveBalance(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, index: ValidatorIndex) !void {
     const state = cached_state.state;
-    const balance = state.getBalance(index);
-    if (balance > MIN_ACTIVATION_BALANCE) {
-        const validator = state.getValidator(index);
-        const excess_balance = balance - MIN_ACTIVATION_BALANCE;
-        state.setBalance(index, MIN_ACTIVATION_BALANCE);
+    const balance = &state.balances().items[index];
+    if (balance.* > MIN_ACTIVATION_BALANCE) {
+        const validator = state.validators().items[index];
+        const excess_balance = balance.* - MIN_ACTIVATION_BALANCE;
+        balance.* = MIN_ACTIVATION_BALANCE;
 
         const pending_deposit = PendingDeposit{
             .pubkey = validator.pubkey,
@@ -65,5 +65,5 @@ pub fn isPubkeyKnown(cached_state: *const CachedBeaconStateAllForks, pubkey: BLS
 
 pub fn isValidatorKnown(state: *const BeaconStateAllForks, index: ?ValidatorIndex) bool {
     const validator_index = index orelse return false;
-    return validator_index < state.getValidatorsCount();
+    return validator_index < state.validators().items.len;
 }

@@ -17,7 +17,7 @@ const UPWARD_THRESHOLD = HYSTERESIS_INCREMENT * preset.HYSTERESIS_UPWARD_MULTIPL
 pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !usize {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const validators = state.getValidators();
+    const validators = state.validators();
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
     var next_epoch_total_active_balance_by_increment: u64 = 0;
 
@@ -26,7 +26,7 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
     // epochTransitionCache.balances is initialized in processRewardsAndPenalties()
     // and updated in processPendingDeposits() and processPendingConsolidations()
     // so it's recycled here for performance.
-    const balances = if (cache.balances) |balances_arr| balances_arr.items else state.getBalances();
+    const balances = if (cache.balances) |balances_arr| balances_arr.items else state.balances().items;
     const is_compounding_validator_arr = cache.is_compounding_validator_arr.items;
 
     var num_update: usize = 0;

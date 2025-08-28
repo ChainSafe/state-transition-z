@@ -14,8 +14,8 @@ pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
         return error.InvalidVoluntaryExit;
     }
 
-    const validator = cached_state.state.getValidator(signed_voluntary_exit.message.validator_index);
-    try initiateValidatorExit(cached_state, validator);
+    var validator = cached_state.state.validators().items[signed_voluntary_exit.message.validator_index];
+    try initiateValidatorExit(cached_state, &validator);
 }
 
 pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) !bool {
@@ -23,12 +23,12 @@ pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
     const epoch_cache = cached_state.getEpochCache();
     const config = cached_state.config.chain;
     const voluntary_exit = signed_voluntary_exit.message;
-    const validator = state.getValidator(voluntary_exit.validator_index);
+    const validator = state.validators().items[voluntary_exit.validator_index];
     const current_epoch = epoch_cache.epoch;
 
     return (
         // verify the validator is active
-        isActiveValidator(validator, current_epoch) and
+        isActiveValidator(&validator, current_epoch) and
             // verify exit has not been initiated
             validator.exit_epoch == FAR_FUTURE_EPOCH and
             // exits must specify an epoch when they become valid; they are not valid before then

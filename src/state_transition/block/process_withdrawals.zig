@@ -64,11 +64,11 @@ pub fn processWithdrawals(
     // Update the nextWithdrawalValidatorIndex
     if (expected_withdrawals.len == preset.MAX_WITHDRAWALS_PER_PAYLOAD) {
         // All slots filled, nextWithdrawalValidatorIndex should be validatorIndex having next turn
-        state.setNextWithdrawalValidatorIndex((expected_withdrawals[expected_withdrawals.len - 1].validator_index + 1) % state.getValidatorsCount());
+        state.setNextWithdrawalValidatorIndex((expected_withdrawals[expected_withdrawals.len - 1].validator_index + 1) % state.validators().items.len);
     } else {
         // expected withdrawals came up short in the bound, so we move nextWithdrawalValidatorIndex to
         // the next post the bound
-        state.setNextWithdrawalValidatorIndex((state.getNextWithdrawalValidatorIndex() + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.getValidatorsCount());
+        state.setNextWithdrawalValidatorIndex((state.getNextWithdrawalValidatorIndex() + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len);
     }
 }
 
@@ -83,8 +83,8 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
 
     const epoch = epoch_cache.epoch;
     var withdrawal_index = state.getNextWithdrawalIndex();
-    const validators = state.getValidators();
-    const balances = state.getBalances();
+    const validators = state.validators();
+    const balances = state.balances();
     const next_withdrawal_validator_index = state.getNextWithdrawalValidatorIndex();
 
     var withdrawals_result = try WithdrawalsResult.init(allocator);
@@ -109,7 +109,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
             const total_withdrawn_gop = try withdrawal_balances.getOrPut(withdrawal.validator_index);
 
             const total_withdrawn: u64 = if (total_withdrawn_gop.found_existing) total_withdrawn_gop.value_ptr.* else 0;
-            const balance = balances[withdrawal.validator_index] - total_withdrawn;
+            const balance = balances.items[withdrawal.validator_index] - total_withdrawn;
 
             if (validator.exit_epoch == params.FAR_FUTURE_EPOCH and
                 validator.effective_balance >= preset.MIN_ACTIVATION_BALANCE and
@@ -144,9 +144,9 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
         const withdraw_balance: u64 = if (withdraw_balance_gop.found_existing) withdraw_balance_gop.value_ptr.* else 0;
         const balance = if (state.isPostElectra())
             // Deduct partially withdrawn balance already queued above
-            balances[validator_index] - withdraw_balance
+            balances.items[validator_index] - withdraw_balance
         else
-            balances[validator_index];
+            balances.items[validator_index];
 
         const withdrawable_epoch = validator.withdrawable_epoch;
         const withdrawal_credentials = validator.withdrawal_credentials;

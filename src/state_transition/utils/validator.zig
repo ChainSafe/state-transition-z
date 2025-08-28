@@ -25,9 +25,8 @@ pub fn isSlashableValidator(validator: *const Validator, epoch: Epoch) bool {
 pub fn getActiveValidatorIndices(allocator: Allocator, state: *const BeaconStateAllForks, epoch: Epoch) !ValidatorIndices {
     const indices = ValidatorIndices.init(allocator);
 
-    const validator_count = state.getValidatorsCount();
-    for (0..validator_count) |i| {
-        const validator = state.getValidator(i);
+    for (0..state.validators().items.len) |i| {
+        const validator = state.validators[i];
         if (isActiveValidator(validator, epoch)) {
             try indices.append(@intCast(i));
         }

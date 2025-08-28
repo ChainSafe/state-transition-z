@@ -43,7 +43,7 @@ pub fn isValidIndexedAttestationIndices(cached_state: *const CachedBeaconStateAl
     }
 
     // check if indices are out of bounds, by checking the highest index (since it is sorted)
-    const validator_count = cached_state.state.getValidatorsCount();
+    const validator_count = cached_state.state.validators().items.len;
     if (indices.len > 0) {
         const last_index = indices[indices.len - 1];
         if (last_index >= validator_count) {

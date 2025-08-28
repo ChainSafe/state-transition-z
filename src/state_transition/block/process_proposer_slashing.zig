@@ -36,8 +36,8 @@ pub fn assertValidProposerSlashing(cached_state: *const CachedBeaconStateAllFork
     // }
 
     // verify the proposer is slashable
-    const proposer = state.getValidator(header_1.proposer_index);
-    if (!isSlashableValidator(proposer, epoch_cache.epoch)) {
+    const proposer = state.validators().items[header_1.proposer_index];
+    if (!isSlashableValidator(&proposer, epoch_cache.epoch)) {
         return error.InvalidProposerSlashingProposerNotSlashable;
     }
 

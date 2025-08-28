@@ -51,7 +51,7 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaco
     state_latest_block_header.* = latest_block_header;
 
     // verify proposer is not slashed. Only once per block, may use the slower read from tree
-    if (state.getValidator(proposer_index).slashed) {
+    if (state.validators().items[proposer_index].slashed) {
         return error.BlockProposerSlashed;
     }
 }

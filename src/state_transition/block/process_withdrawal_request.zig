@@ -20,7 +20,7 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
 
     const amount = withdrawal_request.amount;
     const pending_partial_withdrawals = state.getPendingPartialWithdrawals();
-    const validators = state.getValidators();
+    const validators = state.validators();
 
     // no need to use unfinalized pubkey cache from 6110 as validator won't be active anyway
     const pubkey_to_index = epoch_cache.pubkey_to_index;
@@ -44,7 +44,7 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
 
     // TODO Electra: Consider caching pendingPartialWithdrawals
     const pending_balance_to_withdraw = getPendingBalanceToWithdraw(state, validator_index);
-    const validator_balance = state.getBalance(validator_index);
+    const validator_balance = state.balances().items[validator_index];
 
     if (is_full_exit_request) {
         // only exit validator if it has no pending withdrawals in the queue

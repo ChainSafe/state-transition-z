@@ -51,7 +51,8 @@ pub fn processSyncAggregate(
     const sync_proposer_reward = epoch_cache.sync_proposer_reward;
     const sync_comittee_bits = block.getBeaconBlockBody().syncAggregate().sync_committee_bits;
     const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
-    var proposer_balance = state.getBalance(proposer_index);
+    const balances = state.balances();
+    var proposer_balance = balances.items[proposer_index];
 
     for (0..preset.SYNC_COMMITTEE_SIZE) |i| {
         const index = committee_indices[i];
@@ -70,7 +71,7 @@ pub fn processSyncAggregate(
         } else {
             // Negative rewards for non participants
             if (index == proposer_index) {
-                state.setBalance(proposer_index, @max(0, proposer_balance - sync_participant_reward));
+                balances.items[proposer_index] = @max(0, proposer_balance - sync_participant_reward);
             } else {
                 decreaseBalance(state, index, sync_participant_reward);
             }
@@ -78,7 +79,7 @@ pub fn processSyncAggregate(
     }
 
     // Apply proposer balance
-    state.setBalance(proposer_index, proposer_balance);
+    balances.items[proposer_index] = proposer_balance;
 }
 
 /// Consumers should deinit the returned pubkeys

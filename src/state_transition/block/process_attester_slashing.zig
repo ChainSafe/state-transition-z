@@ -23,8 +23,8 @@ pub fn processAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, 
     var slashed_any: bool = false;
     // Spec requires to sort indices beforehand but we validated sorted asc AttesterSlashing in the above functions
     for (intersecting_indices.items) |validator_index| {
-        const validator = state.getValidator(validator_index);
-        if (isSlashableValidator(validator, epoch)) {
+        const validator = state.validators().items[validator_index];
+        if (isSlashableValidator(&validator, epoch)) {
             try slashValidator(cached_state, validator_index, null);
             slashed_any = true;
         }

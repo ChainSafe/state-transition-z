@@ -156,7 +156,7 @@ pub const EpochTransitionCache = struct {
         var indices_to_eject = ValidatorIndices.init(allocator);
 
         var total_active_stake_by_increment: u64 = 0;
-        const validator_count = state.getValidatorsCount();
+        const validator_count = state.validators().items.len;
         try reused_cache.next_epoch_shuffling_active_validator_indices.resize(validator_count);
         var next_epoch_shuffling_active_indices_length: usize = 0;
         // pre-fill with true (most validators are active)
@@ -195,7 +195,7 @@ pub const EpochTransitionCache = struct {
         const effective_balances_by_increments = epoch_cache.getEffectiveBalanceIncrements().items;
 
         for (0..validator_count) |i| {
-            const validator = state.getValidator(i);
+            const validator = state.validators().items[i];
             var flag: u8 = 0;
 
             if (validator.slashed) {

@@ -257,95 +257,46 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getBlockRoot(self: *const BeaconStateAllForks, index: usize) Root {
-        return switch (self.*) {
-            inline else => |state| state.block_roots[index],
-        };
-    }
-
-    pub fn getBlockRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
+    pub fn blockRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
             inline else => |state| &state.block_roots,
         };
     }
 
-    pub fn setBlockRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.block_roots[index] = root,
-        }
-    }
-
-    pub fn getStateRoot(self: *const BeaconStateAllForks, index: usize) Root {
-        return switch (self.*) {
-            inline else => |state| state.state_roots.items[index],
-        };
-    }
-
-    pub fn getStateRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
+    pub fn stateRoots(self: *const BeaconStateAllForks) *const [preset.SLOTS_PER_HISTORICAL_ROOT]Root {
         return switch (self.*) {
             inline else => |state| &state.state_roots,
         };
     }
 
-    pub fn setStateRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.state_roots[index] = root,
-        }
-    }
-
-    pub fn getHistoricalRoot(self: *const BeaconStateAllForks, index: usize) Root {
+    pub fn historicalRoots(self: *BeaconStateAllForks) *std.ArrayListUnmanaged(Root) {
         return switch (self.*) {
-            inline else => |state| state.historical_roots.items[index],
+            inline else => |state| &state.historical_roots,
         };
     }
 
-    pub fn setHistoricalRoot(self: *BeaconStateAllForks, index: usize, root: Root) void {
-        switch (self.*) {
-            inline else => |state| state.historical_roots.items[index] = root,
-        }
-    }
-
-    pub fn appendHistoricalRoot(self: *BeaconStateAllForks, allocator: Allocator, root: Root) !void {
-        switch (self.*) {
-            inline else => |state| try state.historical_roots.append(allocator, root),
-        }
-    }
-
-    pub fn getEth1Data(self: *const BeaconStateAllForks) *Eth1Data {
+    pub fn eth1Data(self: *const BeaconStateAllForks) *Eth1Data {
         return switch (self.*) {
             inline else => |state| &state.eth1_data,
         };
     }
 
-    pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: Eth1Data) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_data = eth1_data,
-        }
-    }
-
-    pub fn getEth1DataVotes(self: *const BeaconStateAllForks) *Eth1DataVotes {
+    pub fn eth1DataVotes(self: *const BeaconStateAllForks) *Eth1DataVotes {
         return switch (self.*) {
             inline else => |state| &state.eth1_data_votes,
         };
     }
 
-    // TODO: why eth1_data_votes as pointer does not work?
-    pub fn setEth1DataVotes(self: *BeaconStateAllForks, eth1_data_votes: Eth1DataVotes) void {
-        switch (self.*) {
-            inline else => |state| state.eth1_data_votes = eth1_data_votes,
-        }
-    }
-
-    pub fn getEth1DepositIndex(self: *const BeaconStateAllForks) u64 {
+    pub fn eth1DepositIndex(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
             inline else => |state| state.eth1_deposit_index,
         };
     }
 
-    pub fn setEth1DepositIndex(self: *BeaconStateAllForks, index: u64) void {
-        switch (self.*) {
-            inline else => |state| state.eth1_deposit_index = index,
-        }
+    pub fn eth1DepositIndexPtr(self: *const BeaconStateAllForks) *u64 {
+        return switch (self.*) {
+            inline else => |state| &state.eth1_deposit_index,
+        };
     }
 
     pub fn increaseEth1DepositIndex(self: *BeaconStateAllForks) void {
@@ -354,58 +305,16 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getValidator(self: *const BeaconStateAllForks, index: usize) *Validator {
-        return switch (self.*) {
-            inline else => |state| &state.validators.items[index],
-        };
-    }
-
     // TODO: change to []Validator
-    pub fn getValidators(self: *const BeaconStateAllForks) Validators {
+    pub fn validators(self: *const BeaconStateAllForks) *Validators {
         return switch (self.*) {
-            inline else => |state| state.validators,
+            inline else => |state| &state.validators,
         };
     }
 
-    pub fn setValidator(self: *BeaconStateAllForks, index: usize, validator: *const Validator) void {
-        switch (self.*) {
-            inline else => |state| state.validators.items[index] = validator.*,
-        }
-    }
-
-    pub fn appendValidator(self: *BeaconStateAllForks, allocator: Allocator, validator: *const Validator) !void {
-        switch (self.*) {
-            inline else => |state| try state.validators.append(allocator, validator.*),
-        }
-    }
-
-    pub fn getBalance(self: *const BeaconStateAllForks, index: usize) u64 {
+    pub fn balances(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(u64) {
         return switch (self.*) {
-            inline else => |state| state.balances.items[index],
-        };
-    }
-
-    pub fn appendBalance(self: *BeaconStateAllForks, allocator: Allocator, amount: u64) !void {
-        switch (self.*) {
-            inline else => |state| try state.balances.append(allocator, amount),
-        }
-    }
-
-    pub fn setBalance(self: *BeaconStateAllForks, index: usize, balance: u64) void {
-        switch (self.*) {
-            inline else => |state| state.balances.items[index] = balance,
-        }
-    }
-
-    pub fn getBalances(self: *const BeaconStateAllForks) []const u64 {
-        return switch (self.*) {
-            inline else => |state| state.balances.items,
-        };
-    }
-
-    pub fn getValidatorsCount(self: *const BeaconStateAllForks) usize {
-        return switch (self.*) {
-            inline else => |state| state.validators.items.len,
+            inline else => |state| &state.balances,
         };
     }
 

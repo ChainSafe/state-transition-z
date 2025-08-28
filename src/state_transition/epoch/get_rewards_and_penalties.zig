@@ -37,7 +37,7 @@ const RewardPenaltyItem = struct {
 /// consumer should deinit `rewards` and `penalties` arrays
 pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
-    const validator_count = state.getValidatorsCount();
+    const validator_count = state.validators().items.len;
     const active_increments = cache.total_active_stake_by_increment;
     if (rewards.len != validator_count or penalties.len != validator_count) {
         return error.InvalidArrayLength;

@@ -17,14 +17,16 @@ pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_in
     const epoch = epoch_cache.epoch;
     const effective_balance_increments = epoch_cache.effective_balance_increment;
 
-    const validator = state.getValidator(slashed_index);
+    var validator = state.validators().items[slashed_index];
 
     // TODO: Bellatrix initiateValidatorExit validators.update() with the one below
-    try initiateValidatorExit(cached_state, validator);
+    try initiateValidatorExit(cached_state, &validator);
 
     validator.slashed = true;
     validator.withdrawable_epoch = @max(validator.withdrawable_epoch, epoch + preset.EPOCHS_PER_SLASHINGS_VECTOR);
-    state.setValidator(slashed_index, validator);
+
+    const validators = state.validators();
+    validators.items[slashed_index] = validator;
 
     const effective_balance = validator.effective_balance;
 

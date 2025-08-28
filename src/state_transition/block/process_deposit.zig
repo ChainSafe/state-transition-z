@@ -67,14 +67,15 @@ pub fn processDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllF
         deposit_data_root,
         &deposit.proof,
         preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1,
-        state.getEth1DepositIndex(),
-        state.getEth1Data().deposit_root,
+        state.eth1DepositIndex(),
+        state.eth1Data().deposit_root,
     )) {
         return error.InvalidMerkleProof;
     }
 
     // deposits must be processed in order
-    state.increaseEth1DepositIndex();
+    const state_eth1_deposit_index = state.eth1DepositIndexPtr();
+    state_eth1_deposit_index.* += 1;
     try applyDeposit(allocator, cached_state, &.{
         .phase0 = deposit.data,
     });
@@ -92,7 +93,7 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
     const signature = deposit.signature();
 
     const cached_index = epoch_cache.getValidatorIndex(&pubkey);
-    const is_new_validator = cached_index == null or cached_index.? >= state.getValidatorsCount();
+    const is_new_validator = cached_index == null or cached_index.? >= state.validators().items.len;
 
     if (state.isPreElectra()) {
         if (is_new_validator) {
@@ -133,13 +134,14 @@ pub fn addValidatorToRegistry(
 ) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const validators = state.getValidators();
+    const validators = state.validators();
     // add validator and balance entries
     const effective_balance = @min(
         amount - (amount % preset.EFFECTIVE_BALANCE_INCREMENT),
         if (state.isPreElectra()) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
     );
-    try state.appendValidator(allocator, &.{
+
+    try validators.append(allocator, .{
         .pubkey = pubkey,
         .withdrawal_credentials = withdrawal_credentials,
         .activation_eligibility_epoch = params.FAR_FUTURE_EPOCH,
@@ -169,8 +171,9 @@ pub fn addValidatorToRegistry(
         try state.previousEpochParticipations().append(allocator, 0);
         try state.appendCurrentEpochParticipation(allocator, 0);
     }
+    const balances = state.balances();
 
-    try state.appendBalance(allocator, amount);
+    try balances.append(allocator, amount);
 }
 
 pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, withdrawal_credential: WithdrawalCredentials, amount: u64, deposit_signature: BLSSignature) !bool {

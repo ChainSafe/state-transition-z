@@ -78,7 +78,7 @@ pub fn processBlock(
     }
 
     try processRandao(cached_state, &block.getBeaconBlockBody(), block.getProposerIndex(), opts.verify_signature);
-    try processEth1Data(allocator, cached_state, block.getBeaconBlockBody().getEth1Data());
+    try processEth1Data(allocator, cached_state, block.getBeaconBlockBody().eth1Data());
     try processOperations(allocator, cached_state, &block.getBeaconBlockBody(), opts);
     if (state.isPostAltair()) {
         try processSyncAggregate(allocator, cached_state, block, opts.verify_signature);

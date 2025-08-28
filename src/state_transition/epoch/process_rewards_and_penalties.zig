@@ -21,8 +21,9 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
     try getRewardsAndPenalties(allocator, cached_state, cache, rewards, penalties);
 
     for (rewards, 0..) |reward, i| {
-        const result = state.getBalance(i) + reward - penalties[i];
-        state.setBalance(i, @max(result, 0));
+        const balance = &state.balances().items[i];
+        const result = balance.* + reward - penalties[i];
+        balance.* = @max(result, 0);
     }
 
     // TODO this is naive version, consider caching balances here when switching to TreeView

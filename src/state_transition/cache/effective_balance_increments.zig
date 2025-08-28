@@ -26,12 +26,12 @@ pub fn getEffectiveBalanceIncrementsWithLen(allocator: Allocator, validator_coun
 }
 
 pub fn getEffectiveBalanceIncrements(allocator: Allocator, state: BeaconStateAllForks) !EffectiveBalanceIncrements {
-    const validator_count = state.getValidatorsCount();
+    const validator_count = state.validators().items.len;
     var increments = try EffectiveBalanceIncrements.initCapacity(allocator, validator_count);
     try increments.resize(validator_count);
 
     for (0..validator_count) |i| {
-        const validator = state.getValidator(i);
+        const validator = state.validators()[i];
         increments.items[i] = @divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT);
     }
 }

@@ -23,5 +23,6 @@ pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllFork
     // Cache block root
     var previous_block_root: Root = undefined;
     try ssz.phase0.BeaconBlockHeader.hashTreeRoot(latest_block_header, &previous_block_root);
-    state.setBlockRoot(state.slot() % preset.SLOTS_PER_HISTORICAL_ROOT, previous_block_root);
+    const state_block_roots = state.blockRoots();
+    state_block_roots[state.slot() % preset.SLOTS_PER_HISTORICAL_ROOT] = previous_block_root;
 }

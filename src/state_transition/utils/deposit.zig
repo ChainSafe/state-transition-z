@@ -8,7 +8,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 pub fn getEth1DepositCount(cached_state: *const CachedBeaconStateAllForks, eth1_data: ?*const Eth1Data) u64 {
     const state = cached_state.state;
 
-    const eth1_data_to_use = eth1_data orelse state.getEth1Data();
+    const eth1_data_to_use = eth1_data orelse state.eth1Data();
 
     if (state.isPostElectra()) {
         // eth1DataIndexLimit = min(UintNum64, UintBn64) can be safely casted as UintNum64
@@ -18,11 +18,11 @@ pub fn getEth1DepositCount(cached_state: *const CachedBeaconStateAllForks, eth1_
         else
             state.getDepositRequestsStartIndex();
 
-        return if (state.getEth1DepositIndex() < eth1_data_index_limit)
-            @min(MAX_DEPOSITS, eth1_data_index_limit - state.getEth1DepositIndex())
+        return if (state.eth1DepositIndex() < eth1_data_index_limit)
+            @min(MAX_DEPOSITS, eth1_data_index_limit - state.eth1DepositIndex())
         else
             0;
     }
 
-    return @min(MAX_DEPOSITS, eth1_data_to_use.deposit_count - state.getEth1DepositIndex());
+    return @min(MAX_DEPOSITS, eth1_data_to_use.deposit_count - state.eth1DepositIndex());
 }
