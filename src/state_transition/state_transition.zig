@@ -28,7 +28,8 @@ const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlinded
 const TestCachedBeaconStateAllForks = @import("../../test/int/generate_state.zig").TestCachedBeaconStateAllForks;
 const EpochTransitionCacheOpts = @import("cache/epoch_transition_cache.zig").EpochTransitionCacheOpts;
 const EpochTransitionCache = @import("cache/epoch_transition_cache.zig").EpochTransitionCache;
-const process_epoch = @import("epoch/process_epoch.zig").process_epoch;
+const ReusedEpochTransitionCache = @import("cache/epoch_transition_cache.zig").ReusedEpochTransitionCache;
+const processEpoch = @import("epoch/process_epoch.zig").processEpoch;
 const computeEpochAtSlot = @import("utils/epoch.zig").computeEpochAtSlot;
 const processSlot = @import("slot/process_slot.zig").processSlot;
 
@@ -50,6 +51,13 @@ fn processSlotsWithTransientCache(
     var post_state_slot = post_state.state.getSlot();
     if (post_state_slot > slot) return error.outdatedSlot;
 
+    const validator_count = post_state.epoch_cache_ref.get().current_shuffling.active_indices.len;
+
+    var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
+    defer reused_epoch_transition_cache.deinit();
+    var epoch_transition_cache: EpochTransitionCache = undefined;
+    defer epoch_transition_cache.deinit();
+
     while (post_state_slot < slot) {
         try processSlot(allocator, post_state);
 
@@ -57,8 +65,9 @@ fn processSlotsWithTransientCache(
             _ = post_state.config.getForkSeq(post_state_slot);
             // TODO(bing): implement
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
-            // var epoch_transition_cache = beforeProcessEpoch(post_state, epoch_transition_cache_opts);
-            // process_epoch(allocator, post_state, epoch_transition_cache);
+
+            try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache, &epoch_transition_cache);
+            processEpoch(allocator, post_state, epoch_transition_cache);
 
             // registerValidatorStatuses
 
