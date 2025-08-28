@@ -16,7 +16,7 @@ const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const slot = state.getSlot();
+    const slot = state.slot();
     const data = attestation.data;
 
     try validateAttestation(*const Phase0Attestation, cached_state, attestation);
@@ -51,7 +51,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
 pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const slot = state.getSlot();
+    const slot = state.slot();
     const data = attestation.data;
     const computed_epoch = computeEpochAtSlot(data.slot);
     const committee_count = try epoch_cache.getCommitteeCountPerSlot(computed_epoch);

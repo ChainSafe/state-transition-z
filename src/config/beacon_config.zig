@@ -13,7 +13,7 @@ const DOMAIN_VOLUNTARY_EXIT = params.DOMAIN_VOLUNTARY_EXIT;
 const ForkSeq = params.ForkSeq;
 const ForkInfo = params.ForkInfo;
 const TOTAL_FORKS = params.TOTAL_FORKS;
-const getForkSeqByForkName = params.getForkSeqByForkName;
+const forkSeqByForkName = params.forkSeqByForkName;
 
 const DomainByTypeHashMap = std.StringHashMap([]const u8);
 const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);
@@ -120,12 +120,12 @@ pub const BeaconConfig = struct {
         self.allocator.destroy(self);
     }
 
-    pub fn getForkInfo(self: *const BeaconConfig, slot: Slot) ForkInfo {
+    pub fn forkInfo(self: *const BeaconConfig, slot: Slot) ForkInfo {
         const epoch = @divFloor(slot, preset.SLOTS_PER_EPOCH);
-        return self.getForkInfoAtEpoch(epoch);
+        return self.forkInfoAtEpoch(epoch);
     }
 
-    pub fn getForkInfoAtEpoch(self: *const BeaconConfig, epoch: Epoch) ForkInfo {
+    pub fn forkInfoAtEpoch(self: *const BeaconConfig, epoch: Epoch) ForkInfo {
         // NOTE: forks must be sorted by descending epoch, latest fork first
         for (self.forks_descending_epoch_order) |fork| {
             if (epoch >= fork.epoch) {
@@ -137,28 +137,28 @@ pub const BeaconConfig = struct {
         return self.forks_ascending_epoch_order[@intFromEnum(ForkSeq.phase0)];
     }
 
-    pub fn getForkName(self: *const BeaconConfig, slot: Slot) []const u8 {
-        return self.getForkInfo(slot).name;
+    pub fn forkName(self: *const BeaconConfig, slot: Slot) []const u8 {
+        return self.forkInfo(slot).name;
     }
 
-    pub fn getForkSeq(self: *const BeaconConfig, slot: Slot) ForkSeq {
-        return self.getForkInfo(slot).fork_seq;
+    pub fn forkSeq(self: *const BeaconConfig, slot: Slot) ForkSeq {
+        return self.forkInfo(slot).fork_seq;
     }
 
-    pub fn getForkSeqAtEpoch(self: *const BeaconConfig, epoch: Epoch) ForkSeq {
-        return self.getForkInfoAtEpoch(epoch).fork_seq;
+    pub fn forkSeqAtEpoch(self: *const BeaconConfig, epoch: Epoch) ForkSeq {
+        return self.forkInfoAtEpoch(epoch).fork_seq;
     }
 
-    pub fn getForkVersion(self: *const BeaconConfig, slot: Slot) [4]u8 {
-        return self.getForkInfo(slot).version;
+    pub fn forkVersion(self: *const BeaconConfig, slot: Slot) [4]u8 {
+        return self.forkInfo(slot).version;
     }
 
-    // TODO: is getForkTypes() necessary?
+    // TODO: is forkTypes() necessary?
     // TODO: getPostBellatrixForkTypes
     // TODO: getPostAltairForkTypes
     // TODO: getPostDenebForkTypes
     pub fn getMaxBlobsPerBlock(self: *const BeaconConfig, epoch: Epoch) u64 {
-        const fork = self.getForkInfoAtEpoch(epoch).fork_seq;
+        const fork = self.forkInfoAtEpoch(epoch).fork_seq;
         return switch (fork) {
             .deneb => self.chain.MAX_BLOBS_PER_BLOCK,
             .electra => self.chain.MAX_BLOBS_PER_BLOCK_ELECTRA,
@@ -175,7 +175,7 @@ pub const BeaconConfig = struct {
     pub fn getDomain(self: *const BeaconConfig, state_slot: Slot, domain_type: DomainType, message_slot: ?Slot) ![32]u8 {
         const slot = if (message_slot) |s| s else state_slot;
         const epoch = @divFloor(slot, preset.SLOTS_PER_EPOCH);
-        const state_fork_info = self.getForkInfo(state_slot);
+        const state_fork_info = self.forkInfo(state_slot);
         const fork_seq = if (epoch < state_fork_info.epoch) state_fork_info.prev_fork_seq else state_fork_info.fork_seq;
 
         return self.getDomainByForkSeq(fork_seq, domain_type);
@@ -183,7 +183,7 @@ pub const BeaconConfig = struct {
 
     // TODO: may not need this method
     pub fn getDomainByForkName(self: *const BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
-        const fork_seq = getForkSeqByForkName(fork_name);
+        const fork_seq = forkSeqByForkName(fork_name);
         return try self.getDomainByForkSeq(fork_seq, domain_type);
     }
 

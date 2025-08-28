@@ -22,7 +22,7 @@ pub fn processJustificationAndFinalization(cached_state: *CachedBeaconStateAllFo
 
 pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
     const state = cached_state.state;
-    const current_epoch = computeEpochAtSlot(state.getSlot());
+    const current_epoch = computeEpochAtSlot(state.slot());
     const previous_epoch = current_epoch - 1;
 
     const old_previous_justified_checkpoint = state.getPreviousJustifiedCheckpoint();

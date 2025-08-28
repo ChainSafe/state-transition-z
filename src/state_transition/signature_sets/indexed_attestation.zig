@@ -22,7 +22,7 @@ pub fn getAttestationDataSigningRoot(cached_state: *const CachedBeaconStateAllFo
     const slot = computeEpochAtSlot(data.target.epoch);
     const config = cached_state.config;
     const state = cached_state.state;
-    const domain = try config.getDomain(state.getSlot(), params.DOMAIN_BEACON_ATTESTER, slot);
+    const domain = try config.getDomain(state.slot(), params.DOMAIN_BEACON_ATTESTER, slot);
 
     try computeSigningRoot(ssz.phase0.AttestationData, data, domain, out);
 }

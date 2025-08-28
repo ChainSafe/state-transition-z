@@ -32,7 +32,7 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const effective_balance_increments = epoch_cache.effective_balance_increment.get().items;
-    const state_slot = state.getSlot();
+    const state_slot = state.slot();
     const current_epoch = epoch_cache.epoch;
 
     const root_cache = try RootCache.init(allocator, cached_state);

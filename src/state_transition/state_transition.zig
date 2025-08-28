@@ -48,7 +48,7 @@ fn processSlotsWithTransientCache(
     slot: Slot,
     _: EpochTransitionCacheOpts,
 ) !void {
-    var post_state_slot = post_state.state.getSlot();
+    var post_state_slot = post_state.state.slot();
     if (post_state_slot > slot) return error.outdatedSlot;
 
     const validator_count = post_state.epoch_cache_ref.get().current_shuffling.active_indices.len;
@@ -62,7 +62,7 @@ fn processSlotsWithTransientCache(
         try processSlot(allocator, post_state);
 
         if ((post_state_slot + 1) % preset.SLOTS_PER_EPOCH == 0) {
-            _ = post_state.config.getForkSeq(post_state_slot);
+            _ = post_state.config.forkSeq(post_state_slot);
             // TODO(bing): implement
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
@@ -98,8 +98,8 @@ pub fn stateTransition(
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.getMessage();
     const block_slot = switch (block) {
-        .regular => |b| b.getSlot(),
-        .blinded => |b| b.getSlot(),
+        .regular => |b| b.slot(),
+        .blinded => |b| b.slot(),
     };
 
     //TODO(bing): deep clone

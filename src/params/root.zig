@@ -7,7 +7,7 @@ const preset_str = @import("build_options").preset;
 pub const preset = ssz.preset;
 const fork_defs = @import("./fork.zig");
 pub const ForkSeq = fork_defs.ForkSeq;
-pub const getForkSeqByForkName = fork_defs.getForkSeqByForkName;
+pub const forkSeqByForkName = fork_defs.forkSeqByForkName;
 pub const ForkInfo = fork_defs.ForkInfo;
 pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
 

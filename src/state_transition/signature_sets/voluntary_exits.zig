@@ -22,7 +22,7 @@ pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllFor
     const epoch_cache = cached_state.getEpochCache();
 
     const slot = computeStartSlotAtEpoch(signed_voluntary_exit.message.epoch);
-    const domain = try config.getDomainForVoluntaryExit(state.getSlot(), slot);
+    const domain = try config.getDomainForVoluntaryExit(state.slot(), slot);
     var signing_root: [32]u8 = undefined;
     try computeSigningRoot(ssz.phase0.VoluntaryExit, &signed_voluntary_exit.message, domain, &signing_root);
 

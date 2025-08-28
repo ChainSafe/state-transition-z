@@ -114,10 +114,10 @@ pub const SignedBlock = union(enum) {
         };
     }
 
-    pub fn getSlot(self: *const SignedBlock) Slot {
+    pub fn slot(self: *const SignedBlock) Slot {
         return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().getSlot(),
-            .blinded => |b| b.getBeaconBlock().getSlot(),
+            .regular => |b| b.getBeaconBlock().slot(),
+            .blinded => |b| b.getBeaconBlock().slot(),
         };
     }
 

@@ -12,10 +12,10 @@ pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllFork
     // Cache state root
     var previous_state_root: Root = undefined;
     try state.hashTreeRoot(allocator, &previous_state_root);
-    state.setStateRoot(state.getSlot() % preset.SLOTS_PER_HISTORICAL_ROOT, previous_state_root);
+    state.setStateRoot(state.slot() % preset.SLOTS_PER_HISTORICAL_ROOT, previous_state_root);
 
     // Cache latest block header state root
-    var latest_block_header = state.getLatestBlockHeader();
+    var latest_block_header = state.latestBlockHeader();
     if (!std.mem.eql(u8, &latest_block_header.state_root, &ZERO_HASH)) {
         latest_block_header.state_root = previous_state_root;
     }
@@ -23,5 +23,5 @@ pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllFork
     // Cache block root
     var previous_block_root: Root = undefined;
     try ssz.phase0.BeaconBlockHeader.hashTreeRoot(latest_block_header, &previous_block_root);
-    state.setBlockRoot(state.getSlot() % preset.SLOTS_PER_HISTORICAL_ROOT, previous_block_root);
+    state.setBlockRoot(state.slot() % preset.SLOTS_PER_HISTORICAL_ROOT, previous_block_root);
 }

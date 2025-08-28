@@ -58,7 +58,7 @@ pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconSta
     const rand_byte_count: ByteCount = if (state.isPostElectra()) ByteCount.Two else ByteCount.One;
     const max_effective_balance: u64 = if (state.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
 
-    const epoch = computeEpochAtSlot(state.getSlot() + 1);
+    const epoch = computeEpochAtSlot(state.slot() + 1);
     var seed: [32]u8 = undefined;
     try getSeed(state, epoch, params.DOMAIN_SYNC_COMMITTEE, &seed);
     try computeSyncCommitteeIndices(allocator, &seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT, out);

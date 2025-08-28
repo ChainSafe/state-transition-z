@@ -146,7 +146,7 @@ pub const EpochCache = struct {
         const pubkey_to_index = immutable_data.pubkey_to_index;
         const index_to_pubkey = immutable_data.index_to_pubkey;
 
-        const current_epoch = computeEpochAtSlot(state.getSlot());
+        const current_epoch = computeEpochAtSlot(state.slot());
         const is_genesis = current_epoch == params.GENESIS_EPOCH;
         const previous_epoch = if (is_genesis) params.GENESIS_EPOCH else current_epoch - 1;
         const next_epoch = current_epoch + 1;
@@ -229,7 +229,7 @@ pub const EpochCache = struct {
         const next_shuffling: *EpochShuffling = try computeEpochShuffling(allocator, state, next_active_indices, next_epoch);
 
         // TODO: implement proposerLookahead in fulu
-        const fork_seq = config.getForkSeqAtEpoch(current_epoch);
+        const fork_seq = config.forkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
         try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
         var proposers = [_]ValidatorIndex{0} ** preset.SLOTS_PER_EPOCH;
@@ -423,10 +423,10 @@ pub const EpochCache = struct {
 
         var upcoming_proposer_seed: [32]u8 = undefined;
         try getSeed(state, upcoming_epoch, params.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
-        try computeProposers(self.allocator, self.config.getForkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
+        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
 
         self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
-        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.getForkSeq(state.getSlot()), self.current_shuffling.get().active_indices.items.len);
+        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.forkSeq(state.slot()), self.current_shuffling.get().active_indices.items.len);
 
         const exit_queue_epoch = computeActivationExitEpoch(upcoming_epoch);
         if (exit_queue_epoch > self.exit_queue_epoch) {
@@ -443,7 +443,7 @@ pub const EpochCache = struct {
 
         self.previous_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments;
         self.current_target_unslashed_balance_increments = 0;
-        self.epoch = computeEpochAtSlot(state.getSlot());
+        self.epoch = computeEpochAtSlot(state.slot());
         self.sync_period = computeSyncPeriodAtEpoch(self.epoch);
     }
 

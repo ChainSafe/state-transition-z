@@ -25,7 +25,7 @@ pub fn processRandao(
 
     // verify RANDAO reveal
     if (verify_signature) {
-        if (!try verifyRandaoSignature(cached_state, body, cached_state.state.getSlot(), proposer_idx)) {
+        if (!try verifyRandaoSignature(cached_state, body, cached_state.state.slot(), proposer_idx)) {
             return error.InvalidRandaoSignature;
         }
     }

@@ -71,12 +71,12 @@ pub fn processExecutionPayload(
     // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
     //   slots_since_genesis = slot - GENESIS_SLOT
     //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (partial_payload.timestamp != state.genesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
+    if (partial_payload.timestamp != state.genesisTime() + state.slot() * config.chain.SECONDS_PER_SLOT) {
         return error.InvalidExecutionPayloadTimestamp;
     }
 
     if (state.isPostDeneb()) {
-        const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.getSlot()));
+        const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.slot()));
         if (body.blobKzgCommitmentsLen() > max_blobs_per_block) {
             return error.BlobKzgCommitmentsExceedsLimit;
         }

@@ -108,12 +108,12 @@ pub const BeaconBlock = union(enum) {
         _ = options;
         return switch (self) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => {
-                try writer.print("{s} (at slot {})", .{ @tagName(self), self.getSlot() });
+                try writer.print("{s} (at slot {})", .{ @tagName(self), self.slot() });
             },
         };
     }
 
-    pub fn getSlot(self: *const BeaconBlock) Slot {
+    pub fn slot(self: *const BeaconBlock) Slot {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.slot,
         };
@@ -172,7 +172,7 @@ pub const BlindedBeaconBlock = union(enum) {
         }
     }
 
-    pub fn getSlot(self: *const Self) Slot {
+    pub fn slot(self: *const Self) Slot {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |block| block.slot,
         };
@@ -508,7 +508,7 @@ fn testBlockSanity(Block: type) !void {
 
     const beacon_block = Block{ .electra = &electra_block };
 
-    try expect(beacon_block.getSlot() == 12345);
+    try expect(beacon_block.slot() == 12345);
     try expect(beacon_block.getProposerIndex() == 1);
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.getParentRoot());
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.getStateRoot());

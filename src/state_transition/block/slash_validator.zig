@@ -58,7 +58,7 @@ pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_in
     else
         @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR);
 
-    const proposer_index = try epoch_cache.getBeaconProposer(state.getSlot());
+    const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
 
     if (whistle_blower_index) |_whistle_blower_index| {
         increaseBalance(state, proposer_index, proposer_reward);

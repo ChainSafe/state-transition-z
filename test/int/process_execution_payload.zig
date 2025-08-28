@@ -5,7 +5,7 @@ test "process execution payload - sanity" {
     defer test_state.deinit();
 
     var execution_payload: ssz.electra.ExecutionPayload.Type = ssz.electra.ExecutionPayload.default_value;
-    execution_payload.timestamp = test_state.cached_state.state.genesisTime() + test_state.cached_state.state.getSlot() * config.mainnet_chain_config.SECONDS_PER_SLOT;
+    execution_payload.timestamp = test_state.cached_state.state.genesisTime() + test_state.cached_state.state.slot() * config.mainnet_chain_config.SECONDS_PER_SLOT;
     var body: ssz.electra.BeaconBlockBody.Type = ssz.electra.BeaconBlockBody.default_value;
     body.execution_payload = execution_payload;
 

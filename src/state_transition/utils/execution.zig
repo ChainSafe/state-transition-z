@@ -42,7 +42,7 @@ pub fn isMergeTransitionComplete(state: *const BeaconStateAllForks) bool {
     _ = state;
     return false;
 
-    // std.debug.assert(state.getForkSeq() == .bellatrix or state.getForkSeq() == .capella);
+    // std.debug.assert(state.forkSeq() == .bellatrix or state.forkSeq() == .capella);
     // TODO(bing): reenable below code when 'equals' works; first return false to test longer codepath
 
     // TODO(bing): Fix equals

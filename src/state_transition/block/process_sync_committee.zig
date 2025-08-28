@@ -50,7 +50,7 @@ pub fn processSyncAggregate(
     const sync_participant_reward = epoch_cache.sync_participant_reward;
     const sync_proposer_reward = epoch_cache.sync_proposer_reward;
     const sync_comittee_bits = block.getBeaconBlockBody().syncAggregate().sync_committee_bits;
-    const proposer_index = try epoch_cache.getBeaconProposer(state.getSlot());
+    const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
     var proposer_balance = state.getBalance(proposer_index);
 
     for (0..preset.SYNC_COMMITTEE_SIZE) |i| {
@@ -112,7 +112,7 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
     // ```
     // However we need to run the function getSyncCommitteeSignatureSet() for all the blocks in a epoch
     // with the same state when verifying blocks in batch on RangeSync. Therefore we use the block.slot.
-    const previous_slot = @max(block.getSlot(), 1) - 1;
+    const previous_slot = @max(block.slot(), 1) - 1;
 
     // The spec uses the state to get the root at previousSlot
     // ```python
@@ -125,7 +125,7 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
     // So getSyncCommitteeSignatureSet() can be called with a state in any slot (with the correct shuffling)
     const root_signed = block.getParentRoot();
 
-    const domain = try cached_state.config.getDomain(state.getSlot(), params.DOMAIN_SYNC_COMMITTEE, previous_slot);
+    const domain = try cached_state.config.getDomain(state.slot(), params.DOMAIN_SYNC_COMMITTEE, previous_slot);
 
     const pubkeys = try allocator.alloc(*const blst.PublicKey, participant_indices_.len);
     for (0..participant_indices_.len) |i| {

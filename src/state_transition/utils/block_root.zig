@@ -9,7 +9,7 @@ const SLOTS_PER_HISTORICAL_ROOT = preset.SLOTS_PER_HISTORICAL_ROOT;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 
 pub fn getBlockRootAtSlot(state: *const BeaconStateAllForks, slot: Slot) !Root {
-    const state_slot = state.getSlot();
+    const state_slot = state.slot();
     if (slot >= state_slot) {
         return error.SlotTooBig;
     }

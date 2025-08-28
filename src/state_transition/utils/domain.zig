@@ -19,7 +19,7 @@ pub fn computeDomain(domain_type: DomainType, fork_version: Version, genesis_val
 }
 
 /// Return the ForkVersion at an epoch from a Fork type
-pub fn getForkVersion(fork: Fork, epoch: Epoch) Version {
+pub fn forkVersion(fork: Fork, epoch: Epoch) Version {
     return if (epoch < fork.epoch) fork.previousVersion else fork.currentVersion;
 }
 

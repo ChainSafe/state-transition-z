@@ -87,7 +87,7 @@ pub fn computeConsolidationEpochAndUpdateChurn(cached_state: *const CachedBeacon
 }
 
 pub fn getCurrentEpoch(state: BeaconStateAllForks) Epoch {
-    return computeEpochAtSlot(state.getSlot());
+    return computeEpochAtSlot(state.slot());
 }
 
 pub fn getPreviousEpoch(state: BeaconStateAllForks) Epoch {

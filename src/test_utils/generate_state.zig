@@ -68,7 +68,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
         const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
-        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.getGenesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
 
         try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, index_pubkey_cache);
 

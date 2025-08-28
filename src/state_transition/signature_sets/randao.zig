@@ -32,7 +32,7 @@ pub fn getRandaoRevealSignatureSet(
 
     // should not get epoch from epoch_cache
     const epoch = computeEpochAtSlot(slot);
-    const domain = try config.getDomain(state.getSlot(), params.DOMAIN_RANDAO, slot);
+    const domain = try config.getDomain(state.slot(), params.DOMAIN_RANDAO, slot);
     var signing_root: Root = undefined;
     try computeSigningRoot(ssz.primitive.Epoch, &epoch, domain, &signing_root);
     return .{

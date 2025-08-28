@@ -52,7 +52,7 @@ pub const BeaconStateAllForks = union(enum) {
         _ = options;
         return switch (self) {
             inline else => {
-                try writer.print("{s} (at slot {})", .{ @tagName(self), self.getSlot() });
+                try writer.print("{s} (at slot {})", .{ @tagName(self), self.slot() });
             },
         };
     }
@@ -104,14 +104,14 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn getForkSeq(self: *const BeaconStateAllForks) ForkSeq {
+    pub fn forkSeq(self: *const BeaconStateAllForks) ForkSeq {
         return switch (self.*) {
-            .phase0 => ForkSeq.phase0,
-            .altair => ForkSeq.altair,
-            .bellatrix => ForkSeq.bellatrix,
-            .capella => ForkSeq.capella,
-            .deneb => ForkSeq.deneb,
-            .electra => ForkSeq.electra,
+            .phase0 => .phase0,
+            .altair => .altair,
+            .bellatrix => .bellatrix,
+            .capella => .capella,
+            .deneb => .deneb,
+            .electra => .electra,
         };
     }
 
@@ -233,52 +233,28 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn getGenesisValidatorsRoot(self: *const BeaconStateAllForks) Root {
+    pub fn genesisValidatorsRoot(self: *const BeaconStateAllForks) Root {
         return switch (self.*) {
             inline else => |state| state.genesis_validators_root,
         };
     }
 
-    pub fn setGenesisValidatorRoot(self: *BeaconStateAllForks, root: Root) void {
-        switch (self.*) {
-            inline else => |state| state.genesis_validators_root = root,
-        }
-    }
-
-    pub fn getSlot(self: *const BeaconStateAllForks) u64 {
+    pub fn slot(self: *const BeaconStateAllForks) u64 {
         return switch (self.*) {
             inline else => |state| state.slot,
         };
     }
 
-    pub fn setSlot(self: *BeaconStateAllForks, slot: u64) void {
-        switch (self.*) {
-            inline else => |state| state.slot = slot,
-        }
-    }
-
-    pub fn getFork(self: *const BeaconStateAllForks) Fork {
+    pub fn fork(self: *const BeaconStateAllForks) Fork {
         return switch (self.*) {
             inline else => |state| state.fork,
         };
     }
 
-    pub fn setFork(self: *BeaconStateAllForks, fork: Fork) void {
-        switch (self.*) {
-            inline else => |state| state.fork = fork,
-        }
-    }
-
-    pub fn getLatestBlockHeader(self: *const BeaconStateAllForks) *BeaconBlockHeader {
+    pub fn latestBlockHeader(self: *const BeaconStateAllForks) *BeaconBlockHeader {
         return switch (self.*) {
             inline else => |state| &state.latest_block_header,
         };
-    }
-
-    pub fn setLatestBlockHeader(self: *BeaconStateAllForks, header: BeaconBlockHeader) void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.latest_block_header = header,
-        }
     }
 
     pub fn getBlockRoot(self: *const BeaconStateAllForks, index: usize) Root {
@@ -344,7 +320,6 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn setEth1Data(self: *BeaconStateAllForks, eth1_data: Eth1Data) void {
         switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |state| state.eth1_data = eth1_data,
-
         }
     }
 
@@ -947,7 +922,6 @@ pub const BeaconStateAllForks = union(enum) {
         return switch (self.*) {
             .electra => |state| &state.pending_partial_withdrawals.items[index],
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
-
         };
     }
 
@@ -1033,10 +1007,10 @@ test "electra - sanity" {
     };
 
     try std.testing.expect(beacon_state.genesisTime() == 0);
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_state.getGenesisValidatorsRoot());
-    try std.testing.expect(beacon_state.getSlot() == 12345);
+    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_state.genesisValidatorsRoot());
+    try std.testing.expect(beacon_state.slot() == 12345);
     beacon_state.setSlot(2025);
-    try std.testing.expect(beacon_state.getSlot() == 2025);
+    try std.testing.expect(beacon_state.slot() == 2025);
 
     var out: [32]u8 = undefined;
     try beacon_state.hashTreeRoot(std.testing.allocator, &out);

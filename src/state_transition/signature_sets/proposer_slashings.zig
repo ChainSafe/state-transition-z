@@ -20,8 +20,8 @@ pub fn getProposerSlashingSignatureSets(cached_state: *const CachedBeaconStateAl
     // In state transition, ProposerSlashing headers are only partially validated. Their slot could be higher than the
     // clock and the slashing would still be valid. Must use bigint variants to hash correctly to all possible values
     var result: [2]SingleSignatureSet = undefined;
-    const domain_1 = try config.getDomain(state.getSlot(), params.DOMAIN_BEACON_PROPOSER, signed_header_1.message.slot);
-    const domain_2 = try config.getDomain(state.getSlot(), params.DOMAIN_BEACON_PROPOSER, signed_header_2.message.slot);
+    const domain_1 = try config.getDomain(state.slot(), params.DOMAIN_BEACON_PROPOSER, signed_header_1.message.slot);
+    const domain_2 = try config.getDomain(state.slot(), params.DOMAIN_BEACON_PROPOSER, signed_header_2.message.slot);
     var signing_root_1: [32]u8 = undefined;
     try computeSigningRoot(ssz.phase0.SignedBeaconBlockHeader, &signed_header_1, domain_1, &signing_root_1);
     var signing_root_2: [32]u8 = undefined;

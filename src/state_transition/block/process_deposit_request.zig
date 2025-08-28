@@ -18,7 +18,7 @@ pub fn processDepositRequest(allocator: std.mem.Allocator, cached_state: *Cached
         .withdrawal_credentials = deposit_request.withdrawal_credentials,
         .amount = deposit_request.amount,
         .signature = deposit_request.signature,
-        .slot = state.getSlot(),
+        .slot = state.slot(),
     };
 
     try state.pendingDeposits().append(allocator, pending_deposit);

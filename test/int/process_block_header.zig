@@ -11,7 +11,7 @@ test "process block header - sanity" {
     const proposer_index = proposers[slot % preset.SLOTS_PER_EPOCH];
 
     var header_parent_root: [32]u8 = undefined;
-    try ssz.phase0.BeaconBlockHeader.hashTreeRoot(test_state.cached_state.state.getLatestBlockHeader(), &header_parent_root);
+    try ssz.phase0.BeaconBlockHeader.hashTreeRoot(test_state.cached_state.state.latestBlockHeader(), &header_parent_root);
 
     message.slot = slot;
     message.proposer_index = proposer_index;

@@ -14,7 +14,7 @@ const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 pub fn processPendingAttestations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, proposer_indices: []usize, validator_count: usize, inclusion_delays: []usize, flags: []u8, attestations: []const PendingAttestation, epoch: Epoch, source_flag: u8, target_flag: u8, head_flag: u8) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const state_slot = state.getSlot();
+    const state_slot = state.slot();
     const prev_epoch = epoch_cache.getPreviousShuffling().epoch;
     if (attestations.len == 0) {
         return;
