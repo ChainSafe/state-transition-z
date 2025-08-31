@@ -29,10 +29,11 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
     // for TreeView, we may need a reused inactivityScoresArr
     // TODO: assert this once https://github.com/ChainSafe/state-transition-z/issues/33
 
+    const inactivity_scores = state.inactivityScores();
     for (0..flags.len) |i| {
         const flag = flags[i];
         if (hasMarkers(flag, FLAG_ELIGIBLE_ATTESTER)) {
-            var inactivity_score = state.getInactivityScore(i);
+            var inactivity_score = inactivity_scores.items[i];
 
             const prev_inactivity_score = inactivity_score;
             if (hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
@@ -44,7 +45,7 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
                 inactivity_score -= @min(INACTIVITY_SCORE_RECOVERY_RATE, inactivity_score);
             }
             if (inactivity_score != prev_inactivity_score) {
-                state.setInactivityScore(i, inactivity_score);
+                inactivity_scores.items[i] = inactivity_score;
             }
         }
     }

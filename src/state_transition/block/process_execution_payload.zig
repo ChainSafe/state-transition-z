@@ -99,5 +99,6 @@ pub fn processExecutionPayload(
         .regular => |b| try b.getExecutionPayload().toPayloadHeader(allocator),
         .blinded => |b| b.getExecutionPayloadHeader(),
     };
+
     state.setLatestExecutionPayloadHeader(&payload_header);
 }

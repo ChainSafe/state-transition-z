@@ -64,21 +64,22 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
 
     // TODO: Consider rendering bits as array of boolean for faster repeated access here
 
+    const finalized_checkpoint = state.finalizedCheckpoint();
     // Process finalizations
     // The 2nd/3rd/4th most recent epochs are all justified, the 2nd using the 4th as source
     if (bits[1] and bits[2] and bits[3] and old_previous_justified_checkpoint.epoch + 3 == current_epoch) {
-        state.setFinalizedCheckpoint(old_previous_justified_checkpoint);
+        finalized_checkpoint.* = old_previous_justified_checkpoint.*;
     }
     // The 2nd/3rd most recent epochs are both justified, the 2nd using the 3rd as source
     if (bits[1] and bits[2] and old_previous_justified_checkpoint.epoch + 2 == current_epoch) {
-        state.setFinalizedCheckpoint(old_previous_justified_checkpoint);
+        finalized_checkpoint.* = old_previous_justified_checkpoint.*;
     }
     // The 1st/2nd/3rd most recent epochs are all justified, the 1st using the 3rd as source
     if (bits[0] and bits[1] and bits[2] and old_current_justified_checkpoint.epoch + 2 == current_epoch) {
-        state.setFinalizedCheckpoint(old_current_justified_checkpoint);
+        finalized_checkpoint.* = old_current_justified_checkpoint.*;
     }
     // The 1st/2nd most recent epochs are both justified, the 1st using the 2nd as source
     if (bits[0] and bits[1] and old_current_justified_checkpoint.epoch + 1 == current_epoch) {
-        state.setFinalizedCheckpoint(old_current_justified_checkpoint);
+        finalized_checkpoint.* = old_current_justified_checkpoint.*;
     }
 }

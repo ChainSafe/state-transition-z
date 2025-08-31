@@ -29,14 +29,16 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
             next_sync_committee_pubkeys_slices[i] = &next_sync_committee_pubkeys[i];
         }
 
+        const current_sync_committee = state.currentSyncCommittee();
+        const next_sync_committee = state.nextSyncCommittee();
+        current_sync_committee.* = next_sync_committee.*;
         // Rotate syncCommittee in state
-        state.setCurrentSyncCommittee(state.getNextSyncCommittee());
-        state.setNextSyncCommittee(&.{
+        next_sync_committee.* = .{
             .pubkeys = next_sync_committee_pubkeys,
             // TODO(blst): may need to modify AggregatePublicKey.aggregateSerialized to accept this param
             // TODO(blst): is this correct to convert AggregatedPubkey to PublicKey first then toBytes()? there is no toBytes in AggregatedPubkey for now
             .aggregate_pubkey = (try aggregateSerializedPublicKeys(&next_sync_committee_pubkeys_slices, false)).toPublicKey().toBytes(),
-        });
+        };
 
         // Rotate syncCommittee cache
         // next_sync_committee_indices ownership is transferred to epoch_cache

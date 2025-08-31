@@ -29,7 +29,7 @@ pub fn processRegistryUpdates(cached_state: *CachedBeaconStateAllForks, cache: *
         validators.items[index].activation_eligibility_epoch = epoch_cache.epoch + 1;
     }
 
-    const finality_epoch = state.getFinalizedCheckpoint().epoch;
+    const finality_epoch = state.finalizedCheckpoint().epoch;
     const len = if (state.isPreElectra()) @min(cache.indices_eligible_for_activation.items.len, epoch_cache.activation_churn_limit) else cache.indices_eligible_for_activation.items.len;
     const activation_epoch = computeActivationExitEpoch(cache.current_epoch);
 

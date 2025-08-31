@@ -47,8 +47,8 @@ pub fn isMergeTransitionComplete(state: *const BeaconStateAllForks) bool {
 
     // TODO(bing): Fix equals
     // if (!state.isPostCapella()) {
-    //     return !ssz.bellatrix.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().bellatrix, ssz.bellatrix.ExecutionPayloadHeader.default_value);
+    //     return !ssz.bellatrix.ExecutionPayload.equals(state.latestExecutionPayloadHeader().bellatrix, ssz.bellatrix.ExecutionPayloadHeader.default_value);
     // }
 
-    // return !ssz.capella.ExecutionPayload.equals(state.getLatestExecutionPayloadHeader().capella, ssz.capella.ExecutionPayloadHeader.default_value);
+    // return !ssz.capella.ExecutionPayload.equals(state.latestExecutionPayloadHeader().capella, ssz.capella.ExecutionPayloadHeader.default_value);
 }

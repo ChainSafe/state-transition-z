@@ -64,7 +64,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const total_balance_in_gwei_f64: f64 = @floatFromInt(total_balance_in_gwei);
     const total_balance_in_gwei_sqrt: f64 = @sqrt(total_balance_in_gwei_f64);
     const balance_sq_root: u64 = @intFromFloat(total_balance_in_gwei_sqrt);
-    const finality_delay = cache.prev_epoch - state.getFinalizedCheckpoint().epoch;
+    const finality_delay = cache.prev_epoch - state.finalizedCheckpoint().epoch;
 
     const BASE_REWARDS_PER_EPOCH = BASE_REWARDS_PER_EPOCH_CONST;
     const proposer_reward_quotient = PROPOSER_REWARD_QUOTIENT;

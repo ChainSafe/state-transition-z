@@ -19,7 +19,7 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
     const config = epoch_cache.config;
 
     const amount = withdrawal_request.amount;
-    const pending_partial_withdrawals = state.getPendingPartialWithdrawals();
+    const pending_partial_withdrawals = state.pendingPartialWithdrawals();
     const validators = state.validators();
 
     // no need to use unfinalized pubkey cache from 6110 as validator won't be active anyway
@@ -27,7 +27,7 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
     const is_full_exit_request = amount == params.FULL_EXIT_REQUEST_AMOUNT;
 
     // If partial withdrawal queue is full, only full exits are processed
-    if (pending_partial_withdrawals.len >= params.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
+    if (pending_partial_withdrawals.items.len >= params.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
         !is_full_exit_request)
     {
         return;

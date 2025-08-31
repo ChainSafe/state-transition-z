@@ -16,7 +16,8 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
 
     var chunk_start_index: usize = 0;
     const chunk_size = 100;
-    const pending_consolidations_length = state.pendingConsolidations().items.len;
+    const pending_consolidations = state.pendingConsolidations();
+    const pending_consolidations_length = pending_consolidations.items.len;
     outer: while (chunk_start_index < pending_consolidations_length) : (chunk_start_index += chunk_size) {
         // TODO(ssz): implement getReadonlyByRange api for TreeView
         const consolidation_chunk = state.pendingConsolidations().items[chunk_start_index..@min(chunk_start_index + chunk_size, pending_consolidations_length)];
@@ -50,9 +51,8 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
     }
 
     if (next_pending_consolidation > 0) {
-        const new_pending_consolidations = try state.sliceFromPendingConsolidations(allocator, next_pending_consolidation);
-        const pending_consolidations = state.pendingConsolidations();
-        pending_consolidations.clearRetainingCapacity();
-        try pending_consolidations.appendSlice(allocator, new_pending_consolidations);
+        const new_pending_consolidations = pending_consolidations.items[next_pending_consolidation..];
+        try pending_consolidations.resize(allocator, new_pending_consolidations.len);
+        @memcpy(pending_consolidations.items[0..], new_pending_consolidations[0..]);
     }
 }

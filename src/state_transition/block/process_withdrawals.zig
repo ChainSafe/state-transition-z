@@ -55,20 +55,22 @@ pub fn processWithdrawals(
         @memcpy(pending_partial_withdrawals.items, state.pendingPartialWithdrawals().items[processed_partial_withdrawals_count..]);
     }
 
+    const next_withdrawal_index = state.nextWithdrawalIndex();
     // Update the nextWithdrawalIndex
     if (expected_withdrawals.len > 0) {
         const latest_withdrawal = expected_withdrawals[expected_withdrawals.len - 1];
-        state.setNextWithdrawalIndex(latest_withdrawal.index + 1);
+        next_withdrawal_index.* = latest_withdrawal.index + 1;
     }
 
     // Update the nextWithdrawalValidatorIndex
     if (expected_withdrawals.len == preset.MAX_WITHDRAWALS_PER_PAYLOAD) {
         // All slots filled, nextWithdrawalValidatorIndex should be validatorIndex having next turn
-        state.setNextWithdrawalValidatorIndex((expected_withdrawals[expected_withdrawals.len - 1].validator_index + 1) % state.validators().items.len);
+        next_withdrawal_index.* =
+            (expected_withdrawals[expected_withdrawals.len - 1].validator_index + 1) % state.validators().items.len;
     } else {
         // expected withdrawals came up short in the bound, so we move nextWithdrawalValidatorIndex to
         // the next post the bound
-        state.setNextWithdrawalValidatorIndex((state.getNextWithdrawalValidatorIndex() + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len);
+        next_withdrawal_index.* = (state.nextWithdrawalValidatorIndex().* + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len;
     }
 }
 
@@ -82,10 +84,10 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
     const epoch_cache = cached_state.getEpochCache();
 
     const epoch = epoch_cache.epoch;
-    var withdrawal_index = state.getNextWithdrawalIndex();
+    var withdrawal_index = state.nextWithdrawalIndex().*;
     const validators = state.validators();
     const balances = state.balances();
-    const next_withdrawal_validator_index = state.getNextWithdrawalValidatorIndex();
+    const next_withdrawal_validator_index = state.nextWithdrawalValidatorIndex();
 
     var withdrawals_result = try WithdrawalsResult.init(allocator);
     var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
@@ -98,8 +100,9 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
         // MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP = 8, PENDING_PARTIAL_WITHDRAWALS_LIMIT: 134217728 so we should only call getAllReadonly() if it makes sense
         // pendingPartialWithdrawals comes from EIP-7002 smart contract where it takes fee so it's more likely than not validator is in correct condition to withdraw
         // also we may break early if withdrawableEpoch > epoch
-        for (0..state.getPendingPartialWithdrawalCount()) |i| {
-            const withdrawal = state.getPendingPartialWithdrawal(i);
+        const pending_partial_withdrawals = state.pendingPartialWithdrawals();
+        for (0..pending_partial_withdrawals.items.len) |i| {
+            const withdrawal = pending_partial_withdrawals.items[i];
             // TODO: define MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP
             if (withdrawal.withdrawable_epoch > epoch or withdrawals_result.withdrawals.items.len == preset.MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP) {
                 break;
@@ -138,7 +141,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
     var n: usize = 0;
     while (n < bound) : (n += 1) {
         // Get next validator in turn
-        const validator_index = (next_withdrawal_validator_index + n) % validators.items.len;
+        const validator_index = (next_withdrawal_validator_index.* + n) % validators.items.len;
         const validator = validators.items[validator_index];
         const withdraw_balance_gop = try withdrawal_balances.getOrPut(validator_index);
         const withdraw_balance: u64 = if (withdraw_balance_gop.found_existing) withdraw_balance_gop.value_ptr.* else 0;

@@ -165,7 +165,8 @@ pub fn addValidatorToRegistry(
 
     // Only after altair:
     if (state.isPostAltair()) {
-        try state.appendInactivityScore(allocator, 0);
+        const inactivity_scores = state.inactivityScores();
+        try inactivity_scores.append(allocator, 0);
 
         // add participation caches
         try state.previousEpochParticipations().append(allocator, 0);

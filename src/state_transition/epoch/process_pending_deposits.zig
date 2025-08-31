@@ -21,27 +21,29 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
-    const available_for_processing = state.getDepositBalanceToConsume() + getActivationExitChurnLimit(epoch_cache);
+    const deposit_balance_to_consume = state.depositBalanceToConsume();
+    const available_for_processing = deposit_balance_to_consume.* + getActivationExitChurnLimit(epoch_cache);
     var processed_amount: u64 = 0;
     var next_deposit_index: u64 = 0;
     var is_churn_limit_reached = false;
-    const finalized_slot = computeStartSlotAtEpoch(state.getFinalizedCheckpoint().epoch);
+    const finalized_slot = computeStartSlotAtEpoch(state.finalizedCheckpoint().epoch);
 
     var start_index: usize = 0;
     // TODO: is this a good number?
     const chunk = 100;
-    const pending_deposits_len = state.getPendingDepositCount();
+    const pending_deposits = state.pendingDeposits();
+    const pending_deposits_len = pending_deposits.items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
         // TODO(ssz): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
-        const deposits: []PendingDeposit = state.getPendingDeposits()[start_index..@min(start_index + chunk, pending_deposits_len)];
+        const deposits: []PendingDeposit = pending_deposits.items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {
             // Do not process deposit requests if Eth1 bridge deposits are not yet applied.
             if (
             // Is deposit request
             deposit.slot > params.GENESIS_SLOT and
                 // There are pending Eth1 bridge deposits
-                state.eth1DepositIndex() < state.getDepositRequestsStartIndex())
+                state.eth1DepositIndex() < state.depositRequestsStartIndex().*)
             {
                 break :outer;
             }
@@ -74,7 +76,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
                 try applyPendingDeposit(allocator, cached_state, deposit, cache);
             } else if (is_validator_exited) {
                 // TODO: typescript version accumulate to temp array while in zig we append directly
-                try state.appendPendingDeposit(allocator, &deposit);
+                try pending_deposits.append(allocator, deposit);
             } else {
                 // Check if deposit fits in the churn, otherwise, do no more deposit processing in this epoch.
                 is_churn_limit_reached = processed_amount + deposit.amount > available_for_processing;
@@ -92,8 +94,8 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     }
 
     if (next_deposit_index > 0) {
-        const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
-        state.setPendingDeposits(remaining_pending_deposits);
+        try pending_deposits.resize(allocator, pending_deposits_len - next_deposit_index);
+        @memcpy(pending_deposits.items[0..], pending_deposits.items[next_deposit_index..]);
     }
 
     // TODO: consider doing this for TreeView
@@ -104,9 +106,9 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     // no need to append to pending_deposits again because we did that in the for loop above already
     // Accumulate churn only if the churn limit has been hit.
     if (is_churn_limit_reached) {
-        state.setDepositBalanceToConsume(available_for_processing - processed_amount);
+        deposit_balance_to_consume.* = available_for_processing - processed_amount;
     } else {
-        state.setDepositBalanceToConsume(0);
+        deposit_balance_to_consume.* = 0;
     }
 }
 

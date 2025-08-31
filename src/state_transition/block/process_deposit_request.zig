@@ -8,8 +8,9 @@ const params = @import("params");
 
 pub fn processDepositRequest(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, deposit_request: *const DepositRequest) !void {
     const state = cached_state.state;
-    if (state.getDepositRequestsStartIndex() == params.UNSET_DEPOSIT_REQUESTS_START_INDEX) {
-        state.setDepositRequestsStartIndex(deposit_request.index);
+    const deposit_requests_start_index = state.depositRequestsStartIndex();
+    if (deposit_requests_start_index.* == params.UNSET_DEPOSIT_REQUESTS_START_INDEX) {
+        deposit_requests_start_index.* = deposit_request.index;
     }
 
     // Create pending deposit

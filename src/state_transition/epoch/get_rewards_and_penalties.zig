@@ -61,6 +61,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
 
     const flags = cache.flags;
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
+    const inactivity_scores = state.inactivityScores();
     for (flags, 0..) |flag, i| {
         if (!hasMarkers(flag, FLAG_ELIGIBLE_ATTESTER)) {
             continue;
@@ -121,7 +122,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
         // Same logic to getInactivityPenaltyDeltas
         // TODO: if we have limited value in inactivityScores we can provide a cache too
         if (!hasMarkers(flag, FLAG_PREV_TARGET_ATTESTER_UNSLASHED)) {
-            const penalty_numerator: u64 = @as(u64, effective_balance_increment) * EFFECTIVE_BALANCE_INCREMENT * state.getInactivityScore(i);
+            const penalty_numerator: u64 = @as(u64, effective_balance_increment) * EFFECTIVE_BALANCE_INCREMENT * inactivity_scores.items[i];
             penalties[i] += @divFloor(penalty_numerator, penalty_denominator);
         }
     }

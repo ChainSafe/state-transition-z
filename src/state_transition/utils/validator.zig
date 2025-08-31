@@ -77,11 +77,11 @@ pub fn getMaxEffectiveBalance(withdrawal_credentials: WithdrawalCredentials) u64
 
 pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validator_index: ValidatorIndex) u64 {
     var total: u64 = 0;
-    const count = state.getPendingPartialWithdrawalCount();
-    for (0..count) |i| {
-        const item = state.getPendingPartialWithdrawal(i);
-        if (item.validator_index == validator_index) {
-            total += item.amount;
+    const pending_partial_withdrawals = state.pendingPartialWithdrawals();
+    for (0..pending_partial_withdrawals.items.len) |i| {
+        const pending_partial_withdrawal = pending_partial_withdrawals.items[i];
+        if (pending_partial_withdrawal.validator_index == validator_index) {
+            total += pending_partial_withdrawal.amount;
         }
     }
     return total;
