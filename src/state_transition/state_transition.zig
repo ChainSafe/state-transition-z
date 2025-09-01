@@ -96,7 +96,7 @@ pub fn stateTransition(
     signed_block: SignedBlock,
     opts: Options,
 ) !*CachedBeaconStateAllForks {
-    const block = signed_block.getMessage();
+    const block = signed_block.message();
     const block_slot = switch (block) {
         .regular => |b| b.slot(),
         .blinded => |b| b.slot(),

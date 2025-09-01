@@ -7,93 +7,93 @@ pub const SignedBlock = union(enum) {
     regular: *const SignedBeaconBlock,
     blinded: *const SignedBlindedBeaconBlock,
 
-    pub const BeaconBlockBody_ = union(enum) {
+    pub const Body = union(enum) {
         regular: BeaconBlockBody,
         blinded: BlindedBeaconBlockBody,
 
-        pub fn blobKzgCommitmentsLen(self: *const BeaconBlockBody_) usize {
+        pub fn blobKzgCommitmentsLen(self: *const Body) usize {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.blobKzgCommitments().items.len,
             };
         }
 
-        pub fn eth1Data(self: *const BeaconBlockBody_) *const ssz.phase0.Eth1Data.Type {
+        pub fn eth1Data(self: *const Body) *const ssz.phase0.Eth1Data.Type {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.eth1Data(),
             };
         }
 
-        pub fn randaoReveal(self: *const BeaconBlockBody_) ssz.primitive.BLSSignature.Type {
+        pub fn randaoReveal(self: *const Body) ssz.primitive.BLSSignature.Type {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.randaoReveal(),
             };
         }
 
-        pub fn deposits(self: *const BeaconBlockBody_) []Deposit {
+        pub fn deposits(self: *const Body) []Deposit {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.deposits(),
             };
         }
-        pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
+        pub fn depositRequests(self: *const Body) []DepositRequest {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.depositRequests(),
             };
         }
-        pub fn withdrawalRequests(self: *const BeaconBlockBody_) []WithdrawalRequest {
+        pub fn withdrawalRequests(self: *const Body) []WithdrawalRequest {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.withdrawalRequests(),
             };
         }
-        pub fn consolidationRequests(self: *const BeaconBlockBody_) []ConsolidationRequest {
+        pub fn consolidationRequests(self: *const Body) []ConsolidationRequest {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.consolidationRequests(),
             };
         }
 
-        pub fn syncAggregate(self: *const BeaconBlockBody_) *const ssz.altair.SyncAggregate.Type {
+        pub fn syncAggregate(self: *const Body) *const ssz.altair.SyncAggregate.Type {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.syncAggregate(),
             };
         }
 
-        pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
+        pub fn attesterSlashings(self: *const Body) AttesterSlashings {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.attesterSlashings(),
             };
         }
 
-        pub fn attestations(self: *const BeaconBlockBody_) Attestations {
+        pub fn attestations(self: *const Body) Attestations {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.attestations(),
             };
         }
 
-        pub fn voluntaryExits(self: *const BeaconBlockBody_) []SignedVoluntaryExit {
+        pub fn voluntaryExits(self: *const Body) []SignedVoluntaryExit {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.voluntaryExits(),
             };
         }
 
-        pub fn proposerSlashings(self: *const BeaconBlockBody_) []ProposerSlashing {
+        pub fn proposerSlashings(self: *const Body) []ProposerSlashing {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.proposerSlashings(),
             };
         }
 
-        pub fn blsToExecutionChanges(self: *const BeaconBlockBody_) []SignedBLSToExecutionChange {
+        pub fn blsToExecutionChanges(self: *const Body) []SignedBLSToExecutionChange {
             return switch (self.*) {
                 inline .regular, .blinded => |b| b.blsToExecutionChanges(),
             };
         }
     };
 
-    pub fn getMessage(self: *const SignedBlock) Block {
+    pub fn message(self: *const SignedBlock) Block {
         return switch (self.*) {
             .regular => |b| .{ .regular = b.beaconBlock() },
             .blinded => |b| .{ .blinded = b.beaconBlock() },
         };
     }
-    pub fn beaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
+    pub fn beaconBlockBody(self: *const SignedBlock) Body {
         return switch (self.*) {
             .regular => |b| .{ .regular = b.beaconBlock().beaconBlockBody() },
             .blinded => |b| .{ .blinded = b.beaconBlock().beaconBlockBody() },
@@ -104,13 +104,6 @@ pub const SignedBlock = union(enum) {
         return switch (self.*) {
             .regular => |b| b.beaconBlock().parentRoot(),
             .blinded => |b| b.beaconBlock().parentRoot(),
-        };
-    }
-
-    pub fn stateRoot(self: *const SignedBlock) [32]u8 {
-        return switch (self.*) {
-            .regular => |b| b.beaconBlock().stateRoot(),
-            .blinded => |b| b.beaconBlock().stateRoot(),
         };
     }
 
@@ -132,13 +125,6 @@ pub const SignedBlock = union(enum) {
         return switch (self.*) {
             .regular => |b| b.beaconBlock().proposerIndex(),
             .blinded => |b| b.beaconBlock().proposerIndex(),
-        };
-    }
-
-    pub fn signature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
-        return switch (self.*) {
-            .regular => |b| b.signature(),
-            .blinded => |b| b.signature(),
         };
     }
 };

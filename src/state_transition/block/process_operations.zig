@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const params = @import("params");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const BeaconBlockBody_ = @import("../signed_block.zig").SignedBlock.BeaconBlockBody_;
+const Body = @import("../signed_block.zig").SignedBlock.Body;
 
 const getEth1DepositCount = @import("../utils/deposit.zig").getEth1DepositCount;
 const processAttestations = @import("./process_attestations.zig").processAttestations;
@@ -17,7 +17,7 @@ const processVoluntaryExit = @import("./process_voluntary_exit.zig").processVolu
 const processWithdrawalRequest = @import("./process_withdrawal_request.zig").processWithdrawalRequest;
 const ProcessBlockOpts = @import("./types.zig").ProcessBlockOpts;
 
-pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, body: *const BeaconBlockBody_, opts: ProcessBlockOpts) !void {
+pub fn processOperations(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, body: *const Body, opts: ProcessBlockOpts) !void {
     const state = cached_state.state;
 
     // verify that outstanding deposits are processed up to the maximum number of deposits

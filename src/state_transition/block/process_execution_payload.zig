@@ -25,7 +25,7 @@ const PartialPayload = struct {
 pub fn processExecutionPayload(
     allocator: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
-    body: SignedBlock.BeaconBlockBody_,
+    body: SignedBlock.Body,
     external_data: BlockExternalData,
 ) !void {
     const state = cached_state.state;

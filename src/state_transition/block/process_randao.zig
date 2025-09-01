@@ -6,7 +6,7 @@ const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
-const BeaconBlockBody_ = @import("../signed_block.zig").SignedBlock.BeaconBlockBody_;
+const Body = @import("../signed_block.zig").SignedBlock.Body;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 const verifyRandaoSignature = @import("../signature_sets/randao.zig").verifyRandaoSignature;
@@ -14,7 +14,7 @@ const digest = @import("../utils/sha256.zig").digest;
 
 pub fn processRandao(
     cached_state: *const CachedBeaconStateAllForks,
-    body: *const BeaconBlockBody_,
+    body: *const Body,
     proposer_idx: u64,
     verify_signature: bool,
 ) !void {
