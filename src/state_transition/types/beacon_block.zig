@@ -286,7 +286,7 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // bellatrix fields
-    pub fn getExecutionPayload(self: *const BeaconBlockBody) ExecutionPayload {
+    pub fn executionPayload(self: *const BeaconBlockBody) ExecutionPayload {
         return switch (self.*) {
             .bellatrix => |body| .{ .bellatrix = &body.execution_payload },
             .capella => |body| .{ .capella = &body.execution_payload },
@@ -316,28 +316,28 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // electra fields
-    pub fn getExecutionRequests(self: *const BeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
+    pub fn executionRequests(self: *const BeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
         return switch (self.*) {
             .electra => |body| &body.execution_requests,
             else => panic("ExecutionRequests is not available in {}", .{self}),
         };
     }
 
-    pub fn getDepositRequests(self: *const BeaconBlockBody) []DepositRequest {
+    pub fn depositRequests(self: *const BeaconBlockBody) []DepositRequest {
         return switch (self.*) {
             .electra => |body| body.execution_requests.deposits.items,
             else => panic("DepositRequests is not available in {}", .{self}),
         };
     }
 
-    pub fn getWithdrawalRequests(self: *const BeaconBlockBody) []WithdrawalRequest {
+    pub fn withdrawalRequests(self: *const BeaconBlockBody) []WithdrawalRequest {
         return switch (self.*) {
             .electra => |body| body.execution_requests.withdrawals.items,
             else => panic("WithdrawalRequests is not available in {}", .{self}),
         };
     }
 
-    pub fn getConsolidationRequests(self: *const BeaconBlockBody) []ConsolidationRequest {
+    pub fn consolidationRequests(self: *const BeaconBlockBody) []ConsolidationRequest {
         return switch (self.*) {
             .electra => |body| body.execution_requests.consolidations.items,
             else => panic("ConsolidationRequests is not available in {}", .{self}),
@@ -417,7 +417,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
     }
 
     // bellatrix fields
-    pub fn getExecutionPayloadHeader(self: *const BlindedBeaconBlockBody) ExecutionPayloadHeader {
+    pub fn executionPayloadHeader(self: *const BlindedBeaconBlockBody) ExecutionPayloadHeader {
         return switch (self.*) {
             .capella => |body| .{ .capella = body.execution_payload_header },
             .deneb => |body| .{ .deneb = body.execution_payload_header },
@@ -444,7 +444,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
     }
 
     // electra fields
-    pub fn getExecutionRequests(self: *const BlindedBeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
+    pub fn executionRequests(self: *const BlindedBeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
         return switch (self.*) {
             .capella => @panic("ExecutionRequests is not available in capella"),
             .deneb => @panic("ExecutionRequests is not available in deneb"),
@@ -452,7 +452,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getDepositRequests(self: *const BlindedBeaconBlockBody) []DepositRequest {
+    pub fn depositRequests(self: *const BlindedBeaconBlockBody) []DepositRequest {
         return switch (self.*) {
             .capella => @panic("DepositRequests is not available in capella"),
             .deneb => @panic("DepositRequests is not available in deneb"),
@@ -460,7 +460,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getWithdrawalRequests(self: *const BlindedBeaconBlockBody) []WithdrawalRequest {
+    pub fn withdrawalRequests(self: *const BlindedBeaconBlockBody) []WithdrawalRequest {
         return switch (self.*) {
             .capella => @panic("WithdrawalRequests is not available in capella"),
             .deneb => @panic("WithdrawalRequests is not available in deneb"),
@@ -468,7 +468,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getConsolidationRequests(self: *const BlindedBeaconBlockBody) []ConsolidationRequest {
+    pub fn consolidationRequests(self: *const BlindedBeaconBlockBody) []ConsolidationRequest {
         return switch (self.*) {
             .capella => @panic("ConsolidationRequests is not available in capella"),
             .deneb => @panic("ConsolidationRequests is not available in deneb"),
@@ -528,13 +528,13 @@ fn testBlockSanity(Block: type) !void {
 
     if (is_blinded) {
         // Blinded blocks do not have the execution payload in plain
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().electra.parent_hash);
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.executionPayloadHeader().electra.parent_hash);
         // another way to access the parent_hash
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayloadHeader().getParentHash());
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.executionPayloadHeader().getParentHash());
     } else {
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().electra.parent_hash);
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.executionPayload().electra.parent_hash);
         // another way to access the parent_hash
-        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getExecutionPayload().getParentHash());
+        try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.executionPayload().getParentHash());
     }
 
     // capella
@@ -544,7 +544,7 @@ fn testBlockSanity(Block: type) !void {
     try expect(block_body.blobKzgCommitments().items.len == 0);
 
     // electra
-    const execution_request = block_body.getExecutionRequests();
+    const execution_request = block_body.executionRequests();
     try expect(execution_request.deposits.items.len == 0);
     try expect(execution_request.withdrawals.items.len == 0);
     try expect(execution_request.consolidations.items.len == 0);

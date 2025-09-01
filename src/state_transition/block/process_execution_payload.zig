@@ -35,18 +35,18 @@ pub fn processExecutionPayload(
     switch (body) {
         .regular => |b| {
             partial_payload = .{
-                .parent_hash = b.getExecutionPayload().getParentHash(),
-                .block_hash = b.getExecutionPayload().getBlockHash(),
-                .prev_randao = b.getExecutionPayload().getPrevRandao(),
-                .timestamp = b.getExecutionPayload().getTimestamp(),
+                .parent_hash = b.executionPayload().getParentHash(),
+                .block_hash = b.executionPayload().getBlockHash(),
+                .prev_randao = b.executionPayload().getPrevRandao(),
+                .timestamp = b.executionPayload().getTimestamp(),
             };
         },
         .blinded => |b| {
             partial_payload = .{
-                .parent_hash = b.getExecutionPayloadHeader().getParentHash(),
-                .block_hash = b.getExecutionPayloadHeader().getBlockHash(),
-                .prev_randao = b.getExecutionPayloadHeader().getPrevRandao(),
-                .timestamp = b.getExecutionPayloadHeader().getTimestamp(),
+                .parent_hash = b.executionPayloadHeader().getParentHash(),
+                .block_hash = b.executionPayloadHeader().getBlockHash(),
+                .prev_randao = b.executionPayloadHeader().getPrevRandao(),
+                .timestamp = b.executionPayloadHeader().getTimestamp(),
             };
         },
     }
@@ -96,8 +96,8 @@ pub fn processExecutionPayload(
     }
 
     const payload_header = switch (body) {
-        .regular => |b| try b.getExecutionPayload().toPayloadHeader(allocator),
-        .blinded => |b| b.getExecutionPayloadHeader(),
+        .regular => |b| try b.executionPayload().toPayloadHeader(allocator),
+        .blinded => |b| b.executionPayloadHeader(),
     };
 
     state.setLatestExecutionPayloadHeader(&payload_header);

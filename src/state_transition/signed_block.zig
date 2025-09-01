@@ -36,17 +36,17 @@ pub const SignedBlock = union(enum) {
         }
         pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getDepositRequests(),
+                inline .regular, .blinded => |b| b.depositRequests(),
             };
         }
         pub fn withdrawalRequests(self: *const BeaconBlockBody_) []WithdrawalRequest {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getWithdrawalRequests(),
+                inline .regular, .blinded => |b| b.withdrawalRequests(),
             };
         }
         pub fn consolidationRequests(self: *const BeaconBlockBody_) []ConsolidationRequest {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getConsolidationRequests(),
+                inline .regular, .blinded => |b| b.consolidationRequests(),
             };
         }
 
