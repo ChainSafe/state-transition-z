@@ -7,7 +7,7 @@ test "process operations" {
     const beacon_block: ssz.electra.SignedBeaconBlock.Type = ssz.electra.SignedBeaconBlock.default_value;
     const signed_beacon_block = SignedBeaconBlock{ .electra = &beacon_block };
     const block = SignedBlock{ .regular = &signed_beacon_block };
-    try processOperations(allocator, test_state.cached_state, &block.getBeaconBlockBody(), .{});
+    try processOperations(allocator, test_state.cached_state, &block.beaconBlockBody(), .{});
 }
 
 const std = @import("std");

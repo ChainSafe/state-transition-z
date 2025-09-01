@@ -27,14 +27,14 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaco
 
     // verify that proposer index is the correct index
     const proposer_index = try epoch_cache.getBeaconProposer(slot);
-    if (block.getProposerIndex() != proposer_index) {
+    if (block.proposerIndex() != proposer_index) {
         return error.BlockProposerIndexMismatch;
     }
 
     // verify that the parent matches
     var header_parent_root: [32]u8 = undefined;
     try ssz.phase0.BeaconBlockHeader.hashTreeRoot(state.latestBlockHeader(), &header_parent_root);
-    if (!std.mem.eql(u8, &block.getParentRoot(), &header_parent_root)) {
+    if (!std.mem.eql(u8, &block.parentRoot(), &header_parent_root)) {
         return error.BlockParentRootMismatch;
     }
     var body_root: [32]u8 = undefined;
@@ -44,7 +44,7 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaco
     const latest_block_header: BeaconBlockHeader = .{
         .slot = slot,
         .proposer_index = proposer_index,
-        .parent_root = block.getParentRoot(),
+        .parent_root = block.parentRoot(),
         .state_root = ZERO_HASH,
         .body_root = body_root,
     };
@@ -58,8 +58,8 @@ pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaco
 
 pub fn blockToHeader(allocator: Allocator, block: *const SignedBlock, out: *BeaconBlockHeader) !void {
     out.slot = block.slot();
-    out.proposer_index = block.getProposerIndex();
-    out.parent_root = block.getParentRoot();
-    out.state_root = block.getStateRoot();
+    out.proposer_index = block.proposerIndex();
+    out.parent_root = block.parentRoot();
+    out.state_root = block.stateRoot();
     try block.hashTreeRoot(allocator, &out.body_root);
 }

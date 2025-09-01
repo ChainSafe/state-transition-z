@@ -6,8 +6,8 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const SignedBlock = @import("../signed_block.zig").SignedBlock;
 const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
 const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-const getRandaoRevealSignatureSet = @import("./randao.zig").getRandaoRevealSignatureSet;
-const getProposerSlashingsSignatureSets = @import("./proposer_slashings.zig").getProposerSlashingsSignatureSets;
+const randaoRevealSignatureSet = @import("./randao.zig").randaoRevealSignatureSet;
+const proposerSlashingsSignatureSets = @import("./proposer_slashings.zig").proposerSlashingsSignatureSets;
 
 pub fn blockSignatureSets(
     state: CachedBeaconStateAllForks,
@@ -28,7 +28,7 @@ test "blockSignatureSets" {
     const signed_beacon_block = SignedBeaconBlock{ .electra = block };
     const signed_block = SignedBlock{ .regular = &signed_beacon_block };
 
-    getProposerSlashingsSignatureSets(test_state.cached_state, signed_block, signature_sets);
+    proposerSlashingsSignatureSets(test_state.cached_state, signed_block, signature_sets);
 
     blockSignatureSets(test_state.state, signed_block);
 }

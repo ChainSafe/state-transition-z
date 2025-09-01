@@ -21,7 +21,7 @@ test "process randao - sanity" {
     beacon_block.message = message;
     const signed_beacon_block = SignedBeaconBlock{ .electra = &beacon_block };
     const block = SignedBlock{ .regular = &signed_beacon_block };
-    try processRandao(test_state.cached_state, &block.getBeaconBlockBody(), block.getProposerIndex(), false);
+    try processRandao(test_state.cached_state, &block.beaconBlockBody(), block.proposerIndex(), false);
 }
 
 const std = @import("std");

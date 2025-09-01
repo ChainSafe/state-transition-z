@@ -52,9 +52,9 @@ pub fn getIndexedAttestationSignatureSet(comptime IA: type, allocator: Allocator
     return try getAttestationWithIndicesSignatureSet(allocator, cached_state, &indexed_attestation.data, indexed_attestation.signature, indexed_attestation.attesting_indices.items);
 }
 
-pub fn getAttestationsSignatureSets(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(AggregatedSignatureSet)) !void {
+pub fn attestationsSignatureSets(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(AggregatedSignatureSet)) !void {
     const epoch_cache = cached_state.getEpochCache();
-    const attestation_items = signed_block.getBeaconBlock().getBeaconBlockBody().getAttestations().items();
+    const attestation_items = signed_block.beaconBlock().beaconBlockBody().attestations().items();
 
     switch (attestation_items) {
         .phase0 => |phase0_attestations| {

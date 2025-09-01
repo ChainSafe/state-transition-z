@@ -42,7 +42,7 @@ pub fn processBlock(
         // https://github.com/ethereum/consensus-specs/blob/b62c9e877990242d63aa17a2a59a49bc649a2f2e/specs/eip4844/beacon-chain.md#disabling-withdrawals
         if (state.isPostCapella()) {
             const expected_withdrawals_result = try getExpectedWithdrawals(allocator, cached_state);
-            const body = block.getBeaconBlockBody();
+            const body = block.beaconBlockBody();
             switch (body) {
                 .regular => |b| {
                     const actual_withdrawals = b.getExecutionPayload().getWithdrawals();
@@ -72,14 +72,14 @@ pub fn processBlock(
         try processExecutionPayload(
             allocator,
             cached_state,
-            block.getBeaconBlockBody(),
+            block.beaconBlockBody(),
             external_data,
         );
     }
 
-    try processRandao(cached_state, &block.getBeaconBlockBody(), block.getProposerIndex(), opts.verify_signature);
-    try processEth1Data(allocator, cached_state, block.getBeaconBlockBody().eth1Data());
-    try processOperations(allocator, cached_state, &block.getBeaconBlockBody(), opts);
+    try processRandao(cached_state, &block.beaconBlockBody(), block.proposerIndex(), opts.verify_signature);
+    try processEth1Data(allocator, cached_state, block.beaconBlockBody().eth1Data());
+    try processOperations(allocator, cached_state, &block.beaconBlockBody(), opts);
     if (state.isPostAltair()) {
         try processSyncAggregate(allocator, cached_state, block, opts.verify_signature);
     }

@@ -71,7 +71,7 @@ pub const ExecutionPayload = union(enum) {
         };
     }
 
-    pub fn getStateRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn stateRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.state_root,
         };
@@ -190,7 +190,7 @@ pub const ExecutionPayloadHeader = union(enum) {
         };
     }
 
-    pub fn getStateRoot(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn stateRoot(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.state_root,
         };

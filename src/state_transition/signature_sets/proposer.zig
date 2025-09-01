@@ -28,9 +28,9 @@ pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedB
 
     // Root.deserializeFromBytes(&signing_root_buf, &signing_root);
     return .{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_block.getProposerIndex()].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_block.proposerIndex()].*,
         .signing_root = signing_root_buf,
-        .signature = signed_block.getSignature(),
+        .signature = signed_block.signature(),
     };
 }
 

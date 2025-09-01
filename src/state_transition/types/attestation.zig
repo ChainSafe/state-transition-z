@@ -43,7 +43,7 @@ pub const IndexedAttestation = union(enum) {
         };
     }
 
-    pub fn getSignature(self: *const IndexedAttestation) BLSSignature {
+    pub fn signature(self: *const IndexedAttestation) BLSSignature {
         return switch (self.*) {
             .phase0 => |indexed_attestation| indexed_attestation.attestation.signature,
             .electra => |indexed_attestation| indexed_attestation.attestation.signature,

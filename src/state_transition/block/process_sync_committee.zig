@@ -32,7 +32,7 @@ pub fn processSyncAggregate(
     if (verify_signatures orelse true) {
         // This is to conform to the spec - we want the signature to be verified
         // TODO(ssz) implement intersectValues
-        const participant_indices = try block.getBeaconBlockBody().syncAggregate().sync_committee_bits.intersectValues(
+        const participant_indices = try block.beaconBlockBody().syncAggregate().sync_committee_bits.intersectValues(
             ValidatorIndex,
             allocator,
             committee_indices,
@@ -49,7 +49,7 @@ pub fn processSyncAggregate(
 
     const sync_participant_reward = epoch_cache.sync_participant_reward;
     const sync_proposer_reward = epoch_cache.sync_proposer_reward;
-    const sync_comittee_bits = block.getBeaconBlockBody().syncAggregate().sync_committee_bits;
+    const sync_comittee_bits = block.beaconBlockBody().syncAggregate().sync_committee_bits;
     const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
     const balances = state.balances();
     var proposer_balance = balances.items[proposer_index];
@@ -86,7 +86,7 @@ pub fn processSyncAggregate(
 pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, block: *const SignedBlock, participant_indices: ?[]usize) !?AggregatedSignatureSet {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const sync_aggregate = block.getBeaconBlockBody().syncAggregate();
+    const sync_aggregate = block.beaconBlockBody().syncAggregate();
     const signature = sync_aggregate.sync_committee_signature;
 
     const participant_indices_ = if (participant_indices) |pi| pi else blk: {
@@ -124,7 +124,7 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
     //
     // On skipped slots state block roots just copy the latest block, so using the parentRoot here is equivalent.
     // So getSyncCommitteeSignatureSet() can be called with a state in any slot (with the correct shuffling)
-    const root_signed = block.getParentRoot();
+    const root_signed = block.parentRoot();
 
     const domain = try cached_state.config.getDomain(state.slot(), params.DOMAIN_SYNC_COMMITTEE, previous_slot);
 

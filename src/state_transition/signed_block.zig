@@ -13,7 +13,7 @@ pub const SignedBlock = union(enum) {
 
         pub fn blobKzgCommitmentsLen(self: *const BeaconBlockBody_) usize {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getBlobKzgCommitments().items.len,
+                inline .regular, .blinded => |b| b.blobKzgCommitments().items.len,
             };
         }
 
@@ -23,15 +23,15 @@ pub const SignedBlock = union(enum) {
             };
         }
 
-        pub fn getRandaoReveal(self: *const BeaconBlockBody_) ssz.primitive.BLSSignature.Type {
+        pub fn randaoReveal(self: *const BeaconBlockBody_) ssz.primitive.BLSSignature.Type {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getRandaoReveal(),
+                inline .regular, .blinded => |b| b.randaoReveal(),
             };
         }
 
         pub fn deposits(self: *const BeaconBlockBody_) []Deposit {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getDeposits(),
+                inline .regular, .blinded => |b| b.deposits(),
             };
         }
         pub fn depositRequests(self: *const BeaconBlockBody_) []DepositRequest {
@@ -52,93 +52,93 @@ pub const SignedBlock = union(enum) {
 
         pub fn syncAggregate(self: *const BeaconBlockBody_) *const ssz.altair.SyncAggregate.Type {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getSyncAggregate(),
+                inline .regular, .blinded => |b| b.syncAggregate(),
             };
         }
 
         pub fn attesterSlashings(self: *const BeaconBlockBody_) AttesterSlashings {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getAttesterSlashings(),
+                inline .regular, .blinded => |b| b.attesterSlashings(),
             };
         }
 
         pub fn attestations(self: *const BeaconBlockBody_) Attestations {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getAttestations(),
+                inline .regular, .blinded => |b| b.attestations(),
             };
         }
 
         pub fn voluntaryExits(self: *const BeaconBlockBody_) []SignedVoluntaryExit {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getVoluntaryExits(),
+                inline .regular, .blinded => |b| b.voluntaryExits(),
             };
         }
 
         pub fn proposerSlashings(self: *const BeaconBlockBody_) []ProposerSlashing {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getProposerSlashings(),
+                inline .regular, .blinded => |b| b.proposerSlashings(),
             };
         }
 
         pub fn blsToExecutionChanges(self: *const BeaconBlockBody_) []SignedBLSToExecutionChange {
             return switch (self.*) {
-                inline .regular, .blinded => |b| b.getBlsToExecutionChanges(),
+                inline .regular, .blinded => |b| b.blsToExecutionChanges(),
             };
         }
     };
 
     pub fn getMessage(self: *const SignedBlock) Block {
         return switch (self.*) {
-            .regular => |b| .{ .regular = b.getBeaconBlock() },
-            .blinded => |b| .{ .blinded = b.getBeaconBlock() },
+            .regular => |b| .{ .regular = b.beaconBlock() },
+            .blinded => |b| .{ .blinded = b.beaconBlock() },
         };
     }
-    pub fn getBeaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
+    pub fn beaconBlockBody(self: *const SignedBlock) BeaconBlockBody_ {
         return switch (self.*) {
-            .regular => |b| .{ .regular = b.getBeaconBlock().getBeaconBlockBody() },
-            .blinded => |b| .{ .blinded = b.getBeaconBlock().getBeaconBlockBody() },
-        };
-    }
-
-    pub fn getParentRoot(self: *const SignedBlock) [32]u8 {
-        return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().getParentRoot(),
-            .blinded => |b| b.getBeaconBlock().getParentRoot(),
+            .regular => |b| .{ .regular = b.beaconBlock().beaconBlockBody() },
+            .blinded => |b| .{ .blinded = b.beaconBlock().beaconBlockBody() },
         };
     }
 
-    pub fn getStateRoot(self: *const SignedBlock) [32]u8 {
+    pub fn parentRoot(self: *const SignedBlock) [32]u8 {
         return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().getStateRoot(),
-            .blinded => |b| b.getBeaconBlock().getStateRoot(),
+            .regular => |b| b.beaconBlock().parentRoot(),
+            .blinded => |b| b.beaconBlock().parentRoot(),
+        };
+    }
+
+    pub fn stateRoot(self: *const SignedBlock) [32]u8 {
+        return switch (self.*) {
+            .regular => |b| b.beaconBlock().stateRoot(),
+            .blinded => |b| b.beaconBlock().stateRoot(),
         };
     }
 
     pub fn slot(self: *const SignedBlock) Slot {
         return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().slot(),
-            .blinded => |b| b.getBeaconBlock().slot(),
+            .regular => |b| b.beaconBlock().slot(),
+            .blinded => |b| b.beaconBlock().slot(),
         };
     }
 
     pub fn hashTreeRoot(self: *const SignedBlock, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
-            .blinded => |b| b.getBeaconBlock().hashTreeRoot(allocator, out),
+            .regular => |b| b.beaconBlock().hashTreeRoot(allocator, out),
+            .blinded => |b| b.beaconBlock().hashTreeRoot(allocator, out),
         };
     }
 
-    pub fn getProposerIndex(self: *const SignedBlock) u64 {
+    pub fn proposerIndex(self: *const SignedBlock) u64 {
         return switch (self.*) {
-            .regular => |b| b.getBeaconBlock().getProposerIndex(),
-            .blinded => |b| b.getBeaconBlock().getProposerIndex(),
+            .regular => |b| b.beaconBlock().proposerIndex(),
+            .blinded => |b| b.beaconBlock().proposerIndex(),
         };
     }
 
-    pub fn getSignature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
+    pub fn signature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
-            .regular => |b| b.getSignature(),
-            .blinded => |b| b.getSignature(),
+            .regular => |b| b.signature(),
+            .blinded => |b| b.signature(),
         };
     }
 };

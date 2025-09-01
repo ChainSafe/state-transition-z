@@ -42,8 +42,8 @@ pub fn getProposerSlashingSignatureSets(cached_state: *const CachedBeaconStateAl
     return result;
 }
 
-pub fn getProposerSlashingsSignatureSets(cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
-    const proposer_slashings = signed_block.getBeaconBlock().getBeaconBlockBody().getProposerSlashings().items;
+pub fn proposerSlashingsSignatureSets(cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
+    const proposer_slashings = signed_block.beaconBlock().beaconBlockBody().proposerSlashings().items;
     for (proposer_slashings) |proposer_slashing| {
         const signature_sets = getProposerSlashingSignatureSets(cached_state, proposer_slashing);
         try out.append(signature_sets[0]);

@@ -21,7 +21,7 @@ pub fn processRandao(
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const epoch = epoch_cache.epoch;
-    const randao_reveal = body.getRandaoReveal();
+    const randao_reveal = body.randaoReveal();
 
     // verify RANDAO reveal
     if (verify_signature) {

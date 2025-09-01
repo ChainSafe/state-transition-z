@@ -16,11 +16,11 @@ pub fn verifyRandaoSignature(
     slot: Slot,
     proposer_idx: u64,
 ) !bool {
-    const signature_set = try getRandaoRevealSignatureSet(state, body, slot, proposer_idx);
+    const signature_set = try randaoRevealSignatureSet(state, body, slot, proposer_idx);
     return verifySingleSignatureSet(&signature_set);
 }
 
-pub fn getRandaoRevealSignatureSet(
+pub fn randaoRevealSignatureSet(
     cached_state: *const CachedBeaconStateAllForks,
     body: *const BeaconBlockBody_,
     slot: Slot,
@@ -38,6 +38,6 @@ pub fn getRandaoRevealSignatureSet(
     return .{
         .pubkey = epoch_cache.index_to_pubkey.items[proposer_idx].*,
         .signing_root = signing_root,
-        .signature = body.getRandaoReveal(),
+        .signature = body.randaoReveal(),
     };
 }

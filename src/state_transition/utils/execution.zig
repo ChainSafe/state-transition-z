@@ -16,11 +16,11 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Signe
 
     switch (block.*) {
         .blinded => |b| {
-            _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayloadHeader();
+            _ = b.beaconBlock().beaconBlockBody().getExecutionPayloadHeader();
             // TODO(bing) equals
         },
         .regular => |b| {
-            _ = b.getBeaconBlock().getBeaconBlockBody().getExecutionPayload();
+            _ = b.beaconBlock().beaconBlockBody().getExecutionPayload();
             // TODO(bing) equals
         },
     }

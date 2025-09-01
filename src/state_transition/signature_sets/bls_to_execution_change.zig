@@ -32,7 +32,7 @@ pub fn getBlsToExecutionChangeSignatureSet(config: *const BeaconConfig, signed_b
 }
 
 pub fn getBlsToExecutionChangeSignatureSets(config: *const BeaconConfig, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
-    const bls_to_execution_changes = signed_block.getBeaconBlock().getBeaconBlockBody().getBlsToExecutionChanges().items;
+    const bls_to_execution_changes = signed_block.beaconBlock().beaconBlockBody().blsToExecutionChanges().items;
     for (bls_to_execution_changes) |signed_bls_to_execution_change| {
         const signature_set = try getBlsToExecutionChangeSignatureSet(config, signed_bls_to_execution_change);
         try out.append(signature_set);

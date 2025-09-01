@@ -154,8 +154,8 @@ pub fn stateTransition(
         //    hashTreeRootTimer?.();
 
         const block_state_root = switch (block) {
-            .regular => |b| b.getStateRoot(),
-            .blinded => |b| b.getStateRoot(),
+            .regular => |b| b.stateRoot(),
+            .blinded => |b| b.stateRoot(),
         };
         if (!std.mem.eql(u8, &out, &block_state_root)) {
             return error.InvalidStateRoot;

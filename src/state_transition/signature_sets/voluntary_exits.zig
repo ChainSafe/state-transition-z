@@ -33,8 +33,8 @@ pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllFor
     };
 }
 
-pub fn getVoluntaryExitsSignatureSets(cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
-    const voluntary_exits = signed_block.getBeaconBlock().getBeaconBlockBody().getVoluntaryExits().items;
+pub fn voluntaryExitsSignatureSets(cached_state: *const CachedBeaconStateAllForks, signed_block: *const SignedBeaconBlock, out: std.ArrayList(SingleSignatureSet)) !void {
+    const voluntary_exits = signed_block.beaconBlock().beaconBlockBody().voluntaryExits().items;
     for (voluntary_exits) |signed_voluntary_exit| {
         const signature_set = getVoluntaryExitSignatureSet(cached_state, &signed_voluntary_exit);
         try out.append(signature_set);

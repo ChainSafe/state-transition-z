@@ -21,7 +21,7 @@ test "process execution payload - sanity" {
     try processExecutionPayload(
         allocator,
         test_state.cached_state,
-        block.getBeaconBlockBody(),
+        block.beaconBlockBody(),
         .{ .execution_payload_status = .valid, .data_availability_status = .available },
     );
 }

@@ -30,7 +30,7 @@ pub const SignedBeaconBlock = union(enum) {
     deneb: *const ssz.deneb.SignedBeaconBlock.Type,
     electra: *const ssz.electra.SignedBeaconBlock.Type,
 
-    pub fn getBeaconBlock(self: *const SignedBeaconBlock) BeaconBlock {
+    pub fn beaconBlock(self: *const SignedBeaconBlock) BeaconBlock {
         return switch (self.*) {
             .phase0 => |block| .{ .phase0 = &block.message },
             .altair => |block| .{ .altair = &block.message },
@@ -41,7 +41,7 @@ pub const SignedBeaconBlock = union(enum) {
         };
     }
 
-    pub fn getSignature(self: *const SignedBeaconBlock) ssz.primitive.BLSSignature.Type {
+    pub fn signature(self: *const SignedBeaconBlock) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.signature,
         };
@@ -53,7 +53,7 @@ pub const SignedBlindedBeaconBlock = union(enum) {
     deneb: *const ssz.deneb.SignedBlindedBeaconBlock.Type,
     electra: *const ssz.electra.SignedBlindedBeaconBlock.Type,
 
-    pub fn getBeaconBlock(self: *const SignedBlindedBeaconBlock) BlindedBeaconBlock {
+    pub fn beaconBlock(self: *const SignedBlindedBeaconBlock) BlindedBeaconBlock {
         return switch (self.*) {
             .capella => |block| .{ .capella = &block.message },
             .deneb => |block| .{ .deneb = &block.message },
@@ -61,22 +61,11 @@ pub const SignedBlindedBeaconBlock = union(enum) {
         };
     }
 
-    pub fn getSignature(self: *const SignedBlindedBeaconBlock) ssz.primitive.BLSSignature.Type {
+    pub fn signature(self: *const SignedBlindedBeaconBlock) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |block| block.signature,
         };
     }
-
-    // pub fn getSignature(self: *const SignedBlindedBeaconBlock) ssz.primitive.BLSSignature {
-    //     return switch (self.*) {
-    //         .phase0 => |block| .{ .phase0 = &block.signature },
-    //         .altair => |block| .{ .altair = &block.signature },
-    //         .bellatrix => |block| .{ .bellatrix = &block.signature },
-    //         .capella => |block| .{ .capella = &block.signature },
-    //         .deneb => |block| .{ .deneb = &block.signature },
-    //         .electra => |block| .{ .electra = &block.signature },
-    //     };
-    // }
 };
 
 // TODO: also model BlindedBeaconBlock in this enum?
@@ -119,25 +108,25 @@ pub const BeaconBlock = union(enum) {
         };
     }
 
-    pub fn getProposerIndex(self: *const BeaconBlock) ValidatorIndex {
+    pub fn proposerIndex(self: *const BeaconBlock) ValidatorIndex {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.proposer_index,
         };
     }
 
-    pub fn getParentRoot(self: *const BeaconBlock) Root {
+    pub fn parentRoot(self: *const BeaconBlock) Root {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.parent_root,
         };
     }
 
-    pub fn getStateRoot(self: *const BeaconBlock) Root {
+    pub fn stateRoot(self: *const BeaconBlock) Root {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.state_root,
         };
     }
 
-    pub fn getBeaconBlockBody(self: *const BeaconBlock) BeaconBlockBody {
+    pub fn beaconBlockBody(self: *const BeaconBlock) BeaconBlockBody {
         return switch (self.*) {
             .phase0 => |block| .{ .phase0 = &block.body },
             .altair => |block| .{ .altair = &block.body },
@@ -156,7 +145,7 @@ pub const BlindedBeaconBlock = union(enum) {
 
     const Self = @This();
 
-    pub fn getBeaconBlockBody(self: *const Self) BlindedBeaconBlockBody {
+    pub fn beaconBlockBody(self: *const Self) BlindedBeaconBlockBody {
         return switch (self.*) {
             .capella => |block| .{ .capella = &block.body },
             .deneb => |block| .{ .deneb = &block.body },
@@ -178,19 +167,19 @@ pub const BlindedBeaconBlock = union(enum) {
         };
     }
 
-    pub fn getProposerIndex(self: *const Self) ValidatorIndex {
+    pub fn proposerIndex(self: *const Self) ValidatorIndex {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |block| block.proposer_index,
         };
     }
 
-    pub fn getParentRoot(self: *const Self) Root {
+    pub fn parentRoot(self: *const Self) Root {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |block| block.parent_root,
         };
     }
 
-    pub fn getStateRoot(self: *const Self) Root {
+    pub fn stateRoot(self: *const Self) Root {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |block| block.state_root,
         };
@@ -238,7 +227,7 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // phase0 fields
-    pub fn getRandaoReveal(self: *const BeaconBlockBody) ssz.primitive.BLSSignature.Type {
+    pub fn randaoReveal(self: *const BeaconBlockBody) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.randao_reveal,
         };
@@ -250,46 +239,46 @@ pub const BeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getGraffity(self: *const BeaconBlockBody) ssz.primitive.Bytes32.Type {
+    pub fn graffiti(self: *const BeaconBlockBody) ssz.primitive.Bytes32.Type {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.graffiti,
         };
     }
 
-    pub fn getProposerSlashings(self: *const BeaconBlockBody) []ProposerSlashing {
+    pub fn proposerSlashings(self: *const BeaconBlockBody) []ProposerSlashing {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.proposer_slashings.items,
         };
     }
 
-    pub fn getAttesterSlashings(self: *const BeaconBlockBody) AttesterSlashings {
+    pub fn attesterSlashings(self: *const BeaconBlockBody) AttesterSlashings {
         return switch (self.*) {
             .electra => |body| .{ .electra = body.attester_slashings },
             inline .phase0, .altair, .bellatrix, .capella, .deneb => |body| .{ .phase0 = body.attester_slashings },
         };
     }
 
-    pub fn getAttestations(self: *const BeaconBlockBody) Attestations {
+    pub fn attestations(self: *const BeaconBlockBody) Attestations {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => |body| .{ .phase0 = &body.attestations },
             .electra => |body| .{ .electra = &body.attestations },
         };
     }
 
-    pub fn getDeposits(self: *const BeaconBlockBody) []Deposit {
+    pub fn deposits(self: *const BeaconBlockBody) []Deposit {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.deposits.items,
         };
     }
 
-    pub fn getVoluntaryExits(self: *const BeaconBlockBody) []SignedVoluntaryExit {
+    pub fn voluntaryExits(self: *const BeaconBlockBody) []SignedVoluntaryExit {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.voluntary_exits.items,
         };
     }
 
     // altair fields
-    pub fn getSyncAggregate(self: *const BeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
+    pub fn syncAggregate(self: *const BeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
         return switch (self.*) {
             inline .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.sync_aggregate,
             else => @panic("SyncAggregate is not available in phase0"),
@@ -308,7 +297,7 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // capella fields
-    pub fn getBlsToExecutionChanges(self: *const BeaconBlockBody) []SignedBLSToExecutionChange {
+    pub fn blsToExecutionChanges(self: *const BeaconBlockBody) []SignedBLSToExecutionChange {
         return switch (self.*) {
             .capella => |body| body.bls_to_execution_changes.items,
             .deneb => |body| body.bls_to_execution_changes.items,
@@ -318,7 +307,7 @@ pub const BeaconBlockBody = union(enum) {
     }
 
     // deneb fields
-    pub fn getBlobKzgCommitments(self: *const BeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
+    pub fn blobKzgCommitments(self: *const BeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
         return switch (self.*) {
             .deneb => |body| &body.blob_kzg_commitments,
             .electra => |body| &body.blob_kzg_commitments,
@@ -370,7 +359,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
     }
 
     // phase0 fields
-    pub fn getRandaoReveal(self: *const BlindedBeaconBlockBody) ssz.primitive.BLSSignature.Type {
+    pub fn randaoReveal(self: *const BlindedBeaconBlockBody) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| body.randao_reveal,
         };
@@ -382,46 +371,46 @@ pub const BlindedBeaconBlockBody = union(enum) {
         };
     }
 
-    pub fn getGraffity(self: *const BlindedBeaconBlockBody) ssz.primitive.Bytes32.Type {
+    pub fn graffiti(self: *const BlindedBeaconBlockBody) ssz.primitive.Bytes32.Type {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| body.graffiti,
         };
     }
 
-    pub fn getProposerSlashings(self: *const BlindedBeaconBlockBody) []ProposerSlashing {
+    pub fn proposerSlashings(self: *const BlindedBeaconBlockBody) []ProposerSlashing {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| body.proposer_slashings.items,
         };
     }
 
-    pub fn getAttesterSlashings(self: *const BlindedBeaconBlockBody) AttesterSlashings {
+    pub fn attesterSlashings(self: *const BlindedBeaconBlockBody) AttesterSlashings {
         return switch (self.*) {
             .electra => |body| .{ .electra = body.attester_slashings },
             inline .capella, .deneb => |body| .{ .phase0 = body.attester_slashings },
         };
     }
 
-    pub fn getAttestations(self: *const BlindedBeaconBlockBody) Attestations {
+    pub fn attestations(self: *const BlindedBeaconBlockBody) Attestations {
         return switch (self.*) {
             inline .capella, .deneb => |body| .{ .phase0 = &body.attestations },
             .electra => |body| .{ .electra = &body.attestations },
         };
     }
 
-    pub fn getDeposits(self: *const BlindedBeaconBlockBody) []Deposit {
+    pub fn deposits(self: *const BlindedBeaconBlockBody) []Deposit {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| body.deposits.items,
         };
     }
 
-    pub fn getVoluntaryExits(self: *const BlindedBeaconBlockBody) []SignedVoluntaryExit {
+    pub fn voluntaryExits(self: *const BlindedBeaconBlockBody) []SignedVoluntaryExit {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| body.voluntary_exits.items,
         };
     }
 
     // altair fields
-    pub fn getSyncAggregate(self: *const BlindedBeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
+    pub fn syncAggregate(self: *const BlindedBeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
         return switch (self.*) {
             inline .capella, .deneb, .electra => |body| &body.sync_aggregate,
         };
@@ -437,7 +426,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
     }
 
     // capella fields
-    pub fn getBlsToExecutionChanges(self: *const BlindedBeaconBlockBody) []SignedBLSToExecutionChange {
+    pub fn blsToExecutionChanges(self: *const BlindedBeaconBlockBody) []SignedBLSToExecutionChange {
         return switch (self.*) {
             .capella => |body| body.bls_to_execution_changes.items,
             .deneb => |body| body.bls_to_execution_changes.items,
@@ -446,7 +435,7 @@ pub const BlindedBeaconBlockBody = union(enum) {
     }
 
     // deneb fields
-    pub fn getBlobKzgCommitments(self: *const BlindedBeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
+    pub fn blobKzgCommitments(self: *const BlindedBeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
         return switch (self.*) {
             .capella => @panic("BlobKzgCommitments is not available in capella"),
             .deneb => |body| &body.blob_kzg_commitments,
@@ -509,32 +498,32 @@ fn testBlockSanity(Block: type) !void {
     const beacon_block = Block{ .electra = &electra_block };
 
     try expect(beacon_block.slot() == 12345);
-    try expect(beacon_block.getProposerIndex() == 1);
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.getParentRoot());
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.getStateRoot());
+    try expect(beacon_block.proposerIndex() == 1);
+    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.parentRoot());
+    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &beacon_block.stateRoot());
 
     var out: [32]u8 = undefined;
     // all phases
     try beacon_block.hashTreeRoot(allocator, &out);
     try expect(!std.mem.eql(u8, &[_]u8{0} ** 32, &out));
-    const block_body = beacon_block.getBeaconBlockBody();
+    const block_body = beacon_block.beaconBlockBody();
     out = [_]u8{0} ** 32;
     try block_body.hashTreeRoot(allocator, &out);
     try expect(!std.mem.eql(u8, &[_]u8{0} ** 32, &out));
 
-    try std.testing.expectEqualSlices(u8, &[_]u8{1} ** 96, &block_body.getRandaoReveal());
+    try std.testing.expectEqualSlices(u8, &[_]u8{1} ** 96, &block_body.randaoReveal());
     const eth1_data = block_body.eth1Data();
     try expect(eth1_data.deposit_count == 0);
-    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.getGraffity());
-    try expect(block_body.getProposerSlashings().len == 0);
-    try expect(block_body.getAttesterSlashings().length() == 0);
-    try expect(block_body.getAttestations().length() == 1);
-    try expect(block_body.getAttestations().items().electra[0].data.slot == 12345);
-    try expect(block_body.getDeposits().len == 0);
-    try expect(block_body.getVoluntaryExits().len == 0);
+    try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 32, &block_body.graffiti());
+    try expect(block_body.proposerSlashings().len == 0);
+    try expect(block_body.attesterSlashings().length() == 0);
+    try expect(block_body.attestations().length() == 1);
+    try expect(block_body.attestations().items().electra[0].data.slot == 12345);
+    try expect(block_body.deposits().len == 0);
+    try expect(block_body.voluntaryExits().len == 0);
 
     // altair
-    const sync_aggregate = block_body.getSyncAggregate();
+    const sync_aggregate = block_body.syncAggregate();
     try std.testing.expectEqualSlices(u8, &[_]u8{0} ** 96, &sync_aggregate.sync_committee_signature);
 
     if (is_blinded) {
@@ -549,10 +538,10 @@ fn testBlockSanity(Block: type) !void {
     }
 
     // capella
-    try expect(block_body.getBlsToExecutionChanges().len == 0);
+    try expect(block_body.blsToExecutionChanges().len == 0);
 
     // deneb
-    try expect(block_body.getBlobKzgCommitments().items.len == 0);
+    try expect(block_body.blobKzgCommitments().items.len == 0);
 
     // electra
     const execution_request = block_body.getExecutionRequests();
