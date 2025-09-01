@@ -6,7 +6,7 @@ const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const BeaconConfig = @import("config").BeaconConfig;
 const BeaconBlockHeader = @import("../type.zig").BeaconBlockHeader;
 const Root = @import("../type.zig").Root;
-const SignedBlock = @import("../signed_block.zig").SignedBlock;
+const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 
 // TODO: BlindedBeaconBlock

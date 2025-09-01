@@ -33,7 +33,7 @@ const processEpoch = @import("epoch/process_epoch.zig").processEpoch;
 const computeEpochAtSlot = @import("utils/epoch.zig").computeEpochAtSlot;
 const processSlot = @import("slot/process_slot.zig").processSlot;
 
-const SignedBlock = @import("signed_block.zig").SignedBlock;
+const SignedBlock = @import("types/signed_block.zig").SignedBlock;
 
 const Options = struct {
     verify_state_root: bool = true,

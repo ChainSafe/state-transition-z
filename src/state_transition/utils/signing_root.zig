@@ -8,7 +8,7 @@ const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
 const Block = @import("../state_transition.zig").Block;
-const SignedBlock = @import("../signed_block.zig").SignedBlock;
+const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 
 /// Return the signing root of an object by calculating the root of the object-domain tree.
 pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: Domain, out: *[32]u8) !void {

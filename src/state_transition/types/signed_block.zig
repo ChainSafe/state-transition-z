@@ -140,17 +140,17 @@ const DepositRequest = ssz.electra.DepositRequest.Type;
 const WithdrawalRequest = ssz.electra.WithdrawalRequest.Type;
 const ConsolidationRequest = ssz.electra.ConsolidationRequest.Type;
 
-const Attestation = @import("types/attestation.zig").Attestation;
-const Attestations = @import("types/attestation.zig").Attestations;
-const AttesterSlashings = @import("types/attester_slashing.zig").AttesterSlashings;
+const Attestation = @import("attestation.zig").Attestation;
+const Attestations = @import("attestation.zig").Attestations;
+const AttesterSlashings = @import("attester_slashing.zig").AttesterSlashings;
 const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const Slot = ssz.primitive.Slot.Type;
 const SignedBLSToExecutionChange = ssz.capella.SignedBLSToExecutionChange.Type;
 
-const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
-pub const SignedBeaconBlock = @import("types/beacon_block.zig").SignedBeaconBlock;
-const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
-const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
-const BlindedBeaconBlockBody = @import("types/beacon_block.zig").BlindedBeaconBlockBody;
-const BeaconBlockBody = @import("types/beacon_block.zig").BeaconBlockBody;
+const BeaconBlock = @import("beacon_block.zig").BeaconBlock;
+const SignedBeaconBlock = @import("beacon_block.zig").SignedBeaconBlock;
+const SignedBlindedBeaconBlock = @import("beacon_block.zig").SignedBlindedBeaconBlock;
+const BlindedBeaconBlock = @import("beacon_block.zig").BlindedBeaconBlock;
+const BlindedBeaconBlockBody = @import("beacon_block.zig").BlindedBeaconBlockBody;
+const BeaconBlockBody = @import("beacon_block.zig").BeaconBlockBody;

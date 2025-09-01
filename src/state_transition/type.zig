@@ -29,3 +29,4 @@ pub const Withdrawals = ssz.capella.Withdrawals.Type;
 pub const ExecutionPayload = ssz.capella.ExecutionPayload.Type;
 
 pub const PendingDeposit = ssz.electra.PendingDeposit.Type;
+
