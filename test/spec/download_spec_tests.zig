@@ -137,18 +137,28 @@ fn extract_spec_test_archive(
     const filename = try std.fmt.allocPrint(allocator, "{s}.tar.gz", .{test_name});
     defer allocator.free(filename);
 
-    const archive_dir = try std.fs.cwd().openDir(archive_dirname, .{});
+    var archive_dir = try std.fs.cwd().openDir(archive_dirname, .{});
+    defer archive_dir.close();
 
-    const already_extracted = archive_dir.openDir(test_name, .{}) catch null;
-    if (already_extracted != null) {
+    var already_extracted = archive_dir.openDir(test_name, .{});
+    if (already_extracted) |*a| {
+        defer a.close();
         std.log.info("already extracted {s}", .{filename});
         return;
+    } else |err| {
+        if (err != std.fs.Dir.OpenError.FileNotFound) {
+            return err;
+        }
     }
 
     const archive_file = try archive_dir.openFile(filename, .{});
     defer archive_file.close();
 
-    archive_dir.makeDir(test_name) catch {};
+    archive_dir.makeDir(test_name) catch |err| {
+        if (err != std.fs.Dir.MakeError.PathAlreadyExists) {
+            return err;
+        }
+    };
     const extracted_out = try archive_dir.openDir(test_name, .{});
 
     const file_reader = archive_file.reader();
