@@ -61,7 +61,11 @@ fn download_spec_test_archive(
     const archive_dirname = try std.fs.path.join(allocator, &[_][]const u8{ out_dir, spec_test_version });
     defer allocator.free(archive_dirname);
 
-    std.fs.cwd().makePath(archive_dirname) catch {};
+    std.fs.cwd().makePath(archive_dirname) catch |err| {
+        if (err != std.fs.Dir.MakeError.PathAlreadyExists) {
+            return err;
+        }
+    };
     const archive_dir = try std.fs.cwd().openDir(archive_dirname, .{});
 
     const already_downloaded = archive_dir.openFile(filename, .{}) catch null;
