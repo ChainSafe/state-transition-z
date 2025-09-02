@@ -1,16 +1,16 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const preset = @import("consensus_types").preset;
+const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
-const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const BLSPubkey = ssz.primitive.BLSPubkey.Type;
+const ValidatorIndex = primitives.ValidatorIndex;
+const BLSPubkey = primitives.BLSPubkey;
 
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
-const cloneValidatorIndices = @import("../type.zig").cloneValidatorIndices;
+const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const ReferenceCount = @import("../utils/reference_count.zig").ReferenceCount;
 
 pub const SyncCommitteeCacheRc = ReferenceCount(SyncCommitteeCacheAllForks);

@@ -1,15 +1,13 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const BeaconConfig = @import("config").BeaconConfig;
-const types = @import("../type.zig");
-const BLSPubkey = types.BLSPubkey;
-const WithdrawalCredentials = types.WithdrawalCredentials;
-const BLSSignature = types.BLSSignature;
-const DepositMessage = types.DepositMessage;
-const Domain = types.Domain;
-const Root = types.Root;
-const PendingDeposit = types.PendingDeposit;
-const Phase0Deposit = types.Phase0Deposit;
+const primitives = @import("../types/primitives.zig");
+const BLSPubkey = primitives.BLSPubkey;
+const WithdrawalCredentials = primitives.WithdrawalCredentials;
+const BLSSignature = primitives.BLSSignature;
+const DepositMessage = ssz.phase0.DepositMessage.Type;
+const Domain = primitives.Domain;
+const Root = primitives.Root;
 const ssz = @import("consensus_types");
 const params = @import("params");
 const preset = ssz.preset;
@@ -19,7 +17,7 @@ const computeDomain = @import("../utils/domain.zig").computeDomain;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const blst = @import("blst_min_pk");
 const verify = @import("../utils/bls.zig").verify;
-const ForkSeq = types.ForkSeq;
+const ForkSeq = primitives.ForkSeq;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
@@ -106,7 +104,7 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
             increaseBalance(state, index, amount);
         }
     } else {
-        const pending_deposit = PendingDeposit{
+        const pending_deposit = ssz.electra.PendingDeposit.Type{
             .pubkey = pubkey,
             .withdrawal_credentials = withdrawal_credentials,
             .amount = amount,

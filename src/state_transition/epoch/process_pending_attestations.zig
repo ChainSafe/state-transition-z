@@ -1,14 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
-const Epoch = types.Epoch;
+const primitives = @import("../types/primitives.zig");
+const ssz = @import("consensus_types");
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
 const getBlockRootAtSlot = @import("../utils/block_root.zig").getBlockRootAtSlot;
-const ssz = @import("consensus_types");
-const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const phase0 = ssz.phase0;
+
+const Epoch = primitives.Epoch;
+const ValidatorIndex = primitives.ValidatorIndex;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
 pub fn processPendingAttestations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, proposer_indices: []usize, validator_count: usize, inclusion_delays: []usize, flags: []u8, attestations: []const PendingAttestation, epoch: Epoch, source_flag: u8, target_flag: u8, head_flag: u8) !void {
@@ -36,7 +36,7 @@ pub fn processPendingAttestations(allocator: Allocator, cached_state: *CachedBea
         const att_voted_target_root = std.mem.eql(u8, att_data.target.root[0..], actual_target_block_root[0..]);
         const att_voted_head_root = att_slot < state_slot and std.mem.eql(u8, att_data.beacon_block_root[0..], &(try getBlockRootAtSlot(state, att_slot)));
         const committee = try epoch_cache.getBeaconCommittee(att_slot, att_data.index);
-        // TODO(ssz): implement intersectValues api in https://github.com/ChainSafe/ssz-z/issues/25
+        // TODO(ssz): implement intersectValues api in https://github.com/ChainSafe/primitives-z/issues/25
         // const participants = att.aggregate_bit.intersectValues(committee);
         var participants = std.ArrayList(ValidatorIndex).init(allocator);
         defer participants.deinit();

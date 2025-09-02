@@ -1,12 +1,11 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
-const ValidatorIndex = types.ValidatorIndex;
-const ValidatorIndices = types.ValidatorIndices;
+const primitives = @import("../types/primitives.zig");
+const ValidatorIndex = primitives.ValidatorIndex;
+const ValidatorIndices = primitives.ValidatorIndices;
 const ForkSeq = @import("params").ForkSeq;
-const Epoch = types.Epoch;
-const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const Epoch = primitives.Epoch;
+const preset = @import("consensus_types").preset;
 const CachedBeaconStateAllForks = @import("./state_cache.zig").CachedBeaconStateAllForks;
 
 const attester_status = @import("../utils/attester_status.zig");

@@ -1,10 +1,10 @@
 const std = @import("std");
+const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
-const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("consensus_types").preset;
 const isValidatorKnown = @import("../utils/electra.zig").isValidatorKnown;
 const ForkSeq = @import("params").ForkSeq;
 const isValidDepositSignature = @import("../block/process_deposit.zig").isValidDepositSignature;
@@ -12,8 +12,8 @@ const addValidatorToRegistry = @import("../block/process_deposit.zig").addValida
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
-const types = @import("../type.zig");
-const PendingDeposit = types.PendingDeposit;
+const primitives = @import("../types/primitives.zig");
+const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const params = @import("params");
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
@@ -34,7 +34,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     const pending_deposits = state.pendingDeposits();
     const pending_deposits_len = pending_deposits.items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
-        // TODO(ssz): implement getReadonlyByRange api for TreeView
+        // TODO(primitives): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
         const deposits: []PendingDeposit = pending_deposits.items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {

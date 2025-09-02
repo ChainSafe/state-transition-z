@@ -1,11 +1,13 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const types = @import("../type.zig");
-const Epoch = types.Epoch;
+const primitives = @import("../types/primitives.zig");
+const ssz = @import("consensus_types");
+const Epoch = primitives.Epoch;
+const Checkpoint = ssz.phase0.Checkpoint.Type;
+const JustificationBits = ssz.phase0.JustificationBits.Type;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const params = @import("params");
 const GENESIS_EPOCH = params.GENESIS_EPOCH;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-const ssz = @import("consensus_types");
 const getBlockRoot = @import("../utils/block_root.zig").getBlockRoot;
 
 /// Update justified and finalized checkpoints depending on network participation.
@@ -31,7 +33,7 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     // Process justifications
     old_previous_justified_checkpoint.* = old_current_justified_checkpoint.*;
     const justification_bits = state.justificationBits();
-    var bits = [_]bool{false} ** ssz.phase0.JustificationBits.length;
+    var bits = [_]bool{false} ** JustificationBits.length;
     for (0..bits.len) |i| {
         bits[i] = try justification_bits.get(i);
     }
@@ -45,7 +47,7 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
 
     const current_justified_checkpoint = state.currentJustifiedCheckpoint();
     if (previous_epoch_target_balance * 3 > total_active_balance * 2) {
-        current_justified_checkpoint.* = ssz.phase0.Checkpoint.Type{
+        current_justified_checkpoint.* = Checkpoint{
             .epoch = previous_epoch,
             .root = try getBlockRoot(state, previous_epoch),
         };
@@ -53,14 +55,14 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     }
 
     if (current_epoch_target_balance * 3 > total_active_balance * 2) {
-        current_justified_checkpoint.* = ssz.phase0.Checkpoint.Type{
+        current_justified_checkpoint.* = Checkpoint{
             .epoch = current_epoch,
             .root = try getBlockRoot(state, current_epoch),
         };
         bits[0] = true;
     }
 
-    justification_bits.* = try ssz.phase0.JustificationBits.Type.fromBoolArray(bits);
+    justification_bits.* = try JustificationBits.fromBoolArray(bits);
 
     // TODO: Consider rendering bits as array of boolean for faster repeated access here
 

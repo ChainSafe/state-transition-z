@@ -1,12 +1,13 @@
 const std = @import("std");
+const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
-const types = @import("../type.zig");
-const Domain = types.Domain;
-const Version = types.Version;
-const DomainType = types.DomainType;
-const Root = types.Root;
-const Fork = types.Fork;
-const Epoch = types.Epoch;
+const Domain = primitives.Domain;
+const Version = primitives.Version;
+const DomainType = primitives.DomainType;
+const Root = primitives.Root;
+const Fork = ssz.phase0.Fork.Type;
+const ForkData = ssz.phase0.ForkData;
+const Epoch = primitives.Epoch;
 
 // Only used by processDeposit +  lightclient
 
@@ -25,9 +26,9 @@ pub fn forkVersion(fork: Fork, epoch: Epoch) Version {
 
 /// Used primarily in signature domains to avoid collisions across forks/chains.
 pub fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, out: *Root) !void {
-    const fork_data: ssz.phase0.ForkData.Type = .{
+    const fork_data: ForkData.Type = .{
         .current_version = current_version,
         .genesis_validators_root = genesis_validators_root,
     };
-    try ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
+    try ForkData.hashTreeRoot(&fork_data, out);
 }

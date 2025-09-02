@@ -1,6 +1,4 @@
 const ssz = @import("consensus_types");
-const types = @import("../type.zig");
-const IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
 
 pub const AttesterSlashings = union(enum) {
     // no need pointer because this is ArrayList already
@@ -25,5 +23,3 @@ pub const AttesterSlashingItems = union(enum) {
     phase0: []ssz.phase0.AttesterSlashing.Type,
     electra: []ssz.electra.AttesterSlashing.Type,
 };
-
-pub const AttesterSlashing = ssz.phase0.AttesterSlashing;

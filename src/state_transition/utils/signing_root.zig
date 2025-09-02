@@ -1,14 +1,15 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
+const types = @import("../types/primitives.zig");
 const Domain = types.Domain;
 const Root = types.Root;
-const SigningData = types.SigningData;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
 const Block = @import("../state_transition.zig").Block;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
+
+const SigningData = ssz.phase0.SigningData.Type;
 
 /// Return the signing root of an object by calculating the root of the object-domain tree.
 pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: Domain, out: *[32]u8) !void {

@@ -1,8 +1,9 @@
+const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
-const types = @import("../type.zig");
-const AttestationData = types.AttestationData;
-const BLSSignature = types.BLSSignature;
-const ValidatorIndex = types.ValidatorIndex;
+
+const AttestationData = primitives.AttestationData;
+const BLSSignature = primitives.BLSSignature;
+const ValidatorIndex = primitives.ValidatorIndex;
 
 pub const Attestations = union(enum) {
     phase0: *const ssz.phase0.Attestations.Type,

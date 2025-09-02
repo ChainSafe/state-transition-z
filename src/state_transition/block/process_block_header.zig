@@ -4,8 +4,8 @@ const ssz = @import("consensus_types");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const BeaconConfig = @import("config").BeaconConfig;
-const BeaconBlockHeader = @import("../type.zig").BeaconBlockHeader;
-const Root = @import("../type.zig").Root;
+const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
+const Root = @import("../types/primitives.zig").Root;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 

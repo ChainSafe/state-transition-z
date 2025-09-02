@@ -1,9 +1,8 @@
 const ForkSeq = @import("params").ForkSeq;
-const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("consensus_types").preset;
 const params = @import("params");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ValidatorIndex = @import("../type.zig").ValidatorIndex;
+const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
 const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateValidatorExit;
@@ -11,7 +10,11 @@ const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateV
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
 const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
 
-pub fn slashValidator(cached_state: *const CachedBeaconStateAllForks, slashed_index: ValidatorIndex, whistle_blower_index: ?ValidatorIndex) !void {
+pub fn slashValidator(
+    cached_state: *const CachedBeaconStateAllForks,
+    slashed_index: ValidatorIndex,
+    whistle_blower_index: ?ValidatorIndex,
+) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const epoch = epoch_cache.epoch;

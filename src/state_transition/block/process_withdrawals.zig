@@ -1,19 +1,20 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
-const ForkSeq = @import("params").ForkSeq;
-const Withdrawal = @import("../type.zig").Withdrawal;
-const Withdrawals = @import("../type.zig").Withdrawals;
-const ValidatorIndex = @import("../type.zig").ValidatorIndex;
-const ExecutionAddress = @import("../type.zig").ExecutionAddress;
+const ForkSeq = params.ForkSeq;
+const Withdrawal = ssz.capella.Withdrawal.Type;
+const Withdrawals = ssz.capella.Withdrawals.Type;
+const ValidatorIndex = primitives.ValidatorIndex;
+const ExecutionAddress = primitives.ExecutionAddress;
 const ExecutionPayload = @import("../types/execution_payload.zig").ExecutionPayload;
 const hasExecutionWithdrawalCredential = @import("../utils/electra.zig").hasExecutionWithdrawalCredential;
 const hasEth1WithdrawalCredential = @import("../utils/capella.zig").hasEth1WithdrawalCredential;
-const getMaxEffectiveBalance = @import("../utils//validator.zig").getMaxEffectiveBalance;
-const decreaseBalance = @import("../utils//balance.zig").decreaseBalance;
+const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
+const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 
 const WithdrawalsResult = struct {
     withdrawals: Withdrawals,

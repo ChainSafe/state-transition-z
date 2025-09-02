@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
+const types = @import("../types/primitives.zig");
 pub const blst = @import("blst_min_pk");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;

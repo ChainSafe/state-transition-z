@@ -9,7 +9,7 @@ const params = @import("params");
 const innerShuffleList = @import("./shuffle.zig").innerShuffleList;
 const Epoch = ssz.primitive.Epoch.Type;
 const ReferenceCount = @import("./reference_count.zig").ReferenceCount;
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
+const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 
 pub const EpochShufflingRc = ReferenceCount(*EpochShuffling);
 

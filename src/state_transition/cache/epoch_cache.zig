@@ -1,17 +1,16 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const preset = @import("consensus_types").preset;
+const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
 const params = @import("params");
 const blst = @import("blst_min_pk");
-const Epoch = ssz.primitive.Epoch.Type;
-const Slot = ssz.primitive.Slot.Type;
-const Publickey = ssz.primitive.BLSPubkey.Type;
-const BLSSignature = ssz.primitive.BLSSignature.Type;
-const BLSPubkey = blst.PublicKey;
-const SyncPeriod = ssz.primitive.SyncPeriod.Type;
-const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
+const Epoch = primitives.Epoch;
+const Slot = primitives.Slot;
+const BLSSignature = primitives.BLSSignature;
+const SyncPeriod = primitives.SyncPeriod;
+const ValidatorIndex = primitives.ValidatorIndex;
+const CommitteeIndex = primitives.CommitteeIndex;
 const ForkSeq = @import("params").ForkSeq;
 const BeaconConfig = @import("config").BeaconConfig;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
@@ -39,16 +38,12 @@ const isAggregatorFromCommitteeLength = @import("../utils/aggregator.zig").isAgg
 
 const sumTargetUnslashedBalanceIncrements = @import("../utils/target_unslashed_balance.zig").sumTargetUnslashedBalanceIncrements;
 
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
+const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;
 const getChurnLimit = @import("../utils/validator.zig").getChurnLimit;
 const getActivationChurnLimit = @import("../utils/validator.zig").getActivationChurnLimit;
 
-const Phase0Attestation = ssz.phase0.Attestation.Type;
-const ElectraAttestation = ssz.electra.Attestation.Type;
 const Attestation = @import("../types/attestation.zig").Attestation;
-const Phase0IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
-const ElectraIndexedAttestation = ssz.electra.IndexedAttestation.Type;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
 
 const syncPubkeys = @import("./pubkey_cache.zig").syncPubkeys;
@@ -533,7 +528,7 @@ pub const EpochCache = struct {
         };
     }
 
-    // TODO(ssz): implement getTrueBitIndexes and intersectValues https://github.com/ChainSafe/ssz-z/issues/25
+    // TODO(primitives): implement getTrueBitIndexes and intersectValues https://github.com/ChainSafe/primitives-z/issues/25
     /// consumer takes ownership of the returned array
     pub fn getAttestingIndicesPhase0(self: *const EpochCache, attestation: *const ssz.phase0.Attestation.Type) !std.ArrayList(ValidatorIndex) {
         const aggregation_bits = attestation.aggregation_bits;
@@ -584,20 +579,20 @@ pub const EpochCache = struct {
         return isAggregatorFromCommitteeLength(committee.length, slot_signature);
     }
 
-    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?Publickey {
+    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?primitives.BLSPubkey {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const Publickey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const primitives.BLSPubkey) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: primitives.BLSPubkey) !void {
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
-        const pk_ptr = try allocator.create(BLSPubkey);
-        pk_ptr.* = try BLSPubkey.fromBytes(&pubkey);
+        const pk_ptr = try allocator.create(blst.PublicKey);
+        pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
         self.index_to_pubkey.items[index] = pk_ptr;
     }
 

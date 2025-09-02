@@ -1,36 +1,36 @@
 const std = @import("std");
 const params = @import("params");
 const COMPOUNDING_WITHDRAWAL_PREFIX = params.COMPOUNDING_WITHDRAWAL_PREFIX;
-const types = @import("../type.zig");
 const ssz = @import("consensus_types");
+const primitives = @import("../types/primitives.zig");
 const MIN_ACTIVATION_BALANCE = ssz.preset.MIN_ACTIVATION_BALANCE;
 
-pub const WithdrawalCredentials = ssz.primitive.Root;
-pub const WithdrawalCredentialsType = ssz.primitive.Root.Type;
-const BLSPubkey = types.BLSPubkey;
-const ValidatorIndex = types.ValidatorIndex;
-const PendingDeposit = types.PendingDeposit;
+pub const WithdrawalCredentials = primitives.WithdrawalCredentials;
+pub const WithdrawalCredentialsLength = primitives.WithdrawalCredentialsLength;
+const BLSPubkey = primitives.BLSPubkey;
+const ValidatorIndex = primitives.ValidatorIndex;
+
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const hasEth1WithdrawalCredential = @import("./capella.zig").hasEth1WithdrawalCredential;
 const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
 const Allocator = std.mem.Allocator;
 
-pub fn hasCompoundingWithdrawalCredential(withdrawal_credentials: WithdrawalCredentialsType) bool {
+pub fn hasCompoundingWithdrawalCredential(withdrawal_credentials: WithdrawalCredentials) bool {
     return withdrawal_credentials[0] == COMPOUNDING_WITHDRAWAL_PREFIX;
 }
 
-pub fn hasExecutionWithdrawalCredential(withdrawal_credentials: WithdrawalCredentialsType) bool {
+pub fn hasExecutionWithdrawalCredential(withdrawal_credentials: WithdrawalCredentials) bool {
     return hasCompoundingWithdrawalCredential(withdrawal_credentials) or hasEth1WithdrawalCredential(withdrawal_credentials);
 }
 
 pub fn switchToCompoundingValidator(allocator: Allocator, state_cache: *CachedBeaconStateAllForks, index: ValidatorIndex) !void {
     var validator = state_cache.state.validators().items[index];
 
-    // directly modifying the byte leads to ssz missing the modification resulting into
+    // directly modifying the byte leads to primitives missing the modification resulting into
     // wrong root compute, although slicing can be avoided but anyway this is not going
     // to be a hot path so its better to clean slice and avoid side effects
-    var new_withdrawal_credentials = [_]u8{0} ** WithdrawalCredentials.length;
+    var new_withdrawal_credentials = [_]u8{0} ** WithdrawalCredentialsLength;
     std.mem.copyForwards(u8, new_withdrawal_credentials[0..], validator.withdrawal_credentials[0..]);
     new_withdrawal_credentials[0] = COMPOUNDING_WITHDRAWAL_PREFIX;
     @memcpy(validator.withdrawal_credentials[0..], new_withdrawal_credentials[0..]);
@@ -45,7 +45,7 @@ pub fn queueExcessActiveBalance(allocator: Allocator, cached_state: *CachedBeaco
         const excess_balance = balance.* - MIN_ACTIVATION_BALANCE;
         balance.* = MIN_ACTIVATION_BALANCE;
 
-        const pending_deposit = PendingDeposit{
+        const pending_deposit = ssz.electra.PendingDeposit.Type{
             .pubkey = validator.pubkey,
             .withdrawal_credentials = validator.withdrawal_credentials,
             .amount = excess_balance,

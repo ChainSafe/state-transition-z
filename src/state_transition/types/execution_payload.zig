@@ -1,7 +1,8 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
-const Root = @import("../type.zig").Root;
+const Root = @import("../types/primitives.zig").Root;
+const ExecutionAddress = @import("../types/primitives.zig").ExecutionAddress;
 
 pub const ExecutionPayload = union(enum) {
     bellatrix: *const ssz.bellatrix.ExecutionPayload.Type,
@@ -59,25 +60,25 @@ pub const ExecutionPayload = union(enum) {
         };
     }
 
-    pub fn getParentHash(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn getParentHash(self: *const ExecutionPayload) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.parent_hash,
         };
     }
 
-    pub fn getFeeRecipient(self: *const ExecutionPayload) ssz.primitive.Bytes20.Type {
+    pub fn getFeeRecipient(self: *const ExecutionPayload) ExecutionAddress {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.fee_recipient,
         };
     }
 
-    pub fn stateRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn stateRoot(self: *const ExecutionPayload) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.state_root,
         };
     }
 
-    pub fn getReceiptsRoot(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn getReceiptsRoot(self: *const ExecutionPayload) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.receipts_root,
         };
@@ -89,7 +90,7 @@ pub const ExecutionPayload = union(enum) {
         };
     }
 
-    pub fn getPrevRandao(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn getPrevRandao(self: *const ExecutionPayload) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.prev_randao,
         };
@@ -131,7 +132,7 @@ pub const ExecutionPayload = union(enum) {
         };
     }
 
-    pub fn getBlockHash(self: *const ExecutionPayload) ssz.primitive.Bytes32.Type {
+    pub fn getBlockHash(self: *const ExecutionPayload) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload| payload.block_hash,
         };
@@ -178,25 +179,25 @@ pub const ExecutionPayloadHeader = union(enum) {
         };
     }
 
-    pub fn getParentHash(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn getParentHash(self: *const ExecutionPayloadHeader) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.parent_hash,
         };
     }
 
-    pub fn getFeeRecipient(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes20.Type {
+    pub fn getFeeRecipient(self: *const ExecutionPayloadHeader) ExecutionAddress {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.fee_recipient,
         };
     }
 
-    pub fn stateRoot(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn stateRoot(self: *const ExecutionPayloadHeader) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.state_root,
         };
     }
 
-    pub fn getReceiptsRoot(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn getReceiptsRoot(self: *const ExecutionPayloadHeader) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.receipts_root,
         };
@@ -208,7 +209,7 @@ pub const ExecutionPayloadHeader = union(enum) {
         };
     }
 
-    pub fn getPrevRandao(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn getPrevRandao(self: *const ExecutionPayloadHeader) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.prev_randao,
         };
@@ -250,7 +251,7 @@ pub const ExecutionPayloadHeader = union(enum) {
         };
     }
 
-    pub fn getBlockHash(self: *const ExecutionPayloadHeader) ssz.primitive.Bytes32.Type {
+    pub fn getBlockHash(self: *const ExecutionPayloadHeader) Root {
         return switch (self.*) {
             inline .bellatrix, .capella, .deneb, .electra => |payload_header| payload_header.block_hash,
         };
@@ -308,19 +309,19 @@ pub fn toExecutionPayloadHeader(comptime execution_payload_header_type: type, pa
 
 test "electra - sanity" {
     const payload = ssz.electra.ExecutionPayload.Type{
-        .parent_hash = ssz.primitive.Bytes32.default_value,
+        .parent_hash = Root.default_value,
         .fee_recipient = ssz.primitive.Bytes20.default_value,
-        .state_root = ssz.primitive.Bytes32.default_value,
-        .receipts_root = ssz.primitive.Bytes32.default_value,
+        .state_root = Root.default_value,
+        .receipts_root = Root.default_value,
         .logs_bloom = ssz.bellatrix.LogsBloom.default_value,
-        .prev_randao = ssz.primitive.Bytes32.default_value,
+        .prev_randao = Root.default_value,
         .block_number = 12345,
         .gas_limit = 0,
         .gas_used = 0,
         .timestamp = 0,
         .extra_data = ssz.bellatrix.ExtraData.default_value,
         .base_fee_per_gas = 0,
-        .block_hash = ssz.primitive.Bytes32.default_value,
+        .block_hash = Root.default_value,
         .transactions = ssz.bellatrix.Transactions.Type{},
         .withdrawals = ssz.capella.Withdrawals.Type{},
         .blob_gas_used = 0,
