@@ -10,7 +10,6 @@ const BLSPubkey = primitives.BLSPubkey;
 
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);
-const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const ReferenceCount = @import("../utils/reference_count.zig").ReferenceCount;
 
 pub const SyncCommitteeCacheRc = ReferenceCount(SyncCommitteeCacheAllForks);
@@ -119,7 +118,7 @@ test "initSyncCommittee - sanity" {
     try std.testing.expectEqualSlices(
         ValidatorIndex,
         &[_]ValidatorIndex{1000} ** preset.SYNC_COMMITTEE_SIZE,
-        cache.getValidatorIndices(),
+        cache.getValidatorIndexMap(),
     );
 }
 

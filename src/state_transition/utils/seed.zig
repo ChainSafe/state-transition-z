@@ -11,7 +11,6 @@ const ForkSeq = @import("params").ForkSeq;
 const params = @import("params");
 const EPOCHS_PER_HISTORICAL_VECTOR = ssz.preset.EPOCHS_PER_HISTORICAL_VECTOR;
 const MIN_SEED_LOOKAHEAD = ssz.preset.MIN_SEED_LOOKAHEAD;
-const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
 const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;

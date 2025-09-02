@@ -2,7 +2,6 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const primitives = @import("../types/primitives.zig");
 const ValidatorIndex = primitives.ValidatorIndex;
-const ValidatorIndices = primitives.ValidatorIndices;
 const ForkSeq = @import("params").ForkSeq;
 const Epoch = primitives.Epoch;
 const preset = @import("consensus_types").preset;
@@ -52,7 +51,7 @@ pub const ReusedEpochTransitionCache = struct {
     flags: U8Array,
 
     // TODO: nextShufflingDecisionRoot, is it necessary without ShufflingCache?
-    next_epoch_shuffling_active_validator_indices: ValidatorIndices,
+    next_epoch_shuffling_active_validator_indices: std.ArrayList(ValidatorIndex),
 
     is_compounding_validator_arr: BoolArray,
 
@@ -70,7 +69,7 @@ pub const ReusedEpochTransitionCache = struct {
             .proposer_indices = try UsizeArray.initCapacity(allocator, validator_count),
             .inclusion_delays = try UsizeArray.initCapacity(allocator, validator_count),
             .flags = try U8Array.initCapacity(allocator, validator_count),
-            .next_epoch_shuffling_active_validator_indices = try ValidatorIndices.initCapacity(allocator, validator_count),
+            .next_epoch_shuffling_active_validator_indices = try std.ArrayList(ValidatorIndex).initCapacity(allocator, validator_count),
             .is_compounding_validator_arr = try BoolArray.initCapacity(allocator, validator_count),
             .previous_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
             .current_epoch_participation = try U8Array.initCapacity(allocator, validator_count),
@@ -111,10 +110,10 @@ pub const EpochTransitionCache = struct {
     prev_epoch_unslashed_stake_target_by_increment: u64,
     prev_epoch_unslashed_stake_head_by_increment: u64,
     curr_epoch_unslashed_target_stake_by_increment: u64,
-    indices_to_slash: ValidatorIndices,
-    indices_eligible_for_activation_queue: ValidatorIndices,
-    indices_eligible_for_activation: ValidatorIndices,
-    indices_to_eject: ValidatorIndices,
+    indices_to_slash: std.ArrayList(ValidatorIndex),
+    indices_eligible_for_activation_queue: std.ArrayList(ValidatorIndex),
+    indices_eligible_for_activation: std.ArrayList(ValidatorIndex),
+    indices_to_eject: std.ArrayList(ValidatorIndex),
     // this is borrowed from ReusedEpochTransitionCache
     proposer_indices: []const usize,
     // phase0 only
@@ -149,11 +148,11 @@ pub const EpochTransitionCache = struct {
 
         const slashings_epoch = current_epoch + @divFloor(preset.EPOCHS_PER_SLASHINGS_VECTOR, 2);
 
-        var indices_to_slash = ValidatorIndices.init(allocator);
-        var indices_eligible_for_activation_queue = ValidatorIndices.init(allocator);
+        var indices_to_slash = std.ArrayList(ValidatorIndex).init(allocator);
+        var indices_eligible_for_activation_queue = std.ArrayList(ValidatorIndex).init(allocator);
         // we will extract indices_eligible_for_activation from validator_activation_list later
         var validator_activation_list = ValidatorActivationList.init(allocator);
-        var indices_to_eject = ValidatorIndices.init(allocator);
+        var indices_to_eject = std.ArrayList(ValidatorIndex).init(allocator);
 
         var total_active_stake_by_increment: u64 = 0;
         const validator_count = state.validators().items.len;
@@ -219,7 +218,7 @@ pub const EpochTransitionCache = struct {
 
             // Both active validators and slashed-but-not-yet-withdrawn validators are eligible to receive penalties.
             // This is done to prevent self-slashing from being a way to escape inactivity leaks.
-            // TODO: Consider using an array of `eligibleValidatorIndices: number[]`
+            // TODO: Consider using an array of `eligiblestd.ArrayList(ValidatorIndex): number[]`
             if (is_active_prev or (validator.slashed and prev_epoch + 1 < validator.withdrawable_epoch)) {
                 flag |= FLAG_ELIGIBLE_ATTESTER;
             }
@@ -395,7 +394,7 @@ pub const EpochTransitionCache = struct {
         }
 
         // zig specific map function similar to "indicesEligibleForActivation.map(({validatorIndex}) => validatorIndex)"
-        var indices_eligible_for_activation = ValidatorIndices.init(allocator);
+        var indices_eligible_for_activation = std.ArrayList(ValidatorIndex).init(allocator);
         for (validator_activation_list.items) |activation| {
             try indices_eligible_for_activation.append(activation.validator_index);
         }

@@ -7,7 +7,6 @@ const Validator = ssz.phase0.Validator.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const BeaconConfig = @import("config").BeaconConfig;
 const ForkSeq = @import("params").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
@@ -22,8 +21,8 @@ pub fn isSlashableValidator(validator: *const Validator, epoch: Epoch) bool {
     return !validator.slashed and validator.activation_epoch <= epoch and epoch < validator.withdrawable_epoch;
 }
 
-pub fn getActiveValidatorIndices(allocator: Allocator, state: *const BeaconStateAllForks, epoch: Epoch) !ValidatorIndices {
-    const indices = ValidatorIndices.init(allocator);
+pub fn getActiveValidatorIndices(allocator: Allocator, state: *const BeaconStateAllForks, epoch: Epoch) !std.ArrayList(ValidatorIndex) {
+    const indices = std.ArrayList(ValidatorIndex).init(allocator);
 
     for (0..state.validators().items.len) |i| {
         const validator = state.validators[i];

@@ -38,7 +38,6 @@ const isAggregatorFromCommitteeLength = @import("../utils/aggregator.zig").isAgg
 
 const sumTargetUnslashedBalanceIncrements = @import("../utils/target_unslashed_balance.zig").sumTargetUnslashedBalanceIncrements;
 
-const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;
 const getChurnLimit = @import("../utils/validator.zig").getChurnLimit;
 const getActivationChurnLimit = @import("../utils/validator.zig").getActivationChurnLimit;
@@ -162,13 +161,13 @@ pub const EpochCache = struct {
 
         const effective_balance_increment = try getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
         const total_slashings_by_increment = getTotalSlashingsByIncrement(state);
-        var previous_active_indices_array_list = ValidatorIndices.init(allocator);
+        var previous_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer previous_active_indices_array_list.deinit();
         try previous_active_indices_array_list.ensureTotalCapacity(validator_count);
-        var current_active_indices_array_list = ValidatorIndices.init(allocator);
+        var current_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer current_active_indices_array_list.deinit();
         try current_active_indices_array_list.ensureTotalCapacity(validator_count);
-        var next_active_indices_array_list = ValidatorIndices.init(allocator);
+        var next_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer next_active_indices_array_list.deinit();
         try next_active_indices_array_list.ensureTotalCapacity(validator_count);
 
@@ -521,7 +520,7 @@ pub const EpochCache = struct {
         };
     }
 
-    pub fn getAttestingIndices(self: *const EpochCache, attestation: Attestation) !ValidatorIndices {
+    pub fn getAttestingIndices(self: *const EpochCache, attestation: Attestation) !std.ArrayList(ValidatorIndex) {
         return switch (attestation.*) {
             .phase0 => |phase0_attestation| self.getAttestingIndicesPhase0(&phase0_attestation),
             .electra => |electra_attestation| self.getAttestingIndicesElectra(&electra_attestation),
@@ -642,7 +641,7 @@ pub const EpochCache = struct {
 
     // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead
     // TODO: also increase reference count
-    // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
+    // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: std.ArrayList(ValidatorIndex)) !void {
     //     self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices);
     //     self.current_sync_committee_indexed = self.next_sync_committee_indexed;
     // }

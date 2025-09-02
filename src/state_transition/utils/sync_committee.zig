@@ -4,24 +4,25 @@ const BlstPublicKey = blst.PublicKey;
 const AggregatePublicKey = blst.AggregatePublicKey;
 const Allocator = std.mem.Allocator;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const ValidatorIndices = @import("../types/primitives.zig").ValidatorIndices;
 const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const ssz = @import("consensus_types");
+const primitives = @import("../types/primitives.zig");
 const preset = ssz.preset;
 const params = @import("params");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
+const ValidatorIndex = primitives.ValidatorIndex;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
 const ForkSeq = @import("params").ForkSeq;
 
 pub const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
 const SyncCommitteeInfo = struct {
-    indices: ValidatorIndices,
+    indices: std.ArrayList(ValidatorIndex),
     sync_committee: *SyncCommittee,
 };
 
 /// Consumer must deallocate the returned `SyncCommitteeInfo` struct
-pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: ValidatorIndices, effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
-    const indices = ValidatorIndices.init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
+pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: std.ArrayList(ValidatorIndex), effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
+    const indices = std.ArrayList(ValidatorIndex).init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
     try getNextSyncCommitteeIndices(allocator, state, active_validators_indices, effecitve_balance_increment, indices.items);
 
     // Using the index2pubkey cache is slower because it needs the serialized pubkey.
