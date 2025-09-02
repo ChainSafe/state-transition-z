@@ -27,6 +27,4 @@ pub fn getBlockRoot(state: *const BeaconStateAllForks, epoch: Epoch) !Root {
 
 // TODO: getTemporaryBlockHeader
 
-// TODO: blockToHeader
-
 // TODO: signedBlockToSignedHeader
