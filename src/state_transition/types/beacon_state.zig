@@ -527,13 +527,6 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn appendPendingDeposit(self: *BeaconStateAllForks, allocator: Allocator, pending_deposit: *const PendingDeposit) !void {
-        switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb => panic("pending_deposits is not available in {}", .{self}),
-            inline else => |state| try state.pending_deposits.append(allocator, pending_deposit.*),
-        }
-    }
-
     pub fn pendingPartialWithdrawals(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         return switch (self.*) {
             .electra => |state| &state.pending_partial_withdrawals,
