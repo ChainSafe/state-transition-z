@@ -16,10 +16,13 @@ const processRandao = @import("./process_randao.zig").processRandao;
 const processSyncAggregate = @import("./process_sync_committee.zig").processSyncAggregate;
 const processWithdrawals = @import("./process_withdrawals.zig").processWithdrawals;
 const getExpectedWithdrawals = @import("./process_withdrawals.zig").getExpectedWithdrawals;
-const ProcessBlockOpts = @import("./types.zig").ProcessBlockOpts;
 const isExecutionEnabled = @import("../utils/execution.zig").isExecutionEnabled;
 // TODO: proposer reward api
 // const ProposerRewardType = @import("../types/proposer_reward.zig").ProposerRewardType;
+
+pub const ProcessBlockOpts = struct {
+    verify_signature: bool = true,
+};
 
 // TODO
 pub fn processBlock(
