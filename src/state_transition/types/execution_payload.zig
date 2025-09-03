@@ -1,7 +1,7 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
-const Root = @import("../types/primitives.zig").Root;
+const Root = ssz.primitive.Root.Type;
 const ExecutionAddress = @import("../types/primitives.zig").ExecutionAddress;
 
 pub const ExecutionPayload = union(enum) {
@@ -309,19 +309,19 @@ pub fn toExecutionPayloadHeader(comptime execution_payload_header_type: type, pa
 
 test "electra - sanity" {
     const payload = ssz.electra.ExecutionPayload.Type{
-        .parent_hash = Root.default_value,
+        .parent_hash = ssz.primitive.Root.default_value,
         .fee_recipient = ssz.primitive.Bytes20.default_value,
-        .state_root = Root.default_value,
-        .receipts_root = Root.default_value,
+        .state_root = ssz.primitive.Root.default_value,
+        .receipts_root = ssz.primitive.Root.default_value,
         .logs_bloom = ssz.bellatrix.LogsBloom.default_value,
-        .prev_randao = Root.default_value,
+        .prev_randao = ssz.primitive.Root.default_value,
         .block_number = 12345,
         .gas_limit = 0,
         .gas_used = 0,
         .timestamp = 0,
         .extra_data = ssz.bellatrix.ExtraData.default_value,
         .base_fee_per_gas = 0,
-        .block_hash = Root.default_value,
+        .block_hash = ssz.primitive.Root.default_value,
         .transactions = ssz.bellatrix.Transactions.Type{},
         .withdrawals = ssz.capella.Withdrawals.Type{},
         .blob_gas_used = 0,

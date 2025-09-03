@@ -49,11 +49,11 @@ pub fn processBlock(
                     const actual_withdrawals = b.executionPayload().getWithdrawals();
                     std.debug.assert(expected_withdrawals_result.withdrawals.items.len == actual_withdrawals.items.len);
                     for (expected_withdrawals_result.withdrawals.items, actual_withdrawals.items) |expected, actual| {
-                        std.debug.assert(ssz.capella.Withdrawal.equals(expected, actual));
+                        std.debug.assert(ssz.capella.Withdrawal.equals(&expected, &actual));
                     }
                 },
                 .blinded => |b| {
-                    const header = b.getExecutionPayloadHeader();
+                    const header = b.executionPayloadHeader();
                     var expected: [32]u8 = undefined;
                     try ssz.capella.Withdrawals.hashTreeRoot(allocator, &expected_withdrawals_result.withdrawals, &expected);
                     var actual = header.getWithdrawalsRoot();

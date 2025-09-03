@@ -21,24 +21,22 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Signe
         .blinded => |b| {
             const body = b.beaconBlock().beaconBlockBody();
 
-            const ExecutionPayloadHeaderType = switch (body) {
-                .capella => ssz.capella.ExecutionPayloadHeader,
-                .deneb => ssz.deneb.ExecutionPayloadHeader,
-                .electra => ssz.electra.ExecutionPayloadHeader,
+            return switch (body) {
+                .capella => |bd| ssz.capella.ExecutionPayloadHeader.equals(&bd.execution_payload_header, &ssz.capella.ExecutionPayloadHeader.default_value),
+                .deneb => |bd| ssz.deneb.ExecutionPayloadHeader.equals(&bd.execution_payload_header, &ssz.deneb.ExecutionPayloadHeader.default_value),
+                .electra => |bd| ssz.electra.ExecutionPayloadHeader.equals(&bd.execution_payload_header, &ssz.electra.ExecutionPayloadHeader.default_value),
             };
-            return ExecutionPayloadHeaderType.equals(body.executionPayloadHeader(), ExecutionPayloadHeaderType.default_value);
         },
         .regular => |b| {
             const body = b.beaconBlock().beaconBlockBody();
 
-            const ExecutionPayloadType = switch (body) {
-                .bellatrix => ssz.bellatrix.ExecutionPayload,
-                .capella => ssz.capella.ExecutionPayload,
-                .deneb => ssz.deneb.ExecutionPayload,
-                .electra => ssz.electra.ExecutionPayload,
+            return switch (body) {
+                .phase0, .altair => @panic("Unsupported"),
+                .bellatrix => |bd| ssz.bellatrix.ExecutionPayload.equals(&bd.execution_payload, &ssz.bellatrix.ExecutionPayload.default_value),
+                .capella => |bd| ssz.capella.ExecutionPayload.equals(&bd.execution_payload, &ssz.capella.ExecutionPayload.default_value),
+                .deneb => |bd| ssz.deneb.ExecutionPayload.equals(&bd.execution_payload, &ssz.deneb.ExecutionPayload.default_value),
+                .electra => |bd| ssz.electra.ExecutionPayload.equals(&bd.execution_payload, &ssz.electra.ExecutionPayload.default_value),
             };
-
-            return ExecutionPayloadType.equals(body.executionPayload(), ExecutionPayloadType.default_value);
         },
     }
 }

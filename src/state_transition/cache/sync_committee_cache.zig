@@ -118,7 +118,7 @@ test "initSyncCommittee - sanity" {
     try std.testing.expectEqualSlices(
         ValidatorIndex,
         &[_]ValidatorIndex{1000} ** preset.SYNC_COMMITTEE_SIZE,
-        cache.getValidatorIndexMap(),
+        cache.getValidatorIndices(),
     );
 }
 

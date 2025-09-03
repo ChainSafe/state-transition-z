@@ -127,6 +127,12 @@ pub const SignedBlock = union(enum) {
             .blinded => |b| b.beaconBlock().proposerIndex(),
         };
     }
+
+    pub fn signature(self: *const SignedBlock) ssz.primitive.BLSSignature.Type {
+        return switch (self.*) {
+            inline .regular, .blinded => |b| b.signature(),
+        };
+    }
 };
 
 const std = @import("std");
