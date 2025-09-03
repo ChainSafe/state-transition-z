@@ -2,7 +2,7 @@ const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
 const Root = ssz.primitive.Root.Type;
-const ExecutionAddress = @import("../types/primitives.zig").ExecutionAddress;
+const ExecutionAddress = ssz.primitive.ExecutionAddress;
 
 pub const ExecutionPayload = union(enum) {
     bellatrix: *const ssz.bellatrix.ExecutionPayload.Type,

@@ -6,7 +6,7 @@ const getBlockRootFn = @import("../utils/block_root.zig").getBlockRoot;
 const getBlockRootAtSlotFn = @import("../utils/block_root.zig").getBlockRootAtSlot;
 const ssz = @import("consensus_types");
 const Checkpoint = ssz.phase0.Checkpoint.Type;
-const Epoch = ssz.primitive.Epoch;
+const Epoch = ssz.primitive.Epoch.Type;
 const Slot = ssz.primitive.Slot.Type;
 const Root = ssz.primitive.Root.Type;
 
@@ -15,7 +15,7 @@ pub const RootCache = struct {
     current_justified_checkpoint: Checkpoint,
     previous_justified_checkpoint: Checkpoint,
     state: *const BeaconStateAllForks,
-    block_root_epoch_cache: std.AutoHashMap(Epoch.Type, Root),
+    block_root_epoch_cache: std.AutoHashMap(Epoch, Root),
     block_root_slot_cache: std.AutoHashMap(Slot, Root),
 
     pub fn init(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks) !*RootCache {
@@ -26,14 +26,14 @@ pub const RootCache = struct {
             .current_justified_checkpoint = state.currentJustifiedCheckpoint().*,
             .previous_justified_checkpoint = state.previousJustifiedCheckpoint().*,
             .state = state,
-            .block_root_epoch_cache = std.AutoHashMap(Epoch.Type, Root).init(allocator),
+            .block_root_epoch_cache = std.AutoHashMap(Epoch, Root).init(allocator),
             .block_root_slot_cache = std.AutoHashMap(Slot, Root).init(allocator),
         };
 
         return instance;
     }
 
-    pub fn getBlockRoot(self: *RootCache, epoch: Epoch.Type) !Root {
+    pub fn getBlockRoot(self: *RootCache, epoch: Epoch) !Root {
         if (self.block_root_epoch_cache.get(epoch)) |root| {
             return root;
         } else {

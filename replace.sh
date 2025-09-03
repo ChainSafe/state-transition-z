@@ -1,2 +1,2 @@
 #/bin/sh
-find src test -type f -exec sed -i '' -e "s/$1/$2/g" {} +
+find src test -type f -exec sed -i '' -e "s/@import(\"..\/types\/primitives.zig\")/ssz.primitive/g" {} +

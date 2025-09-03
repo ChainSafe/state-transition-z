@@ -12,7 +12,6 @@ const addValidatorToRegistry = @import("../block/process_deposit.zig").addValida
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
-const primitives = @import("../types/primitives.zig");
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const params = @import("params");
 
@@ -34,7 +33,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     const pending_deposits = state.pendingDeposits();
     const pending_deposits_len = pending_deposits.items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
-        // TODO(primitives): implement getReadonlyByRange api for TreeView
+        // TODO(ssz.primitive): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
         const deposits: []PendingDeposit = pending_deposits.items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {

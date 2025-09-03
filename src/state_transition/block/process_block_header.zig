@@ -5,7 +5,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const BeaconConfig = @import("config").BeaconConfig;
 const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
-const Root = @import("../types/primitives.zig").Root;
+const Root = ssz.primitive.Root;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 

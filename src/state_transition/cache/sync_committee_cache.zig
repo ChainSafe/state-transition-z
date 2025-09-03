@@ -1,12 +1,11 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const preset = @import("consensus_types").preset;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
-const ValidatorIndex = primitives.ValidatorIndex;
-const BLSPubkey = primitives.BLSPubkey;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 
 const SyncCommitteeIndices = std.ArrayList(u32);
 const SyncComitteeValidatorIndexMap = std.AutoHashMap(ValidatorIndex, SyncCommitteeIndices);

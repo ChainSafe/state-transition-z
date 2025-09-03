@@ -1,5 +1,5 @@
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
+const ValidatorIndex = @import("consensus_types").primitive.ValidatorIndex.Type;
 
 /// Increase the balance for a validator with the given ``index`` by ``delta``.
 pub fn increaseBalance(state: *BeaconStateAllForks, index: ValidatorIndex, delta: u64) void {

@@ -1,16 +1,15 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const preset = @import("consensus_types").preset;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 const params = @import("params");
 const blst = @import("blst_min_pk");
-const Epoch = primitives.Epoch;
-const Slot = primitives.Slot;
-const BLSSignature = primitives.BLSSignature;
-const SyncPeriod = primitives.SyncPeriod;
-const ValidatorIndex = primitives.ValidatorIndex;
-const CommitteeIndex = primitives.CommitteeIndex;
+const Epoch = ssz.primitive.Epoch.Type;
+const Slot = ssz.primitive.Slot.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
+const SyncPeriod = ssz.primitive.SyncPeriod.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
 const ForkSeq = @import("params").ForkSeq;
 const BeaconConfig = @import("config").BeaconConfig;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
@@ -577,16 +576,16 @@ pub const EpochCache = struct {
         return isAggregatorFromCommitteeLength(committee.length, slot_signature);
     }
 
-    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?primitives.BLSPubkey {
+    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?ssz.primitive.BLSPubkey {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const primitives.BLSPubkey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const ssz.primitive.BLSPubkey.Type) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: primitives.BLSPubkey) !void {
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
         const pk_ptr = try allocator.create(blst.PublicKey);
