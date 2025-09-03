@@ -31,8 +31,6 @@ pub fn processSyncAggregate(
 
     // different from the spec but not sure how to get through signature verification for default/empty SyncAggregate in the spec test
     if (verify_signatures orelse true) {
-        // This is to conform to the spec - we want the signature to be verified
-        // TODO(ssz) implement intersectValues
         const participant_indices = try block.beaconBlockBody().syncAggregate().sync_committee_bits.intersectValues(
             ValidatorIndex,
             allocator,
@@ -92,10 +90,6 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
 
     const participant_indices_ = if (participant_indices) |pi| pi else blk: {
         const committee_indices = @as(*const [preset.SYNC_COMMITTEE_SIZE]u64, @ptrCast(epoch_cache.current_sync_committee_indexed.get().getValidatorIndices()));
-        // TODO(ssz) implement intersectValues
-        //
-        // return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, validator_indices);
-
         break :blk (try sync_aggregate.sync_committee_bits.intersectValues(ValidatorIndex, allocator, committee_indices)).items;
     };
     // When there's no participation we consider the signature valid and just ignore it

@@ -21,7 +21,6 @@ const PartialPayload = struct {
     timestamp: u64 = undefined,
 };
 
-// TODO: support BlindedBeaconBlockBody
 pub fn processExecutionPayload(
     allocator: Allocator,
     cached_state: *const CachedBeaconStateAllForks,

@@ -13,7 +13,6 @@ pub fn processDepositRequest(allocator: std.mem.Allocator, cached_state: *Cached
         deposit_requests_start_index.* = deposit_request.index;
     }
 
-    // Create pending deposit
     const pending_deposit = PendingDeposit{
         .pubkey = deposit_request.pubkey,
         .withdrawal_credentials = deposit_request.withdrawal_credentials,

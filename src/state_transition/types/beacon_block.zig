@@ -68,7 +68,6 @@ pub const SignedBlindedBeaconBlock = union(enum) {
     }
 };
 
-// TODO: also model BlindedBeaconBlock in this enum?
 pub const BeaconBlock = union(enum) {
     phase0: *const ssz.phase0.BeaconBlock.Type,
     altair: *const ssz.altair.BeaconBlock.Type,

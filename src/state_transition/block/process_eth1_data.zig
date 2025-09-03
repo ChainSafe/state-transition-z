@@ -25,7 +25,7 @@ pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_et
     }
 
     // Nothing to do if the state already has this as eth1data (happens a lot after majority vote is in)
-    if (isEqualEth1DataView(state.eth1Data().*, new_eth1_data.*)) {
+    if (isEqualEth1DataView(state.eth1Data(), new_eth1_data)) {
         return false;
     }
 
@@ -35,7 +35,7 @@ pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_et
     // than doing structural equality, which requires tree -> value conversions
     var same_votes_count: usize = 0;
     for (state_eth1_data_votes) |state_eth1_data_vote| {
-        if (isEqualEth1DataView(state_eth1_data_vote, new_eth1_data.*)) {
+        if (isEqualEth1DataView(&state_eth1_data_vote, new_eth1_data)) {
             same_votes_count += 1;
         }
     }
@@ -49,8 +49,6 @@ pub fn becomesNewEth1Data(cached_state: *const CachedBeaconStateAllForks, new_et
 }
 
 // TODO: should have a different implement in TreeView
-fn isEqualEth1DataView(_: Eth1Data, _: Eth1Data) bool {
-    // TODO(bing): implement equals api, for now return true
-    // return ssz.phase0.Eth1Data.equals(eth1_data_a, eth1_data_b);
-    return true;
+fn isEqualEth1DataView(a: *const Eth1Data, b: *const Eth1Data) bool {
+    return ssz.phase0.Eth1Data.equals(a, b);
 }

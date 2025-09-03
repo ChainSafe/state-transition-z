@@ -30,10 +30,9 @@ pub fn assertValidProposerSlashing(cached_state: *const CachedBeaconStateAllFork
     }
 
     // verify headers are different
-    // TODO(ssz): implement equals api
-    // if (ssz.phase0.BeaconBlockHeader.equals(header_1, header_2)) {
-    //     return error.InvalidProposerSlashingHeadersEqual;
-    // }
+    if (ssz.phase0.BeaconBlockHeader.equals(&header_1, &header_2)) {
+        return error.InvalidProposerSlashingHeadersEqual;
+    }
 
     // verify the proposer is slashable
     const proposer = state.validators().items[header_1.proposer_index];

@@ -527,8 +527,7 @@ pub const EpochCache = struct {
         };
     }
 
-    // TODO(primitives): implement getTrueBitIndexes and intersectValues https://github.com/ChainSafe/primitives-z/issues/25
-    /// consumer takes ownership of the returned array
+    /// Consumer takes ownership of the returned array
     pub fn getAttestingIndicesPhase0(self: *const EpochCache, attestation: *const ssz.phase0.Attestation.Type) !std.ArrayList(ValidatorIndex) {
         const aggregation_bits = attestation.aggregation_bits;
         const data = attestation.data;

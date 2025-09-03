@@ -43,7 +43,6 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         .phase0 = attestation.*,
     });
 
-    //TODO(bing): ugly to take in indexed_attestation.phase0; clean
     _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, allocator, cached_state, indexed_attestation.phase0, verify_signature);
 }
 
@@ -85,9 +84,6 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
         if (last_committee_index >= committee_count) {
             return error.InvalidAttestationInvalidLstCommitteeIndex;
         }
-
-        // const validators_by_committee = try epoch_cache.getBeaconCommittees(slot, committee_indices.items);
-        // TODO(ssz): implement toBoolArray() for BitVector/BitList https://github.com/ChainSafe/ssz-z/issues/25
 
         var aggregation_bits_array: []bool = undefined;
         try attestation.aggregation_bits.toBoolSlice(&aggregation_bits_array);

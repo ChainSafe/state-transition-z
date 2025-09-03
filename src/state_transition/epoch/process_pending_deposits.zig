@@ -55,8 +55,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
             // Check if number of processed deposits has not reached the limit, otherwise, stop processing.
             // TODO(ssz): define MAX_PENDING_DEPOSITS_PER_EPOCH in preset
-            const MAX_PENDING_DEPOSITS_PER_EPOCH = 16;
-            if (next_deposit_index >= MAX_PENDING_DEPOSITS_PER_EPOCH) {
+            if (next_deposit_index >= preset.MAX_PENDING_DEPOSITS_PER_EPOCH) {
                 break :outer;
             }
 

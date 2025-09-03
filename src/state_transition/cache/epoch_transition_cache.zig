@@ -218,7 +218,7 @@ pub const EpochTransitionCache = struct {
 
             // Both active validators and slashed-but-not-yet-withdrawn validators are eligible to receive penalties.
             // This is done to prevent self-slashing from being a way to escape inactivity leaks.
-            // TODO: Consider using an array of `eligiblestd.ArrayList(ValidatorIndex): number[]`
+            // TODO: Consider using an array of `eligible ValidatorIndex: number[]`
             if (is_active_prev or (validator.slashed and prev_epoch + 1 < validator.withdrawable_epoch)) {
                 flag |= FLAG_ELIGIBLE_ATTESTER;
             }

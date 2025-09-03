@@ -24,11 +24,9 @@ pub const ProcessBlockOpts = struct {
     verify_signature: bool = true,
 };
 
-// TODO
 pub fn processBlock(
     allocator: Allocator,
     cached_state: *CachedBeaconStateAllForks,
-    // TODO: support BlindedBeaconBlock
     block: *const SignedBlock,
     external_data: BlockExternalData,
     opts: ProcessBlockOpts,
@@ -48,13 +46,10 @@ pub fn processBlock(
             const body = block.beaconBlockBody();
             switch (body) {
                 .regular => |b| {
-                    const actual_withdrawals = b.getExecutionPayload().getWithdrawals();
+                    const actual_withdrawals = b.executionPayload().getWithdrawals();
                     std.debug.assert(expected_withdrawals_result.withdrawals.items.len == actual_withdrawals.items.len);
-                    for (expected_withdrawals_result.withdrawals.items, actual_withdrawals.items) |ew, pw| {
-                        _ = ew;
-                        _ = pw;
-                        // TODO(bing): equals API
-                        // assert(ew == pw)
+                    for (expected_withdrawals_result.withdrawals.items, actual_withdrawals.items) |expected, actual| {
+                        std.debug.assert(ssz.capella.Withdrawal.equals(expected, actual));
                     }
                 },
                 .blinded => |b| {

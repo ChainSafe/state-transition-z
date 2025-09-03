@@ -14,18 +14,33 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Signe
     if (!state.isPostBellatrix()) return false;
     if (isMergeTransitionComplete(state)) return true;
 
+    // TODO(bing): in lodestar prod, state root comparison should be enough but spec tests were failing. This switch block is a failsafe for that.
+    //
+    // Ref: https://github.com/ChainSafe/lodestar/blob/7f2271a1e2506bf30378da98a0f548290441bdc5/packages/state-transition/src/util/execution.ts#L37-L42
     switch (block.*) {
         .blinded => |b| {
-            _ = b.beaconBlock().beaconBlockBody().getExecutionPayloadHeader();
-            // TODO(bing) equals
+            const body = b.beaconBlock().beaconBlockBody();
+
+            const ExecutionPayloadHeaderType = switch (body) {
+                .capella => ssz.capella.ExecutionPayloadHeader,
+                .deneb => ssz.deneb.ExecutionPayloadHeader,
+                .electra => ssz.electra.ExecutionPayloadHeader,
+            };
+            return ExecutionPayloadHeaderType.equals(body.executionPayloadHeader(), ExecutionPayloadHeaderType.default_value);
         },
         .regular => |b| {
-            _ = b.beaconBlock().beaconBlockBody().getExecutionPayload();
-            // TODO(bing) equals
+            const body = b.beaconBlock().beaconBlockBody();
+
+            const ExecutionPayloadType = switch (body) {
+                .bellatrix => ssz.bellatrix.ExecutionPayload,
+                .capella => ssz.capella.ExecutionPayload,
+                .deneb => ssz.deneb.ExecutionPayload,
+                .electra => ssz.electra.ExecutionPayload,
+            };
+
+            return ExecutionPayloadType.equals(body.executionPayload(), ExecutionPayloadType.default_value);
         },
     }
-
-    return true;
 }
 
 pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const BeaconBlockBody) bool {

@@ -34,7 +34,6 @@ const WithdrawalsResult = struct {
     }
 };
 
-// TODO: support capella.FullOrBlindedExecutionPayload
 pub fn processWithdrawals(
     _: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
@@ -104,7 +103,6 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
         const pending_partial_withdrawals = state.pendingPartialWithdrawals();
         for (0..pending_partial_withdrawals.items.len) |i| {
             const withdrawal = pending_partial_withdrawals.items[i];
-            // TODO: define MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP
             if (withdrawal.withdrawable_epoch > epoch or withdrawals_result.withdrawals.items.len == preset.MAX_PENDING_PARTIALS_PER_WITHDRAWALS_SWEEP) {
                 break;
             }
