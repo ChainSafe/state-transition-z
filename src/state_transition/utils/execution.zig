@@ -50,18 +50,18 @@ pub fn isMergeTransitionBlock(state: *const BeaconStateAllForks, body: *const Be
         !ssz.bellatrix.ExecutionPayload.equals(body.getExecutionPayload().bellatrix, ssz.bellatrix.ExecutionPayload.default_value));
 }
 
-// TODO: make sure this function is not called for forks other than Bellatrix and Capella
 pub fn isMergeTransitionComplete(state: *const BeaconStateAllForks) bool {
-    _ = state;
-    return false;
+    if (!state.isPostCapella()) {
+        return switch (state.*) {
+            .bellatrix => |s| !ssz.bellatrix.ExecutionPayloadHeader.equals(&s.latest_execution_payload_header, &ssz.bellatrix.ExecutionPayloadHeader.default_value),
+            else => false,
+        };
+    }
 
-    // std.debug.assert(state.forkSeq() == .bellatrix or state.forkSeq() == .capella);
-    // TODO(bing): reenable below code when 'equals' works; first return false to test longer codepath
-
-    // TODO(bing): Fix equals
-    // if (!state.isPostCapella()) {
-    //     return !ssz.bellatrix.ExecutionPayload.equals(state.latestExecutionPayloadHeader().bellatrix, ssz.bellatrix.ExecutionPayloadHeader.default_value);
-    // }
-
-    // return !ssz.capella.ExecutionPayload.equals(state.latestExecutionPayloadHeader().capella, ssz.capella.ExecutionPayloadHeader.default_value);
+    return switch (state.*) {
+        .capella => |s| !ssz.capella.ExecutionPayloadHeader.equals(&s.latest_execution_payload_header, &ssz.capella.ExecutionPayloadHeader.default_value),
+        .deneb => |s| !ssz.deneb.ExecutionPayloadHeader.equals(&s.latest_execution_payload_header, &ssz.deneb.ExecutionPayloadHeader.default_value),
+        .electra => |s| !ssz.electra.ExecutionPayloadHeader.equals(&s.latest_execution_payload_header, &ssz.electra.ExecutionPayloadHeader.default_value),
+        else => false,
+    };
 }
