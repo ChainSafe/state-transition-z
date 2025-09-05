@@ -109,7 +109,7 @@ pub const EpochCache = struct {
 
     base_reward_per_increment: u64,
 
-    total_acrive_balance_increments: u64,
+    total_active_balance_increments: u64,
 
     churn_limit: u64,
 
@@ -294,7 +294,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = sync_participant_reward,
             .sync_proposer_reward = sync_proposer_reward,
             .base_reward_per_increment = base_reward_pre_increment,
-            .total_acrive_balance_increments = total_active_balance_increments,
+            .total_active_balance_increments = total_active_balance_increments,
             .churn_limit = churn_limit,
             .activation_churn_limit = activation_churn_limit,
             .exit_queue_epoch = exit_queue_epoch,
@@ -350,7 +350,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = self.sync_participant_reward,
             .sync_proposer_reward = self.sync_proposer_reward,
             .base_reward_per_increment = self.base_reward_per_increment,
-            .total_acrive_balance_increments = self.total_acrive_balance_increments,
+            .total_active_balance_increments = self.total_active_balance_increments,
             .churn_limit = self.churn_limit,
             .activation_churn_limit = self.activation_churn_limit,
             .exit_queue_epoch = self.exit_queue_epoch,
@@ -427,11 +427,11 @@ pub const EpochCache = struct {
             self.exit_queue_churn = 0;
         }
 
-        self.total_acrive_balance_increments = epoch_transition_cache.total_active_balance_increments;
+        self.total_active_balance_increments = epoch_transition_cache.total_active_balance_increments;
         if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
-            self.sync_participant_reward = computeSyncParticipantReward(self.total_acrive_balance_increments);
+            self.sync_participant_reward = computeSyncParticipantReward(self.total_active_balance_increments);
             self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
-            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_acrive_balance_increments);
+            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_active_balance_increments);
         }
 
         self.previous_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments;
