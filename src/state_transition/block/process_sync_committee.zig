@@ -22,14 +22,14 @@ pub fn processSyncAggregate(
     allocator: Allocator,
     cached_state: *CachedBeaconStateAllForks,
     block: *const SignedBlock,
-    verify_signatures: ?bool,
+    verify_signatures: bool,
 ) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const committee_indices = @as(*const [preset.SYNC_COMMITTEE_SIZE]u64, @ptrCast(epoch_cache.current_sync_committee_indexed.get().getValidatorIndices()));
 
     // different from the spec but not sure how to get through signature verification for default/empty SyncAggregate in the spec test
-    if (verify_signatures orelse true) {
+    if (verify_signatures) {
         const participant_indices = try block.beaconBlockBody().syncAggregate().sync_committee_bits.intersectValues(
             ValidatorIndex,
             allocator,

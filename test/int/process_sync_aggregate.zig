@@ -17,7 +17,7 @@ test "process sync aggregate - sanity" {
     const signed_beacon_block = SignedBeaconBlock{ .electra = &beacon_block };
     const block = SignedBlock{ .regular = &signed_beacon_block };
 
-    try processSyncAggregate(allocator, test_state.cached_state, &block, null);
+    try processSyncAggregate(allocator, test_state.cached_state, &block, true);
 }
 
 const std = @import("std");
