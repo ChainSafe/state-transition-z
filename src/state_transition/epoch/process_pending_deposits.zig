@@ -103,11 +103,11 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
     // no need to append to pending_deposits again because we did that in the for loop above already
     // Accumulate churn only if the churn limit has been hit.
-    if (is_churn_limit_reached) {
-        deposit_balance_to_consume.* = available_for_processing - processed_amount;
-    } else {
-        deposit_balance_to_consume.* = 0;
-    }
+    deposit_balance_to_consume.* =
+        if (is_churn_limit_reached)
+            available_for_processing - processed_amount
+        else
+            0;
 }
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
