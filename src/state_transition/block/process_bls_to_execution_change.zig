@@ -22,7 +22,7 @@ pub fn processBlsToExecutionChange(state: *CachedBeaconStateAllForks, signed_bls
     validator.withdrawal_credentials = new_withdrawal_credentials;
 }
 
-pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, signed_bls_to_execution_change: *const SignedBLSToExecutionChange, verify_signature: ?bool) !void {
+pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, signed_bls_to_execution_change: *const SignedBLSToExecutionChange, verify_signature: bool) !void {
     const state = cached_state.state;
     const address_change = signed_bls_to_execution_change.message;
     const validator_index = address_change.validator_index;
@@ -44,7 +44,7 @@ pub fn isValidBlsToExecutionChange(cached_state: *CachedBeaconStateAllForks, sig
         return error.InvalidWithdrawalCredentials;
     }
 
-    if (verify_signature orelse true) {
+    if (verify_signature) {
         if (!try verifyBlsToExecutionChangeSignature(cached_state, signed_bls_to_execution_change)) {
             return error.InvalidBlsToExecutionChangeSignature;
         }
