@@ -540,6 +540,16 @@ pub const BeaconStateAllForks = union(enum) {
             else => panic("pending_consolidations is not available in {}", .{self}),
         };
     }
+    pub fn upgrade(self: *BeaconStateAllForks) *BeaconStateAllForks {
+        return switch (self.*) {
+            .phase0 => {},
+            .altair => {},
+            .bellatrix => {},
+            .capella => {},
+            .deneb => {},
+            .electra => {},
+        };
+    }
 };
 
 test "electra - sanity" {
