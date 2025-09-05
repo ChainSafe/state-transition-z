@@ -45,14 +45,12 @@ pub fn slashValidator(
     epoch_cache.total_slashings_by_increment += effective_balance_increments.get().items[slashed_index];
 
     // TODO(ssz): define MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA
-    const min_slashing_penalty_quotient: usize = if (state.isPhase0())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT
-    else if (state.isAltair())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR
-    else if (state.isPreElectra())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX
-    else
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
+    const min_slashing_penalty_quotient: usize = switch (state.*) {
+        .phase0 => preset.MIN_SLASHING_PENALTY_QUOTIENT,
+        .altair => preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR,
+        .bellatrix, .capella, .deneb => preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX,
+        .electra => preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA,
+    };
 
     decreaseBalance(state, slashed_index, @divFloor(effective_balance, min_slashing_penalty_quotient));
 
