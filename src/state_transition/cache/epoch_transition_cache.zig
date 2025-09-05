@@ -321,8 +321,32 @@ pub const EpochTransitionCache = struct {
             @memset(reused_cache.proposer_indices.items, validator_count);
             try reused_cache.inclusion_delays.resize(validator_count);
             @memset(reused_cache.inclusion_delays.items, 0);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.previousEpochPendingAttestations().items, prev_epoch, FLAG_PREV_SOURCE_ATTESTER, FLAG_PREV_TARGET_ATTESTER, FLAG_PREV_HEAD_ATTESTER);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.currentEpochPendingAttestations().items, current_epoch, FLAG_CURR_SOURCE_ATTESTER, FLAG_CURR_TARGET_ATTESTER, FLAG_CURR_HEAD_ATTESTER);
+            try processPendingAttestations(
+                allocator,
+                cached_state,
+                reused_cache.proposer_indices.items,
+                validator_count,
+                reused_cache.inclusion_delays.items,
+                reused_cache.flags.items,
+                state.previousEpochPendingAttestations().items,
+                prev_epoch,
+                FLAG_PREV_SOURCE_ATTESTER,
+                FLAG_PREV_TARGET_ATTESTER,
+                FLAG_PREV_HEAD_ATTESTER,
+            );
+            try processPendingAttestations(
+                allocator,
+                cached_state,
+                reused_cache.proposer_indices.items,
+                validator_count,
+                reused_cache.inclusion_delays.items,
+                reused_cache.flags.items,
+                state.currentEpochPendingAttestations().items,
+                current_epoch,
+                FLAG_CURR_SOURCE_ATTESTER,
+                FLAG_CURR_TARGET_ATTESTER,
+                FLAG_CURR_HEAD_ATTESTER,
+            );
         } else {
             try reused_cache.previous_epoch_participation.resize(validator_count);
             try reused_cache.current_epoch_participation.resize(validator_count);
