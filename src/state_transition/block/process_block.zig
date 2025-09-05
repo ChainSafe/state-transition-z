@@ -62,11 +62,7 @@ pub fn processBlock(
                     std.debug.assert(std.mem.eql(u8, &expected, &actual));
                 },
             }
-            try processWithdrawals(
-                allocator,
-                cached_state,
-                expected_withdrawals_result,
-            );
+            try processWithdrawals(cached_state, expected_withdrawals_result);
         }
 
         try processExecutionPayload(

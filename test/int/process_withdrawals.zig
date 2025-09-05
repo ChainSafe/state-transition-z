@@ -6,7 +6,7 @@ test "process withdrawals - sanity" {
 
     var ewr = try getExpectedWithdrawalsResult(allocator, test_state.cached_state);
     defer ewr.deinit(allocator);
-    try processWithdrawals(allocator, test_state.cached_state, ewr);
+    try processWithdrawals(test_state.cached_state, ewr);
 }
 
 const std = @import("std");
