@@ -33,9 +33,7 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     old_previous_justified_checkpoint.* = old_current_justified_checkpoint.*;
     const justification_bits = state.justificationBits();
     var bits = [_]bool{false} ** JustificationBits.length;
-    for (0..bits.len) |i| {
-        bits[i] = try justification_bits.get(i);
-    }
+    justification_bits.toBoolArray(&bits);
 
     // Rotate bits
     var i: usize = bits.len - 1;
