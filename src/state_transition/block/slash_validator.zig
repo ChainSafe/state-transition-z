@@ -56,12 +56,15 @@ pub fn slashValidator(
 
     // apply proposer and whistleblower rewards
     // TODO(ssz): define WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA
-    const whistleblower_reward =
-        if (state.isPreElectra()) @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT) else @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA);
-    const proposer_reward = if (state.isPhase0())
-        @divFloor(whistleblower_reward, preset.PROPOSER_REWARD_QUOTIENT)
-    else
-        @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR);
+    const whistleblower_reward = switch (state.*) {
+        .electra => @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA),
+        else => @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT),
+    };
+
+    const proposer_reward = switch (state.*) {
+        .phase0 => @divFloor(whistleblower_reward, preset.PROPOSER_REWARD_QUOTIENT),
+        else => @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR),
+    };
 
     const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
 
