@@ -63,13 +63,14 @@ fn processSlotsWithTransientCache(
 
         if ((post_state_slot + 1) % preset.SLOTS_PER_EPOCH == 0) {
             _ = post_state.config.forkSeq(post_state_slot);
-            // TODO(bing): implement
+            // TODO(bing): metrics
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
+            // TODO(bing): metrics: time beforeProcessEpoch
             try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache, &epoch_transition_cache);
             try processEpoch(allocator, post_state, &epoch_transition_cache);
 
-            // registerValidatorStatuses
+            // TODO(bing): registerValidatorStatuses
 
             post_state_slot += 1;
 
@@ -102,9 +103,7 @@ pub fn stateTransition(
         .blinded => |b| b.slot(),
     };
 
-    //TODO(bing): deep clone
-    // const post_state = state.clone();
-    const post_state = state;
+    const post_state = state.clone();
 
     //TODO(bing): metrics
     //if (metrics) {
@@ -162,5 +161,5 @@ pub fn stateTransition(
         }
     }
 
-    return state;
+    return post_state;
 }
