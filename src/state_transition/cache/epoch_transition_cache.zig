@@ -395,7 +395,7 @@ pub const EpochTransitionCache = struct {
         }
 
         // zig specific map function similar to "indicesEligibleForActivation.map(({validatorIndex}) => validatorIndex)"
-        var indices_eligible_for_activation = std.ArrayList(ValidatorIndex).init(allocator);
+        var indices_eligible_for_activation = try std.ArrayList(ValidatorIndex).initCapacity(allocator, validator_activation_list.items.len);
         for (validator_activation_list.items) |activation| {
             try indices_eligible_for_activation.append(activation.validator_index);
         }
