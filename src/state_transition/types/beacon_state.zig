@@ -350,10 +350,10 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn rotateEpochPendingAttestations(self: *BeaconStateAllForks, allocator: Allocator) void {
+    pub fn rotateEpochPendingAttestations(self: *BeaconStateAllForks) void {
         switch (self.*) {
             .phase0 => |state| {
-                state.previous_epoch_attestations.deinit(allocator);
+                state.previous_epoch_attestations.clearRetainingCapacity();
                 state.previous_epoch_attestations = state.current_epoch_attestations;
                 state.current_epoch_attestations = ssz.phase0.EpochAttestations.default_value;
             },
@@ -375,11 +375,11 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn rotateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) void {
+    pub fn rotateEpochParticipations(self: *BeaconStateAllForks) void {
         switch (self.*) {
             .phase0 => @panic("rotate_epoch_participations is not available in phase0"),
             inline else => |state| {
-                state.previous_epoch_participation.deinit(allocator);
+                state.previous_epoch_participation.clearRetainingCapacity();
                 state.previous_epoch_participation = state.current_epoch_participation;
                 state.current_epoch_participation = ssz.altair.EpochParticipation.default_value;
             },

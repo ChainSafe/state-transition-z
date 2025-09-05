@@ -6,10 +6,10 @@ const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").Epoc
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 
-pub fn processParticipationFlagUpdates(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) void {
+pub fn processParticipationFlagUpdates(cached_state: *CachedBeaconStateAllForks) void {
     const state = cached_state.state;
     // rotate EpochParticipation
-    state.rotateEpochParticipations(allocator);
+    state.rotateEpochParticipations();
 
     // We need to replace the node of currentEpochParticipation with a node that represents an empty list of some length.
     // SSZ represents a list as = new BranchNode(chunksNode, lengthNode).
