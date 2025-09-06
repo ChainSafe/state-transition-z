@@ -177,6 +177,27 @@ pub fn build(b: *std.Build) void {
     tls_run_test_state_transition_utils.dependOn(&run_test_state_transition_utils.step);
     tls_run_test.dependOn(&run_test_state_transition_utils.step);
 
+    const module_unit = b.createModule(.{
+        .root_source_file = b.path("src/state_transition/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("unit"), module_unit) catch @panic("OOM");
+
+    const test_unit = b.addTest(.{
+        .name = "unit",
+        .root_module = module_unit,
+        .filters = &[_][]const u8{},
+    });
+    const install_test_unit = b.addInstallArtifact(test_unit, .{});
+    const tls_install_test_unit = b.step("build-test:unit", "Install the unit test");
+    tls_install_test_unit.dependOn(&install_test_unit.step);
+
+    const run_test_unit = b.addRunArtifact(test_unit);
+    const tls_run_test_unit = b.step("test:unit", "Run the unit test");
+    tls_run_test_unit.dependOn(&run_test_unit.step);
+    tls_run_test.dependOn(&run_test_unit.step);
+
     const module_int = b.createModule(.{
         .root_source_file = b.path("test/int/root.zig"),
         .target = target,
@@ -221,6 +242,15 @@ pub fn build(b: *std.Build) void {
     module_test_utils.addImport("state_transition", module_state_transition);
     module_test_utils.addImport("consensus_types", module_consensus_types);
     module_test_utils.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+
+    module_unit.addImport("build_options", options_module_build_options);
+    module_unit.addImport("ssz", dep_ssz.module("ssz"));
+    module_unit.addImport("state_transition", module_state_transition);
+    module_unit.addImport("test_utils", module_test_utils);
+    module_unit.addImport("config", module_config);
+    module_unit.addImport("params", module_params);
+    module_unit.addImport("consensus_types", module_consensus_types);
+    module_unit.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
 
     module_int.addImport("build_options", options_module_build_options);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
