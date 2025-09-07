@@ -422,7 +422,7 @@ pub const BeaconStateAllForks = union(enum) {
             .phase0 => @panic("rotate_epoch_participations is not available in phase0"),
             inline else => |state| {
                 state.previous_epoch_participation.clearRetainingCapacity();
-                try state.previous_epoch_participation.appendSlice(allocator, state.current_epoch_participation.items) ;
+                try state.previous_epoch_participation.appendSlice(allocator, state.current_epoch_participation.items);
                 state.current_epoch_participation.clearRetainingCapacity();
             },
         }
@@ -583,18 +583,96 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn upgrade(self: *BeaconStateAllForks) *BeaconStateAllForks {
-        return switch (self.*) {
-            .phase0 => |state| {
-            
+    /// Copies ssz fields of `BeaconState` from type `F` to type `T`, provided they have the same field name.
+    fn populateFields(
+        comptime F: type,
+        comptime T: type,
+        allocator: Allocator,
+        state: *F.Type,
+    ) !*T.Type {
+        var upgraded = try allocator.create(T.Type);
+        upgraded.* = T.default_value;
+        inline for (@typeInfo(F).@"struct".fields) |f| {
+            if (@hasField(T.Type, f.name)) {
+                f.type.clone(allocator, &@field(state, f.name), &@field(upgraded, f.name));
+            }
+        }
 
-        },
-            .altair => {},
-            .bellatrix => {},
-            .capella => {},
-            .deneb => {},
-            .electra => {},
-        };
+        return upgraded;
+    }
+
+    /// Upgrade `self` from a certain fork to the next.
+    ///
+    /// Allocates a new `state` of the next fork, clones all fields of the current `state` to it and assigns `self` to it.
+    /// Destroys the old `state`.
+    ///
+    /// Caller must free upgraded state.
+    pub fn upgrade(self: *BeaconStateAllForks, allocator: std.mem.Allocator) !*BeaconStateAllForks {
+        switch (self.*) {
+            .phase0 => |state| {
+                self.* = .{
+                    .altair = try populateFields(
+                        ssz.phase0.BeaconState,
+                        ssz.altair.BeaconState,
+                        allocator,
+                        state,
+                    ),
+                };
+                allocator.destroy(state);
+                return self;
+            },
+            .altair => |state| {
+                self.* = .{
+                    .bellatrix = try populateFields(
+                        ssz.altair.BeaconState,
+                        ssz.bellatrix.BeaconState,
+                        allocator,
+                        state,
+                    ),
+                };
+                allocator.destroy(state);
+                return self;
+            },
+            .bellatrix => |state| {
+                self.* = .{
+                    .capella = try populateFields(
+                        ssz.bellatrix.BeaconState,
+                        ssz.capella.BeaconState,
+                        allocator,
+                        state,
+                    ),
+                };
+                allocator.destroy(state);
+                return self;
+            },
+            .capella => |state| {
+                self.* = .{
+                    .deneb = try populateFields(
+                        ssz.capella.BeaconState,
+                        ssz.deneb.BeaconState,
+                        allocator,
+                        state,
+                    ),
+                };
+                allocator.destroy(state);
+                return self;
+            },
+            .deneb => |state| {
+                self.* = .{
+                    .electra = try populateFields(
+                        ssz.deneb.BeaconState,
+                        ssz.electra.BeaconState,
+                        allocator,
+                        state,
+                    ),
+                };
+                allocator.destroy(state);
+                return self;
+            },
+            .electra => |_| {
+                @panic("upgrade state from electra to fulu unimplemented");
+            },
+        }
     }
 };
 
@@ -617,4 +695,17 @@ test "electra - sanity" {
     try expect(!std.mem.eql(u8, &[_]u8{0} ** 32, &out));
 
     // TODO: more tests
+}
+
+test "upgrade state - sanity" {
+    const allocator = std.testing.allocator;
+    const phase0_state = try allocator.create(ssz.phase0.BeaconState.Type);
+    phase0_state.* = ssz.phase0.BeaconState.default_value;
+
+    var phase0 = BeaconStateAllForks{ .phase0 = phase0_state };
+    var altair = try phase0.upgrade(allocator);
+    const bellatrix = try altair.upgrade(allocator);
+    const capella = try bellatrix.upgrade(allocator);
+    var deneb = try capella.upgrade(allocator);
+    defer deneb.deinit(allocator);
 }

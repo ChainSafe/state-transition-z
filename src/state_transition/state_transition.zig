@@ -79,15 +79,14 @@ fn processSlotsWithTransientCache(
         }
 
         //epochTransitionTimer
-        // upgrade state
-        _ = computeEpochAtSlot(post_state_slot);
-        _ = post_state.config;
+        const state_epoch = computeEpochAtSlot(post_state_slot);
 
-        //TODO(bing): upgradeState to forks
-        //switch (true) {
-        //    state_epoch == config.chain.DENEB_FORK_EPOCH => post_state = upgradeState();
-        //
-        //}
+        for (post_state.config.forks_descending_epoch_order) |e| {
+            if (state_epoch == e) {
+                post_state.state.upgrade(allocator);
+                break; // no need to check all forks once one hits
+            }
+        }
     }
 }
 
