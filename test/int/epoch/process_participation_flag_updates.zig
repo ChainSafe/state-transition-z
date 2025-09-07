@@ -27,6 +27,6 @@ test "processParticipationFlagUpdates - sanity" {
         );
         defer epoch_transition_cache.deinit();
 
-        processParticipationFlagUpdates(test_state.cached_state);
+        try processParticipationFlagUpdates(test_state.cached_state, allocator);
     }
 }

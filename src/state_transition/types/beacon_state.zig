@@ -375,13 +375,13 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
-    pub fn rotateEpochParticipations(self: *BeaconStateAllForks) void {
+    pub fn rotateEpochParticipations(self: *BeaconStateAllForks, allocator: Allocator) !void {
         switch (self.*) {
             .phase0 => @panic("rotate_epoch_participations is not available in phase0"),
             inline else => |state| {
                 state.previous_epoch_participation.clearRetainingCapacity();
-                state.previous_epoch_participation = state.current_epoch_participation;
-                state.current_epoch_participation = ssz.altair.EpochParticipation.default_value;
+                try state.previous_epoch_participation.appendSlice(allocator, state.current_epoch_participation.items) ;
+                state.current_epoch_participation.clearRetainingCapacity();
             },
         }
     }
