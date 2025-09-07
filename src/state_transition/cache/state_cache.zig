@@ -1,4 +1,5 @@
 const std = @import("std");
+const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
 const BeaconConfig = @import("config").BeaconConfig;
 const EpochCacheRc = @import("./epoch_cache.zig").EpochCacheRc;
@@ -6,6 +7,9 @@ const EpochCache = @import("./epoch_cache.zig").EpochCache;
 const EpochCacheImmutableData = @import("./epoch_cache.zig").EpochCacheImmutableData;
 const EpochCacheOpts = @import("./epoch_cache.zig").EpochCacheOpts;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const PubkeyIndexMap = @import("pubkey_cache.zig").PubkeyIndexMap(ValidatorIndex);
+const Index2PubkeyCache = @import("pubkey_cache.zig").Index2PubkeyCache;
 
 pub const CachedBeaconStateAllForks = struct {
     allocator: Allocator,
@@ -37,6 +41,31 @@ pub const CachedBeaconStateAllForks = struct {
     // TODO: do we need another getConst()?
     pub fn getEpochCache(self: *const CachedBeaconStateAllForks) *EpochCache {
         return self.epoch_cache_ref.get();
+    }
+
+    pub fn clone(self: *CachedBeaconStateAllForks, allocator: Allocator) !*CachedBeaconStateAllForks {
+        const cloned = try self.state.clone(allocator);
+
+        const ecr = self.epoch_cache_ref.get();
+        const pubkey_index_map = try ecr.pubkey_to_index.clone();
+        var index_pubkey_cache = try ecr.index_to_pubkey.clone();
+
+        const immutable_data = EpochCacheImmutableData{
+            .config = self.config,
+            .index_to_pubkey = &index_pubkey_cache,
+            .pubkey_to_index = pubkey_index_map,
+        };
+
+        const cached_state = CachedBeaconStateAllForks.createCachedBeaconState(
+            self.allocator,
+            cloned,
+            immutable_data,
+            .{
+                .skip_sync_committee_cache = false,
+                .skip_sync_pubkeys = false,
+            },
+        );
+        return cached_state;
     }
 
     pub fn deinit(self: *CachedBeaconStateAllForks, allocator: Allocator) void {

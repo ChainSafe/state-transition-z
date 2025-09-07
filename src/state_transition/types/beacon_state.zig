@@ -57,6 +57,48 @@ pub const BeaconStateAllForks = union(enum) {
         };
     }
 
+    pub fn clone(self: *const BeaconStateAllForks, allocator: std.mem.Allocator) !*BeaconStateAllForks {
+        switch (self.*) {
+            .phase0 => |state| {
+                var cloned = ssz.phase0.BeaconState.default_value;
+                try ssz.phase0.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .phase0 = &cloned };
+                return &out;
+            },
+            .altair => |state| {
+                var cloned = ssz.altair.BeaconState.default_value;
+                try ssz.altair.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .altair = &cloned };
+                return &out;
+            },
+            .bellatrix => |state| {
+                var cloned = ssz.bellatrix.BeaconState.default_value;
+                try ssz.bellatrix.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .bellatrix = &cloned };
+                return &out;
+            },
+            .capella => |state| {
+                var cloned = ssz.capella.BeaconState.default_value;
+                try ssz.capella.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .capella = &cloned };
+                return &out;
+            },
+            .deneb => |state| {
+                var cloned = ssz.deneb.BeaconState.default_value;
+                try ssz.deneb.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .deneb = &cloned };
+                return &out;
+            },
+
+            .electra => |state| {
+                var cloned = ssz.electra.BeaconState.default_value;
+                try ssz.electra.BeaconState.clone(allocator, state, &cloned);
+                var out: BeaconStateAllForks = .{ .electra = &cloned };
+                return &out;
+            },
+        }
+    }
+
     pub fn hashTreeRoot(self: *const BeaconStateAllForks, allocator: std.mem.Allocator, out: *[32]u8) !void {
         return switch (self.*) {
             .phase0 => |state| try ssz.phase0.BeaconState.hashTreeRoot(allocator, state, out),
@@ -543,7 +585,10 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn upgrade(self: *BeaconStateAllForks) *BeaconStateAllForks {
         return switch (self.*) {
-            .phase0 => {},
+            .phase0 => |state| {
+            
+
+        },
             .altair => {},
             .bellatrix => {},
             .capella => {},

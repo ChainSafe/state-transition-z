@@ -103,7 +103,7 @@ pub fn stateTransition(
         .blinded => |b| b.slot(),
     };
 
-    const post_state = state.clone();
+    const post_state = try state.clone(allocator);
 
     //TODO(bing): metrics
     //if (metrics) {
