@@ -50,13 +50,6 @@ pub fn build(b: *std.Build) void {
     });
     b.modules.put(b.dupe("state_transition"), module_state_transition) catch @panic("OOM");
 
-    const module_test_utils = b.createModule(.{
-        .root_source_file = b.path("src/test_utils/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("test_utils"), module_test_utils) catch @panic("OOM");
-
     const module_state_transition_utils = b.createModule(.{
         .root_source_file = b.path("src/lib_state_transition_utils.zig"),
         .target = target,
@@ -149,20 +142,6 @@ pub fn build(b: *std.Build) void {
     tls_run_test_state_transition.dependOn(&run_test_state_transition.step);
     tls_run_test.dependOn(&run_test_state_transition.step);
 
-    const test_test_utils = b.addTest(.{
-        .name = "test_utils",
-        .root_module = module_test_utils,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_test_utils = b.addInstallArtifact(test_test_utils, .{});
-    const tls_install_test_test_utils = b.step("build-test:test_utils", "Install the test_utils test");
-    tls_install_test_test_utils.dependOn(&install_test_test_utils.step);
-
-    const run_test_test_utils = b.addRunArtifact(test_test_utils);
-    const tls_run_test_test_utils = b.step("test:test_utils", "Run the test_utils test");
-    tls_run_test_test_utils.dependOn(&run_test_test_utils.step);
-    tls_run_test.dependOn(&run_test_test_utils.step);
-
     const test_state_transition_utils = b.addTest(.{
         .name = "state_transition_utils",
         .root_module = module_state_transition_utils,
@@ -237,16 +216,9 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
     module_state_transition.addImport("params", module_params);
 
-    module_test_utils.addImport("build_options", options_module_build_options);
-    module_test_utils.addImport("config", module_config);
-    module_test_utils.addImport("state_transition", module_state_transition);
-    module_test_utils.addImport("consensus_types", module_consensus_types);
-    module_test_utils.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
-
     module_unit.addImport("build_options", options_module_build_options);
     module_unit.addImport("ssz", dep_ssz.module("ssz"));
     module_unit.addImport("state_transition", module_state_transition);
-    module_unit.addImport("test_utils", module_test_utils);
     module_unit.addImport("config", module_config);
     module_unit.addImport("params", module_params);
     module_unit.addImport("consensus_types", module_consensus_types);
@@ -255,7 +227,6 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("build_options", options_module_build_options);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
     module_int.addImport("state_transition", module_state_transition);
-    module_int.addImport("test_utils", module_test_utils);
     module_int.addImport("config", module_config);
     module_int.addImport("consensus_types", module_consensus_types);
 }

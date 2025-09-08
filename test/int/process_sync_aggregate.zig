@@ -27,9 +27,10 @@ const config = @import("config");
 const Allocator = std.mem.Allocator;
 const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
 
-const processSyncAggregate = @import("state_transition").processSyncAggregate;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
+const state_transition = @import("state_transition");
+const processSyncAggregate = state_transition.processSyncAggregate;
+const SignedBlock = state_transition.SignedBlock;
+const SignedBeaconBlock = state_transition.SignedBeaconBlock;
 const G2_POINT_AT_INFINITY = blk: {
     const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
     const byte_array_len = hex_string.len / 2;

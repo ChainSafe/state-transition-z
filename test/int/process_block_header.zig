@@ -28,10 +28,11 @@ const std = @import("std");
 const ssz = @import("consensus_types");
 const config = @import("config");
 
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+const state_transition = @import("state_transition");
+const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 
 const preset = ssz.preset;
 
-const processBlockHeader = @import("state_transition").processBlockHeader;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
+const processBlockHeader = state_transition.processBlockHeader;
+const SignedBlock = state_transition.SignedBlock;
+const SignedBeaconBlock = state_transition.SignedBeaconBlock;

@@ -45,6 +45,8 @@ pub const processOperations = @import("./block/process_operations.zig").processO
 pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
 pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
 
+pub const test_utils = @import("test_utils/root.zig");
+
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
 pub const state_transition = @import("./state_transition.zig");

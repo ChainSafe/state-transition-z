@@ -51,16 +51,6 @@
                 .params,
             },
         },
-        .test_utils = .{
-            .root_source_file = "src/test_utils/root.zig",
-            .imports = .{
-                .build_options,
-                .config,
-                .state_transition,
-                .consensus_types,
-                .blst_min_pk,
-            },
-        },
     },
     .libraries = .{
         .state_transition_utils = .{
@@ -79,7 +69,6 @@
                     .build_options,
                     .ssz,
                     .state_transition,
-                    .test_utils,
                     .config,
                     .params,
                     .consensus_types,
@@ -95,7 +84,6 @@
                     .build_options,
                     .ssz,
                     .state_transition,
-                    .test_utils,
                     .config,
                     .consensus_types,
                 },
