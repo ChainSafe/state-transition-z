@@ -35,13 +35,6 @@ const processSlot = @import("slot/process_slot.zig").processSlot;
 
 const SignedBlock = @import("types/signed_block.zig").SignedBlock;
 
-const Options = struct {
-    verify_state_root: bool = true,
-    verify_proposer: bool = true,
-    verify_signatures: bool = false,
-    do_not_transfer_cache: bool = false,
-};
-
 fn processSlotsWithTransientCache(
     allocator: std.mem.Allocator,
     post_state: *CachedBeaconStateAllForks,
@@ -94,7 +87,12 @@ pub fn stateTransition(
     allocator: std.mem.Allocator,
     state: *CachedBeaconStateAllForks,
     signed_block: SignedBlock,
-    opts: Options,
+    opts: struct {
+        verify_state_root: bool = true,
+        verify_proposer: bool = true,
+        verify_signatures: bool = false,
+        do_not_transfer_cache: bool = false,
+    },
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.message();
     const block_slot = switch (block) {
