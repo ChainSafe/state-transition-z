@@ -1,15 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const BeaconConfig = @import("config").BeaconConfig;
-const types = @import("../type.zig");
-const BLSPubkey = types.BLSPubkey;
-const WithdrawalCredentials = types.WithdrawalCredentials;
-const BLSSignature = types.BLSSignature;
-const DepositMessage = types.DepositMessage;
-const Domain = types.Domain;
-const Root = types.Root;
-const PendingDeposit = types.PendingDeposit;
-const Phase0Deposit = types.Phase0Deposit;
+const BLSPubkey = ssz.primitive.BLSPubkey.Type;
+const WithdrawalCredentials = ssz.primitive.Root.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
+const DepositMessage = ssz.phase0.DepositMessage.Type;
+const Domain = ssz.primitive.Domain.Type;
+const Root = ssz.primitive.Root.Type;
 const ssz = @import("consensus_types");
 const params = @import("params");
 const preset = ssz.preset;
@@ -19,7 +16,7 @@ const computeDomain = @import("../utils/domain.zig").computeDomain;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const blst = @import("blst_min_pk");
 const verify = @import("../utils/bls.zig").verify;
-const ForkSeq = types.ForkSeq;
+const ForkSeq = ssz.primitive.ForkSeq.Type;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
@@ -29,29 +26,29 @@ pub const DepositData = union(enum) {
     phase0: ssz.phase0.DepositData.Type,
     electra: ssz.electra.DepositRequest.Type,
 
-    pub fn getPubkey(self: *const DepositData) BLSPubkey {
-        return switch (self) {
+    pub fn pubkey(self: *const DepositData) BLSPubkey {
+        return switch (self.*) {
             .phase0 => |data| data.pubkey,
             .electra => |data| data.pubkey,
         };
     }
 
-    pub fn getWithdrawalCredentials(self: *const DepositData) WithdrawalCredentials {
-        return switch (self) {
+    pub fn withdrawalCredentials(self: *const DepositData) WithdrawalCredentials {
+        return switch (self.*) {
             .phase0 => |data| data.withdrawal_credentials,
             .electra => |data| data.withdrawal_credentials,
         };
     }
 
-    pub fn getAmount(self: *const DepositData) u64 {
-        return switch (self) {
+    pub fn amount(self: *const DepositData) u64 {
+        return switch (self.*) {
             .phase0 => |data| data.amount,
             .electra => |data| data.amount,
         };
     }
 
-    pub fn getSignature(self: *const DepositData) BLSSignature {
-        return switch (self) {
+    pub fn signature(self: *const DepositData) BLSSignature {
+        return switch (self.*) {
             .phase0 => |data| data.signature,
             .electra => |data| data.signature,
         };
@@ -61,13 +58,22 @@ pub const DepositData = union(enum) {
 pub fn processDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: *const ssz.phase0.Deposit.Type) !void {
     const state = cached_state.state;
     // verify the merkle branch
-    if (!verifyMerkleBranch(ssz.phase0.DepositData.hashTreeRoot(deposit.data), deposit.proof, preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1, state.getEth1DepositIndex(), state.getEth1Data().deposit_root)) {
+    var deposit_data_root: Root = undefined;
+    try ssz.phase0.DepositData.hashTreeRoot(&deposit.data, &deposit_data_root);
+    if (!verifyMerkleBranch(
+        deposit_data_root,
+        &deposit.proof,
+        preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1,
+        state.eth1DepositIndex(),
+        state.eth1Data().deposit_root,
+    )) {
         return error.InvalidMerkleProof;
     }
 
     // deposits must be processed in order
-    state.increaseEth1DepositIndex();
-    applyDeposit(allocator, cached_state, .{
+    const state_eth1_deposit_index = state.eth1DepositIndexPtr();
+    state_eth1_deposit_index.* += 1;
+    try applyDeposit(allocator, cached_state, &.{
         .phase0 = deposit.data,
     });
 }
@@ -78,13 +84,13 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const pubkey = deposit.getPubkey();
-    const withdrawal_credentials = deposit.getWithdrawalCredentials();
-    const amount = deposit.getAmount();
-    const signature = deposit.getSignature();
+    const pubkey = deposit.pubkey();
+    const withdrawal_credentials = deposit.withdrawalCredentials();
+    const amount = deposit.amount();
+    const signature = deposit.signature();
 
     const cached_index = epoch_cache.getValidatorIndex(&pubkey);
-    const is_new_validator = cached_index == null or cached_index.? >= state.getValidatorsCount();
+    const is_new_validator = cached_index == null or cached_index.? >= state.validators().items.len;
 
     if (state.isPreElectra()) {
         if (is_new_validator) {
@@ -97,7 +103,7 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
             increaseBalance(state, index, amount);
         }
     } else {
-        const pending_deposit = PendingDeposit{
+        const pending_deposit = ssz.electra.PendingDeposit.Type{
             .pubkey = pubkey,
             .withdrawal_credentials = withdrawal_credentials,
             .amount = amount,
@@ -108,24 +114,31 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
         if (is_new_validator) {
             if (try isValidDepositSignature(config, pubkey, withdrawal_credentials, amount, signature)) {
                 try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credentials, 0);
-                state.appendPendingDeposit(pending_deposit);
+                try state.pendingDeposits().append(allocator, pending_deposit);
             }
         } else {
-            state.appendPendingDeposit(pending_deposit);
+            try state.pendingDeposits().append(allocator, pending_deposit);
         }
     }
 }
 
-pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, pubkey: BLSPubkey, withdrawal_credentials: WithdrawalCredentials, amount: u64) !void {
+pub fn addValidatorToRegistry(
+    allocator: Allocator,
+    cached_state: *CachedBeaconStateAllForks,
+    pubkey: BLSPubkey,
+    withdrawal_credentials: WithdrawalCredentials,
+    amount: u64,
+) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const validators = state.getValidators();
+    const validators = state.validators();
     // add validator and balance entries
     const effective_balance = @min(
         amount - (amount % preset.EFFECTIVE_BALANCE_INCREMENT),
         if (state.isPreElectra()) preset.MAX_EFFECTIVE_BALANCE else getMaxEffectiveBalance(withdrawal_credentials),
     );
-    try state.appendValidator(allocator, &.{
+
+    try validators.append(allocator, .{
         .pubkey = pubkey,
         .withdrawal_credentials = withdrawal_credentials,
         .activation_eligibility_epoch = params.FAR_FUTURE_EPOCH,
@@ -149,14 +162,17 @@ pub fn addValidatorToRegistry(allocator: Allocator, cached_state: *CachedBeaconS
 
     // Only after altair:
     if (state.isPostAltair()) {
-        try state.appendInactivityScore(allocator, 0);
+        const inactivity_scores = state.inactivityScores();
+        try inactivity_scores.append(allocator, 0);
 
         // add participation caches
-        try state.appendPreviousEpochParticipation(allocator, 0);
-        try state.appendCurrentEpochParticipation(allocator, 0);
+        try state.previousEpochParticipations().append(allocator, 0);
+        const state_current_epoch_participations = state.currentEpochParticipations();
+        try state_current_epoch_participations.append(allocator, 0);
     }
+    const balances = state.balances();
 
-    try state.appendBalance(allocator, amount);
+    try balances.append(allocator, amount);
 }
 
 pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, withdrawal_credential: WithdrawalCredentials, amount: u64, deposit_signature: BLSSignature) !bool {

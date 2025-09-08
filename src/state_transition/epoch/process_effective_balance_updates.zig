@@ -17,7 +17,7 @@ const UPWARD_THRESHOLD = HYSTERESIS_INCREMENT * preset.HYSTERESIS_UPWARD_MULTIPL
 pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !usize {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const validators = state.getValidators();
+    const validators = state.validators();
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements().items;
     var next_epoch_total_active_balance_by_increment: u64 = 0;
 
@@ -26,7 +26,7 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
     // epochTransitionCache.balances is initialized in processRewardsAndPenalties()
     // and updated in processPendingDeposits() and processPendingConsolidations()
     // so it's recycled here for performance.
-    const balances = if (cache.balances) |balances_arr| balances_arr.items else state.getBalances();
+    const balances = if (cache.balances) |balances_arr| balances_arr.items else state.balances().items;
     const is_compounding_validator_arr = cache.is_compounding_validator_arr.items;
 
     var num_update: usize = 0;
@@ -64,17 +64,19 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
             // Must update target balances for consistency, see comments below
             if (state.isPostAltair()) {
                 const delta_effective_balance_increment = new_effective_balance_increment - effective_balance_increment;
-                const previous_epoch_participation = state.getPreviousEpochParticipations();
-                const current_epoch_participation = state.getCurrentEpochParticipations();
+                const previous_epoch_participation = state.previousEpochParticipations().items;
+                const current_epoch_participation = state.currentEpochParticipations().items;
 
-                if (!validator.slashed and (previous_epoch_participation[i] & TIMELY_TARGET) == TIMELY_TARGET) {
-                    epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;
-                }
+                if (!validator.slashed) {
+                    if (previous_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
+                        epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    }
 
-                // currentTargetUnslashedBalanceIncrements is transfered to previousTargetUnslashedBalanceIncrements in afterEpochTransitionCache
-                // at epoch transition of next epoch (in EpochTransitionCache), prevTargetUnslStake is calculated based on newEffectiveBalanceIncrement
-                if (!validator.slashed and (current_epoch_participation[i] & TIMELY_TARGET) == TIMELY_TARGET) {
-                    epoch_cache.current_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    // currentTargetUnslashedBalanceIncrements is transfered to previousTargetUnslashedBalanceIncrements in afterEpochTransitionCache
+                    // at epoch transition of next epoch (in EpochTransitionCache), prevTargetUnslStake is calculated based on newEffectiveBalanceIncrement
+                    if (current_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
+                        epoch_cache.current_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    }
                 }
             }
 

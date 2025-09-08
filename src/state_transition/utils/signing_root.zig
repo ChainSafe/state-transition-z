@@ -1,11 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
-const Domain = types.Domain;
-const Root = types.Root;
-const SigningData = types.SigningData;
+const Domain = ssz.primitive.Domain.Type;
+const Root = ssz.primitive.Root.Type;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
+const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
+const Block = @import("../state_transition.zig").Block;
+const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
+
+const SigningData = ssz.phase0.SigningData.Type;
 
 /// Return the signing root of an object by calculating the root of the object-domain tree.
 pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: Domain, out: *[32]u8) !void {
@@ -19,7 +22,7 @@ pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: D
     try ssz.phase0.SigningData.hashTreeRoot(&domain_wrapped_object, out);
 }
 
-pub fn computeBlockSigningRoot(allocator: Allocator, block: BeaconBlock, domain: Domain, out: *[32]u8) !void {
+pub fn computeBlockSigningRoot(allocator: Allocator, block: *const SignedBlock, domain: Domain, out: *[32]u8) !void {
     var object_root: Root = undefined;
     try block.hashTreeRoot(allocator, &object_root);
     const domain_wrapped_object: SigningData = .{
@@ -45,10 +48,12 @@ test "computeBlockSigningRoot - sanity" {
     const allocator = std.testing.allocator;
     var electra_block = ssz.electra.BeaconBlock.default_value;
     electra_block.slot = 2025;
-    const beacon_block: BeaconBlock = .{
-        .electra = &electra_block,
-    };
+    var signed_electra_block = ssz.electra.SignedBeaconBlock.default_value;
+    signed_electra_block.message = electra_block;
     const domain = [_]u8{0x01} ** 32;
     var out: [32]u8 = undefined;
-    try computeBlockSigningRoot(allocator, beacon_block, domain, &out);
+
+    const signed_beacon_block = SignedBeaconBlock{ .electra = &signed_electra_block };
+    const signed_block = SignedBlock{ .regular = &signed_beacon_block };
+    try computeBlockSigningRoot(allocator, &signed_block, domain, &out);
 }

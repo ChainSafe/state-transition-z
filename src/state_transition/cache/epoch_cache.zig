@@ -1,14 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const preset = @import("consensus_types").preset;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
 const params = @import("params");
 const blst = @import("blst_min_pk");
 const Epoch = ssz.primitive.Epoch.Type;
 const Slot = ssz.primitive.Slot.Type;
-const Publickey = ssz.primitive.BLSPubkey.Type;
 const BLSSignature = ssz.primitive.BLSSignature.Type;
-const BLSPubkey = blst.PublicKey;
 const SyncPeriod = ssz.primitive.SyncPeriod.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
@@ -39,16 +37,11 @@ const isAggregatorFromCommitteeLength = @import("../utils/aggregator.zig").isAgg
 
 const sumTargetUnslashedBalanceIncrements = @import("../utils/target_unslashed_balance.zig").sumTargetUnslashedBalanceIncrements;
 
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;
 const getChurnLimit = @import("../utils/validator.zig").getChurnLimit;
 const getActivationChurnLimit = @import("../utils/validator.zig").getActivationChurnLimit;
 
-const Phase0Attestation = ssz.phase0.Attestation.Type;
-const ElectraAttestation = ssz.electra.Attestation.Type;
 const Attestation = @import("../types/attestation.zig").Attestation;
-const Phase0IndexedAttestation = ssz.phase0.IndexedAttestation.Type;
-const ElectraIndexedAttestation = ssz.electra.IndexedAttestation.Type;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
 
 const syncPubkeys = @import("./pubkey_cache.zig").syncPubkeys;
@@ -116,7 +109,7 @@ pub const EpochCache = struct {
 
     base_reward_per_increment: u64,
 
-    total_acrive_balance_increments: u64,
+    total_active_balance_increments: u64,
 
     churn_limit: u64,
 
@@ -146,7 +139,7 @@ pub const EpochCache = struct {
         const pubkey_to_index = immutable_data.pubkey_to_index;
         const index_to_pubkey = immutable_data.index_to_pubkey;
 
-        const current_epoch = computeEpochAtSlot(state.getSlot());
+        const current_epoch = computeEpochAtSlot(state.slot());
         const is_genesis = current_epoch == params.GENESIS_EPOCH;
         const previous_epoch = if (is_genesis) params.GENESIS_EPOCH else current_epoch - 1;
         const next_epoch = current_epoch + 1;
@@ -155,8 +148,8 @@ pub const EpochCache = struct {
         var exit_queue_epoch = computeActivationExitEpoch(current_epoch);
         var exit_queue_churn: u64 = 0;
 
-        const validators = state.getValidators().items;
-        const validator_count = state.getValidatorsCount();
+        const validators = state.validators().items;
+        const validator_count = validators.len;
 
         // syncPubkeys here to ensure EpochCacheImmutableData is popualted before computing the rest of caches
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
@@ -167,32 +160,32 @@ pub const EpochCache = struct {
 
         const effective_balance_increment = try getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
         const total_slashings_by_increment = getTotalSlashingsByIncrement(state);
-        var previous_active_indices_array_list = ValidatorIndices.init(allocator);
+        var previous_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer previous_active_indices_array_list.deinit();
         try previous_active_indices_array_list.ensureTotalCapacity(validator_count);
-        var current_active_indices_array_list = ValidatorIndices.init(allocator);
+        var current_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer current_active_indices_array_list.deinit();
         try current_active_indices_array_list.ensureTotalCapacity(validator_count);
-        var next_active_indices_array_list = ValidatorIndices.init(allocator);
+        var next_active_indices_array_list = std.ArrayList(ValidatorIndex).init(allocator);
         defer next_active_indices_array_list.deinit();
         try next_active_indices_array_list.ensureTotalCapacity(validator_count);
 
         for (0..validator_count) |i| {
-            const validator = state.getValidator(i);
+            const validator = validators[i];
 
             // Note: Not usable for fork-choice balances since in-active validators are not zero'ed
             effective_balance_increment.items[i] = @intCast(@divFloor(validator.effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
 
-            if (isActiveValidator(validator, previous_epoch)) {
+            if (isActiveValidator(&validator, previous_epoch)) {
                 try previous_active_indices_array_list.append(i);
             }
 
-            if (isActiveValidator(validator, current_epoch)) {
+            if (isActiveValidator(&validator, current_epoch)) {
                 try current_active_indices_array_list.append(i);
                 total_active_balance_increments += effective_balance_increment.items[i];
             }
 
-            if (isActiveValidator(validator, next_epoch)) {
+            if (isActiveValidator(&validator, next_epoch)) {
                 try next_active_indices_array_list.append(i);
             }
 
@@ -229,7 +222,7 @@ pub const EpochCache = struct {
         const next_shuffling: *EpochShuffling = try computeEpochShuffling(allocator, state, next_active_indices, next_epoch);
 
         // TODO: implement proposerLookahead in fulu
-        const fork_seq = config.getForkSeqAtEpoch(current_epoch);
+        const fork_seq = config.forkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
         try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
         var proposers = [_]ValidatorIndex{0} ** preset.SLOTS_PER_EPOCH;
@@ -246,8 +239,8 @@ pub const EpochCache = struct {
         const sync_proposer_reward = sync_participant_reward * PROPOSER_WEIGHT_FACTOR;
         const base_reward_pre_increment = computeBaseRewardPerIncrement(total_active_balance_increments);
         const skip_sync_committee_cache = if (option) |opt| opt.skip_sync_committee_cache else !after_altair_fork;
-        const current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.getCurrentSyncCommittee(), pubkey_to_index);
-        const next_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.getNextSyncCommittee(), pubkey_to_index);
+        const current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.currentSyncCommittee(), pubkey_to_index);
+        const next_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.nextSyncCommittee(), pubkey_to_index);
 
         // Precompute churnLimit for efficient initiateValidatorExit() during block proposing MUST be recompute everytime the
         // active validator indices set changes in size. Validators change active status only when:
@@ -276,8 +269,8 @@ pub const EpochCache = struct {
         var current_target_unslashed_balance_increments: u64 = 0;
 
         if (fork_seq.isPostAltair()) {
-            const previous_epoch_participation = state.getPreviousEpochParticipations();
-            const current_epoch_participation = state.getCurrentEpochParticipations();
+            const previous_epoch_participation = state.previousEpochParticipations().items;
+            const current_epoch_participation = state.currentEpochParticipations().items;
 
             previous_target_unslashed_balance_increments = sumTargetUnslashedBalanceIncrements(previous_epoch_participation, previous_epoch, validators);
             current_target_unslashed_balance_increments = sumTargetUnslashedBalanceIncrements(current_epoch_participation, current_epoch, validators);
@@ -301,7 +294,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = sync_participant_reward,
             .sync_proposer_reward = sync_proposer_reward,
             .base_reward_per_increment = base_reward_pre_increment,
-            .total_acrive_balance_increments = total_active_balance_increments,
+            .total_active_balance_increments = total_active_balance_increments,
             .churn_limit = churn_limit,
             .activation_churn_limit = activation_churn_limit,
             .exit_queue_epoch = exit_queue_epoch,
@@ -357,7 +350,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = self.sync_participant_reward,
             .sync_proposer_reward = self.sync_proposer_reward,
             .base_reward_per_increment = self.base_reward_per_increment,
-            .total_acrive_balance_increments = self.total_acrive_balance_increments,
+            .total_active_balance_increments = self.total_active_balance_increments,
             .churn_limit = self.churn_limit,
             .activation_churn_limit = self.activation_churn_limit,
             .exit_queue_epoch = self.exit_queue_epoch,
@@ -423,10 +416,10 @@ pub const EpochCache = struct {
 
         var upcoming_proposer_seed: [32]u8 = undefined;
         try getSeed(state, upcoming_epoch, params.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
-        try computeProposers(self.allocator, self.config.getForkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
+        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
 
         self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
-        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.getForkSeq(state.getSlot()), self.current_shuffling.get().active_indices.items.len);
+        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.forkSeq(state.slot()), self.current_shuffling.get().active_indices.items.len);
 
         const exit_queue_epoch = computeActivationExitEpoch(upcoming_epoch);
         if (exit_queue_epoch > self.exit_queue_epoch) {
@@ -434,16 +427,16 @@ pub const EpochCache = struct {
             self.exit_queue_churn = 0;
         }
 
-        self.total_acrive_balance_increments = epoch_transition_cache.total_active_balance_increments;
+        self.total_active_balance_increments = epoch_transition_cache.total_active_balance_increments;
         if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
-            self.sync_participant_reward = computeSyncParticipantReward(self.total_acrive_balance_increments);
+            self.sync_participant_reward = computeSyncParticipantReward(self.total_active_balance_increments);
             self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
-            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_acrive_balance_increments);
+            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_active_balance_increments);
         }
 
         self.previous_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments;
         self.current_target_unslashed_balance_increments = 0;
-        self.epoch = computeEpochAtSlot(state.getSlot());
+        self.epoch = computeEpochAtSlot(state.slot());
         self.sync_period = computeSyncPeriodAtEpoch(self.epoch);
     }
 
@@ -466,8 +459,9 @@ pub const EpochCache = struct {
     }
 
     pub fn getCommitteeCountPerSlot(self: *const EpochCache, epoch: Epoch) !usize {
-        const shuffling = self.getShufflingAtEpochOrNull(epoch) orelse error.EpochShufflingNotFound;
-        return shuffling.committees_per_slot;
+        if (self.getShufflingAtEpochOrNull(epoch)) |s| return s.committees_per_slot;
+
+        return error.EpochShufflingNotFound;
     }
 
     pub fn computeSubnetForSlot(self: *const EpochCache, slot: Slot, committee_index: CommitteeIndex) !u8 {
@@ -494,46 +488,50 @@ pub const EpochCache = struct {
     /// hence it needs to deinit attesting_indices inside
     /// TODO: unit test
     pub fn getIndexedAttestation(self: *const EpochCache, attestation: Attestation) !IndexedAttestation {
-        const attesting_indices = switch (attestation.*) {
+        var attesting_indices_ = switch (attestation) {
             .phase0 => |phase0_attestation| try self.getAttestingIndicesPhase0(&phase0_attestation),
             .electra => |electra_attestation| try self.getAttestingIndicesElectra(&electra_attestation),
         };
+        const attesting_indices = attesting_indices_.moveToUnmanaged();
 
         const sort_fn = struct {
-            pub fn sort(_: anytype, a: ValidatorIndex, b: ValidatorIndex) bool {
+            pub fn sort(_: void, a: ValidatorIndex, b: ValidatorIndex) bool {
                 return a < b;
             }
         }.sort;
         std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
 
         return switch (attestation) {
-            .phase0 => |phase0_attestation| Phase0IndexedAttestation{
-                .attesting_indices = attesting_indices,
-                .data = phase0_attestation.data,
-                .signature = phase0_attestation.signature,
+            .phase0 => |phase0_attestation| IndexedAttestation{
+                .phase0 = &ssz.phase0.IndexedAttestation.Type{
+                    .attesting_indices = attesting_indices,
+                    .data = phase0_attestation.data,
+                    .signature = phase0_attestation.signature,
+                },
             },
-            .electra => |electra_attestation| ElectraIndexedAttestation{
-                .attesting_indices = attesting_indices,
-                .data = electra_attestation.data,
-                .signature = electra_attestation.signature,
+            .electra => |electra_attestation| IndexedAttestation{
+                .electra = &ssz.electra.IndexedAttestation.Type{
+                    .attesting_indices = attesting_indices,
+                    .data = electra_attestation.data,
+                    .signature = electra_attestation.signature,
+                },
             },
         };
     }
 
-    pub fn getAttestingIndices(self: *const EpochCache, attestation: Attestation) !ValidatorIndices {
+    pub fn getAttestingIndices(self: *const EpochCache, attestation: Attestation) !std.ArrayList(ValidatorIndex) {
         return switch (attestation.*) {
             .phase0 => |phase0_attestation| self.getAttestingIndicesPhase0(&phase0_attestation),
             .electra => |electra_attestation| self.getAttestingIndicesElectra(&electra_attestation),
         };
     }
 
-    // TODO(ssz): implement getTrueBitIndexes and intersectValues https://github.com/ChainSafe/ssz-z/issues/25
-    /// consumer takes ownership of the returned array
+    /// Consumer takes ownership of the returned array
     pub fn getAttestingIndicesPhase0(self: *const EpochCache, attestation: *const ssz.phase0.Attestation.Type) !std.ArrayList(ValidatorIndex) {
         const aggregation_bits = attestation.aggregation_bits;
         const data = attestation.data;
         const validator_indices = try self.getBeaconCommittee(data.slot, data.index);
-        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, validator_indices);
+        return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, validator_indices);
     }
 
     /// consumer takes ownership of the returned array
@@ -547,11 +545,11 @@ pub const EpochCache = struct {
         // In the spec it means a list of committee indices according to committeeBits
         // This `committeeIndices` refers to the latter
         // TODO Electra: resolve the naming conflicts
-        const committee_indices = try committee_bits.getTrueBitIndexes(self.allocator);
-        defer committee_indices.deinit();
+        var committee_indices: []usize = undefined;
+        _ = try committee_bits.getTrueBitIndexes(committee_indices[0..]);
 
         var total_len: usize = 0;
-        for (committee_indices.items) |committee_index| {
+        for (committee_indices) |committee_index| {
             const committee = try self.getBeaconCommittee(data.slot, committee_index);
             total_len += committee.len;
         }
@@ -560,13 +558,13 @@ pub const EpochCache = struct {
         defer self.allocator.free(committee_validators);
 
         var offset: usize = 0;
-        for (committee_indices.items) |committee_index| {
+        for (committee_indices) |committee_index| {
             const committee = try self.getBeaconCommittee(data.slot, committee_index);
             std.mem.copyForwards(ValidatorIndex, committee_validators[offset..(offset + committee.len)], committee);
             offset += committee.len;
         }
 
-        return try aggregation_bits.intersectValues(self.allocator, ValidatorIndex, committee_validators);
+        return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, committee_validators);
     }
 
     // TODO: getCommitteeAssignments
@@ -578,20 +576,20 @@ pub const EpochCache = struct {
         return isAggregatorFromCommitteeLength(committee.length, slot_signature);
     }
 
-    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?Publickey {
+    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?ssz.primitive.BLSPubkey {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: Publickey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const ssz.primitive.BLSPubkey.Type) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: Publickey) !void {
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
-        const pk_ptr = try allocator.create(BLSPubkey);
-        pk_ptr.* = try BLSPubkey.fromBytes(&pubkey);
+        const pk_ptr = try allocator.create(blst.PublicKey);
+        pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
         self.index_to_pubkey.items[index] = pk_ptr;
     }
 
@@ -641,7 +639,7 @@ pub const EpochCache = struct {
 
     // TODO: review the use of this function, use the rotateSyncCommitteeIndexed() instead
     // TODO: also increase reference count
-    // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: ValidatorIndices) !void {
+    // pub fn setSyncCommitteesIndexed(self: *EpochCache, next_sync_committee_indices: std.ArrayList(ValidatorIndex)) !void {
     //     self.next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(self.allocator, next_sync_committee_indices);
     //     self.current_sync_committee_indexed = self.next_sync_committee_indexed;
     // }

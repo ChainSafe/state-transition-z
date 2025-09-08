@@ -7,7 +7,7 @@ const preset_str = @import("build_options").preset;
 pub const preset = ssz.preset;
 const fork_defs = @import("./fork.zig");
 pub const ForkSeq = fork_defs.ForkSeq;
-pub const getForkSeqByForkName = fork_defs.getForkSeqByForkName;
+pub const forkSeqByForkName = fork_defs.forkSeqByForkName;
 pub const ForkInfo = fork_defs.ForkInfo;
 pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
 
@@ -132,6 +132,7 @@ pub const NEXT_SYNC_COMMITTEE_INDEX_ELECTRA = 23;
 pub const DEPOSIT_REQUEST_TYPE = 0x00;
 pub const WITHDRAWAL_REQUEST_TYPE = 0x01;
 pub const CONSOLIDATION_REQUEST_TYPE = 0x02;
+pub const PENDING_PARTIAL_WITHDRAWALS_LIMIT = 134_217_728;
 
 // 128
 pub const NUMBER_OF_COLUMNS = (preset.FIELD_ELEMENTS_PER_BLOB * 2) / preset.FIELD_ELEMENTS_PER_CELL;

@@ -23,8 +23,8 @@ pub const RootCache = struct {
         const state = cached_state.state;
         instance.* = RootCache{
             .allocator = allocator,
-            .current_justified_checkpoint = state.getCurrentJustifiedCheckpoint(),
-            .previous_justified_checkpoint = state.getPreviousJustifiedCheckpoint(),
+            .current_justified_checkpoint = state.currentJustifiedCheckpoint().*,
+            .previous_justified_checkpoint = state.previousJustifiedCheckpoint().*,
             .state = state,
             .block_root_epoch_cache = std.AutoHashMap(Epoch, Root).init(allocator),
             .block_root_slot_cache = std.AutoHashMap(Slot, Root).init(allocator),
@@ -43,7 +43,7 @@ pub const RootCache = struct {
         }
     }
 
-    pub fn getBlockRootAtSlot(self: *RootCache, slot: Slot) Root {
+    pub fn getBlockRootAtSlot(self: *RootCache, slot: Slot) !Root {
         if (self.block_root_slot_cache.get(slot)) |root| {
             return root;
         } else {

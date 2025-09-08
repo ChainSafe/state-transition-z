@@ -1,12 +1,12 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
-const types = @import("../type.zig");
-const Domain = types.Domain;
-const Version = types.Version;
-const DomainType = types.DomainType;
-const Root = types.Root;
-const Fork = types.Fork;
-const Epoch = types.Epoch;
+const Domain = ssz.primitive.Domain.Type;
+const Version = ssz.primitive.Version.Type;
+const DomainType = ssz.primitive.DomainType.Type;
+const Root = ssz.primitive.Root.Type;
+const Fork = ssz.phase0.Fork.Type;
+const ForkData = ssz.phase0.ForkData.Type;
+const Epoch = ssz.primitive.Epoch.Type;
 
 // Only used by processDeposit +  lightclient
 
@@ -19,13 +19,13 @@ pub fn computeDomain(domain_type: DomainType, fork_version: Version, genesis_val
 }
 
 /// Return the ForkVersion at an epoch from a Fork type
-pub fn getForkVersion(fork: Fork, epoch: Epoch) Version {
+pub fn forkVersion(fork: Fork, epoch: Epoch) Version {
     return if (epoch < fork.epoch) fork.previousVersion else fork.currentVersion;
 }
 
 /// Used primarily in signature domains to avoid collisions across forks/chains.
 pub fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, out: *Root) !void {
-    const fork_data: ssz.phase0.ForkData.Type = .{
+    const fork_data: ForkData = .{
         .current_version = current_version,
         .genesis_validators_root = genesis_validators_root,
     };

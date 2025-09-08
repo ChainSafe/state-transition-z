@@ -21,8 +21,9 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
     try getRewardsAndPenalties(allocator, cached_state, cache, rewards, penalties);
 
     for (rewards, 0..) |reward, i| {
-        const result = state.getBalance(i) + reward - penalties[i];
-        state.setBalance(i, @max(result, 0));
+        const balance = &state.balances().items[i];
+        const result = balance.* + reward - penalties[i];
+        balance.* = @max(result, 0);
     }
 
     // TODO this is naive version, consider caching balances here when switching to TreeView
@@ -30,6 +31,9 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
 
 pub fn getRewardsAndPenalties(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
-    const fork = cached_state.config.getForkSeq(state.getSlot());
-    return if (fork == ForkSeq.phase0) try getAttestationDeltas(allocator, cached_state, cache, rewards, penalties) else try getRewardsAndPenaltiesAltair(allocator, cached_state, cache, rewards, penalties);
+    const fork = cached_state.config.forkSeq(state.slot());
+    return if (fork == ForkSeq.phase0)
+        try getAttestationDeltas(allocator, cached_state, cache, rewards, penalties)
+    else
+        try getRewardsAndPenaltiesAltair(allocator, cached_state, cache, rewards, penalties);
 }

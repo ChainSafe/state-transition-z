@@ -11,6 +11,7 @@ pub fn processEth1DataReset(cached_state: *CachedBeaconStateAllForks, cache: *co
     // reset eth1 data votes
     if (next_epoch % EPOCHS_PER_ETH1_VOTING_PERIOD == 0) {
         const state = cached_state.state;
-        state.setEth1DataVotes(ssz.phase0.Eth1DataVotes.default_value);
+        const state_eth1_data_votes = state.eth1DataVotes();
+        @memcpy(state_eth1_data_votes.items, ssz.phase0.Eth1DataVotes.default_value.items);
     }
 }

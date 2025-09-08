@@ -3,10 +3,10 @@ const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const Validator = ssz.phase0.Validator.Type;
+
 const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const BeaconConfig = @import("config").BeaconConfig;
 const ForkSeq = @import("params").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
@@ -21,12 +21,11 @@ pub fn isSlashableValidator(validator: *const Validator, epoch: Epoch) bool {
     return !validator.slashed and validator.activation_epoch <= epoch and epoch < validator.withdrawable_epoch;
 }
 
-pub fn getActiveValidatorIndices(allocator: Allocator, state: *const BeaconStateAllForks, epoch: Epoch) !ValidatorIndices {
-    const indices = ValidatorIndices.init(allocator);
+pub fn getActiveValidatorIndices(allocator: Allocator, state: *const BeaconStateAllForks, epoch: Epoch) !std.ArrayList(ValidatorIndex) {
+    const indices = std.ArrayList(ValidatorIndex).init(allocator);
 
-    const validator_count = state.getValidatorsCount();
-    for (0..validator_count) |i| {
-        const validator = state.getValidator(i);
+    for (0..state.validators().items.len) |i| {
+        const validator = state.validators[i];
         if (isActiveValidator(validator, epoch)) {
             try indices.append(@intCast(i));
         }
@@ -48,15 +47,15 @@ pub fn getChurnLimit(config: *const BeaconConfig, active_validator_count: usize)
 }
 
 pub fn getBalanceChurnLimit(total_active_balance_increments: u64, churn_limit_quotient: u64, min_per_epoch_churn_limit: u64) u64 {
-    const churnLimitByTotalActiveBalance = (total_active_balance_increments / churn_limit_quotient) * preset.EFFECTIVE_BALANCE_INCREMENT;
+    const churn_limit_by_total_active_balance = (total_active_balance_increments / churn_limit_quotient) * preset.EFFECTIVE_BALANCE_INCREMENT;
 
-    const churn = @max(churnLimitByTotalActiveBalance, min_per_epoch_churn_limit);
+    const churn = @max(churn_limit_by_total_active_balance, min_per_epoch_churn_limit);
 
     return churn - (churn % preset.EFFECTIVE_BALANCE_INCREMENT);
 }
 
 pub fn getBalanceChurnLimitFromCache(epoch_cache: *const EpochCache) u64 {
-    return getBalanceChurnLimit(epoch_cache.total_acrive_balance_increments, epoch_cache.config.chain.CHURN_LIMIT_QUOTIENT, epoch_cache.config.chain.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
+    return getBalanceChurnLimit(epoch_cache.total_active_balance_increments, epoch_cache.config.chain.CHURN_LIMIT_QUOTIENT, epoch_cache.config.chain.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
 }
 
 pub fn getActivationExitChurnLimit(epoch_cache: *const EpochCache) u64 {
@@ -75,13 +74,13 @@ pub fn getMaxEffectiveBalance(withdrawal_credentials: WithdrawalCredentials) u64
     return preset.MIN_ACTIVATION_BALANCE;
 }
 
-pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validatorIndex: ValidatorIndex) u64 {
+pub fn getPendingBalanceToWithdraw(state: *const BeaconStateAllForks, validator_index: ValidatorIndex) u64 {
     var total: u64 = 0;
-    const count = state.getPendingPartialWithdrawalCount();
-    for (0..count) |i| {
-        const item = state.getPendingPartialWithdrawal(i);
-        if (item.validatorIndex == validatorIndex) {
-            total += item.amount;
+    const pending_partial_withdrawals = state.pendingPartialWithdrawals();
+    for (0..pending_partial_withdrawals.items.len) |i| {
+        const pending_partial_withdrawal = pending_partial_withdrawals.items[i];
+        if (pending_partial_withdrawal.validator_index == validator_index) {
+            total += pending_partial_withdrawal.amount;
         }
     }
     return total;

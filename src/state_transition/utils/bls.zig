@@ -82,12 +82,8 @@ test "bls - sanity" {
     try initBlst(allocator);
     defer deinitBlst(allocator);
 
-    // TODO: why cannot compile this with zig 0.14
-    // const pks = [_]*const PublicKey{&pk};
-    // const pks_slice: []*const PublicKey = pks[0..];
-    var pks: [1]*const PublicKey = undefined;
-    pks[0] = &pk;
-    const pks_slice = pks[0..1];
-    const result = try fastAggregateVerify(allocator, &msg, pks_slice, &sig, null);
+    var pks = [_]*const PublicKey{&pk};
+    var pks_slice: []*const PublicKey = pks[0..1];
+    const result = try fastAggregateVerify(allocator, &msg, pks_slice[0..], &sig, null);
     try std.testing.expect(result);
 }

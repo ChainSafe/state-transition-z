@@ -11,8 +11,7 @@ const ForkSeq = @import("params").ForkSeq;
 const params = @import("params");
 const EPOCHS_PER_HISTORICAL_VECTOR = ssz.preset.EPOCHS_PER_HISTORICAL_VECTOR;
 const MIN_SEED_LOOKAHEAD = ssz.preset.MIN_SEED_LOOKAHEAD;
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
-const ValidatorIndex = @import("../type.zig").ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 const ComputeIndexUtils = @import("./committee_indices.zig").ComputeIndexUtils(ValidatorIndex);
@@ -58,14 +57,14 @@ pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconSta
     const rand_byte_count: ByteCount = if (state.isPostElectra()) ByteCount.Two else ByteCount.One;
     const max_effective_balance: u64 = if (state.isPostElectra()) preset.MAX_EFFECTIVE_BALANCE_ELECTRA else preset.MAX_EFFECTIVE_BALANCE;
 
-    const epoch = computeEpochAtSlot(state.getSlot() + 1);
+    const epoch = computeEpochAtSlot(state.slot() + 1);
     var seed: [32]u8 = undefined;
     try getSeed(state, epoch, params.DOMAIN_SYNC_COMMITTEE, &seed);
     try computeSyncCommitteeIndices(allocator, &seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT, out);
 }
 
 pub fn getRandaoMix(state: *const BeaconStateAllForks, epoch: Epoch) Bytes32 {
-    return state.getRanDaoMix(epoch % EPOCHS_PER_HISTORICAL_VECTOR);
+    return state.randaoMixes()[epoch % EPOCHS_PER_HISTORICAL_VECTOR];
 }
 
 pub fn getSeed(state: *const BeaconStateAllForks, epoch: Epoch, domain_type: DomainType, out: *[32]u8) !void {

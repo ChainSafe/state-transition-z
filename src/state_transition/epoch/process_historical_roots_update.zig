@@ -14,9 +14,9 @@ pub fn processHistoricalRootsUpdate(allocator: Allocator, cached_state: *CachedB
     // set historical root accumulator
     if (next_epoch % @divFloor(preset.SLOTS_PER_HISTORICAL_ROOT, preset.SLOTS_PER_EPOCH) == 0) {
         var block_roots: Root = undefined;
-        try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.getBlockRoots(), &block_roots);
+        try ssz.phase0.HistoricalBlockRoots.hashTreeRoot(state.blockRoots(), &block_roots);
         var state_roots: Root = undefined;
-        try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.getStateRoots(), &state_roots);
+        try ssz.phase0.HistoricalStateRoots.hashTreeRoot(state.stateRoots(), &state_roots);
         var root: Root = undefined;
         // HistoricalBatchRoots = Non-spec'ed helper type to allow efficient hashing in epoch transition.
         // This type is like a 'Header' of HistoricalBatch where its fields are hashed.
@@ -24,6 +24,7 @@ pub fn processHistoricalRootsUpdate(allocator: Allocator, cached_state: *CachedB
             .block_roots = block_roots,
             .state_roots = state_roots,
         }, &root);
-        try state.appendHistoricalRoot(allocator, root);
+        const historical_roots = state.historicalRoots();
+        try historical_roots.append(allocator, root);
     }
 }

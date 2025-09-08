@@ -26,7 +26,7 @@ pub fn processSlashings(
     const state = cached_state.state;
 
     const total_balance_by_increment = cache.total_active_stake_by_increment;
-    const fork = config.getForkSeq(state.getSlot());
+    const fork = config.forkSeq(state.slot());
     const proportional_slashing_multiplier: u64 =
         if (fork.isPhase0()) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork.isAltair())
             PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR
@@ -45,7 +45,10 @@ pub fn processSlashings(
     for (cache.indices_to_slash.items) |index| {
         const effective_balance_increment = effective_balance_increments[index];
         const penalty: u64 = if (penalties_by_effective_balance_increment.get(effective_balance_increment)) |penalty| penalty else blk: {
-            const p = if (fork.isPostElectra()) penalty_per_effective_balance_increment * effective_balance_increment else @divFloor(effective_balance_increment * adjusted_total_slashing_balance_by_increment, total_balance_by_increment) * increment;
+            const p = if (fork.isPostElectra())
+                penalty_per_effective_balance_increment * effective_balance_increment
+            else
+                @divFloor(effective_balance_increment * adjusted_total_slashing_balance_by_increment, total_balance_by_increment) * increment;
             try penalties_by_effective_balance_increment.put(effective_balance_increment, p);
             break :blk p;
         };
@@ -55,10 +58,10 @@ pub fn processSlashings(
 
 pub fn getTotalSlashingsByIncrement(state: *const BeaconStateAllForks) u64 {
     var total_slashings_by_increment: u64 = 0;
-    const count = state.getSlashingCount();
+    const count = state.slashings().len;
 
     for (0..count) |i| {
-        const slashing = state.getSlashing(i);
+        const slashing = state.slashings()[i];
         total_slashings_by_increment += @divFloor(slashing, preset.EFFECTIVE_BALANCE_INCREMENT);
     }
 

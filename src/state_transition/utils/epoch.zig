@@ -34,14 +34,16 @@ pub fn computeActivationExitEpoch(epoch: Epoch) Epoch {
     return epoch + 1 + preset.MAX_SEED_LOOKAHEAD;
 }
 
-pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, exit_balance: Gwei) u64 {
+pub fn computeExitEpochAndUpdateChurn(cached_state: *const CachedBeaconStateAllForks, exit_balance: Gwei) u64 {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    var earliest_exit_epoch = @max(state.getEarliestExitEpoch(), computeActivationExitEpoch(epoch_cache.epoch));
+    const state_earliest_exit_epoch = state.earliestExitEpoch();
+    var earliest_exit_epoch = @max(state_earliest_exit_epoch.*, computeActivationExitEpoch(epoch_cache.epoch));
     const per_epoch_churn = getActivationExitChurnLimit(epoch_cache);
 
+    const state_exit_balance_to_consume = state.exitBalanceToConsume();
     // New epoch for exits.
-    var exit_balance_to_consume = if (state.getEarliestExitEpoch() < earliest_exit_epoch) per_epoch_churn else state.getExitBalanceToConsume();
+    var exit_balance_to_consume = if (state_earliest_exit_epoch.* < earliest_exit_epoch) per_epoch_churn else state_exit_balance_to_consume.*;
 
     // Exit doesn't fit in the current earliest epoch.
     if (exit_balance > exit_balance_to_consume) {
@@ -52,24 +54,27 @@ pub fn computeExitEpochAndUpdateChurn(cached_state: *CachedBeaconStateAllForks, 
     }
 
     // Consume the balance and update state variables.
-    state.setExitBalanceToConsume(exit_balance_to_consume - exit_balance);
-    state.setEarliestExitEpoch(earliest_exit_epoch);
+    state_exit_balance_to_consume.* = exit_balance_to_consume - exit_balance;
+    state_earliest_exit_epoch.* = earliest_exit_epoch;
 
-    return state.getEarliestExitEpoch();
+    return state_earliest_exit_epoch.*;
 }
 
 pub fn computeConsolidationEpochAndUpdateChurn(cached_state: *const CachedBeaconStateAllForks, consolidation_balance: Gwei) u64 {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
 
-    var earliest_consolidation_epoch = @max(state.getEarliestConsolidationEpoch(), computeActivationExitEpoch(epoch_cache.epoch));
+    const state_earliest_consolidation_epoch = state.earliestConsolidationEpoch();
+    var earliest_consolidation_epoch = @max(state_earliest_consolidation_epoch.*, computeActivationExitEpoch(epoch_cache.epoch));
     const per_epoch_consolidation_churn = getConsolidationChurnLimit(epoch_cache);
 
+    const state_consolidation_balance_to_consume = state.consolidationBalanceToConsume();
+
     // New epoch for consolidations
-    var consolidation_balance_to_consume = if (state.getEarliestConsolidationEpoch() < earliest_consolidation_epoch)
+    var consolidation_balance_to_consume = if (state_earliest_consolidation_epoch.* < earliest_consolidation_epoch)
         per_epoch_consolidation_churn
     else
-        state.getConsolidationBalanceToConsume();
+        state_consolidation_balance_to_consume.*;
 
     // Consolidation doesn't fit in the current earliest epoch.
     if (consolidation_balance > consolidation_balance_to_consume) {
@@ -80,14 +85,14 @@ pub fn computeConsolidationEpochAndUpdateChurn(cached_state: *const CachedBeacon
     }
 
     // Consume the balance and update state variables.
-    state.setConsolidationBalanceToConsume(consolidation_balance_to_consume - consolidation_balance);
-    state.setEarliestConsolidationEpoch(earliest_consolidation_epoch);
+    state_consolidation_balance_to_consume.* = consolidation_balance_to_consume - consolidation_balance;
+    state_earliest_consolidation_epoch.* = earliest_consolidation_epoch;
 
-    return state.getEarliestConsolidationEpoch();
+    return state_earliest_consolidation_epoch.*;
 }
 
 pub fn getCurrentEpoch(state: BeaconStateAllForks) Epoch {
-    return computeEpochAtSlot(state.getSlot());
+    return computeEpochAtSlot(state.slot());
 }
 
 pub fn getPreviousEpoch(state: BeaconStateAllForks) Epoch {

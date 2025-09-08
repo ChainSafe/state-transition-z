@@ -5,31 +5,62 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
-const BeaconBlockBody = @import("../types/beacon_block.zig").BeaconBlockBody;
+const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const ExecutionPayloadStatus = @import("./external_data.zig").ExecutionPayloadStatus;
+const SignedBlindedBeaconBlock = @import("../types/beacon_block.zig").SignedBlindedBeaconBlock;
+const BlockExternalData = @import("./external_data.zig").BlockExternalData;
 const BeaconConfig = @import("config").BeaconConfig;
 const isMergeTransitionComplete = @import("../utils/execution.zig").isMergeTransitionComplete;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const getRandaoMix = @import("../utils/seed.zig").getRandaoMix;
 
-// TODO: support BlindedBeaconBlockBody
-pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, body: BeaconBlockBody, external_data: ExecutionPayloadStatus) !void {
+const PartialPayload = struct {
+    parent_hash: [32]u8 = undefined,
+    block_hash: [32]u8 = undefined,
+    prev_randao: ssz.primitive.Bytes32.Type = undefined,
+    timestamp: u64 = undefined,
+};
+
+pub fn processExecutionPayload(
+    allocator: Allocator,
+    cached_state: *const CachedBeaconStateAllForks,
+    body: SignedBlock.Body,
+    external_data: BlockExternalData,
+) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const config = epoch_cache.config;
-    const payload = body.getExecutionPayload();
+    var partial_payload = PartialPayload{};
+    switch (body) {
+        .regular => |b| {
+            partial_payload = .{
+                .parent_hash = b.executionPayload().getParentHash(),
+                .block_hash = b.executionPayload().getBlockHash(),
+                .prev_randao = b.executionPayload().getPrevRandao(),
+                .timestamp = b.executionPayload().getTimestamp(),
+            };
+        },
+        .blinded => |b| {
+            partial_payload = .{
+                .parent_hash = b.executionPayloadHeader().getParentHash(),
+                .block_hash = b.executionPayloadHeader().getBlockHash(),
+                .prev_randao = b.executionPayloadHeader().getPrevRandao(),
+                .timestamp = b.executionPayloadHeader().getTimestamp(),
+            };
+        },
+    }
+
     // Verify consistency of the parent hash, block number, base fee per gas and gas limit
     // with respect to the previous execution payload header
     if (isMergeTransitionComplete(state)) {
-        const execution_payload_header = state.getLatestExecutionPayloadHeader();
-        if (!std.mem.eql(u8, &payload.getParentHash(), &execution_payload_header.getBlockHash())) {
+        if (!std.mem.eql(u8, &partial_payload.parent_hash, &partial_payload.block_hash)) {
             return error.InvalidExecutionPayloadParentHash;
         }
     }
 
     // Verify random
-    const expected_random = getRandaoMix(state.*, epoch_cache.epoch);
-    if (!std.mem.eql(u8, &payload.getPrevRandao(), &expected_random)) {
+    const expected_random = getRandaoMix(state, epoch_cache.epoch);
+    if (!std.mem.eql(u8, &partial_payload.prev_randao, &expected_random)) {
         return error.InvalidExecutionPayloadRandom;
     }
 
@@ -39,14 +70,13 @@ pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeacon
     // def compute_timestamp_at_slot(state: BeaconState, slot: Slot) -> uint64:
     //   slots_since_genesis = slot - GENESIS_SLOT
     //   return uint64(state.genesis_time + slots_since_genesis * SECONDS_PER_SLOT)
-    if (payload.getTimestamp() != state.getGenesisTime() + state.getSlot() * config.chain.SECONDS_PER_SLOT) {
+    if (partial_payload.timestamp != state.genesisTime() + state.slot() * config.chain.SECONDS_PER_SLOT) {
         return error.InvalidExecutionPayloadTimestamp;
     }
 
     if (state.isPostDeneb()) {
-        const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.getSlot()));
-        const blob_kzg_commitments_len = body.getBlobKzgCommitments().items.len;
-        if (blob_kzg_commitments_len > max_blobs_per_block) {
+        const max_blobs_per_block = config.getMaxBlobsPerBlock(computeEpochAtSlot(state.slot()));
+        if (body.blobKzgCommitmentsLen() > max_blobs_per_block) {
             return error.BlobKzgCommitmentsExceedsLimit;
         }
     }
@@ -58,12 +88,16 @@ pub fn processExecutionPayload(allocator: Allocator, cached_state: *CachedBeacon
     // the state transition sync
     //
     // Equivalent to `assert executionEngine.notifyNewPayload(payload)
-    if (external_data == ExecutionPayloadStatus.pre_merge) {
+    if (external_data.execution_payload_status == .pre_merge) {
         return error.ExecutionPayloadStatusPreMerge;
-    } else if (external_data == ExecutionPayloadStatus.invalid) {
+    } else if (external_data.execution_payload_status == .invalid) {
         return error.InvalidExecutionPayload;
     }
 
-    const payload_header = try payload.toPayloadHeader(allocator);
-    state.setLatestExecutionPayloadHeader(payload_header);
+    const payload_header = switch (body) {
+        .regular => |b| try b.executionPayload().toPayloadHeader(allocator),
+        .blinded => |b| b.executionPayloadHeader(),
+    };
+
+    state.setLatestExecutionPayloadHeader(&payload_header);
 }

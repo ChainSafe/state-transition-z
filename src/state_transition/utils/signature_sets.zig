@@ -1,11 +1,11 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../type.zig");
+const ssz = @import("consensus_types");
 pub const blst = @import("blst_min_pk");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
-const Root = types.Root;
-const BLSSignature = types.BLSSignature;
+const Root = ssz.primitive.Root.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
 const verify = @import("./bls.zig").verify;
 const fastAggregateVerify = @import("./bls.zig").fastAggregateVerify;
 
@@ -25,15 +25,15 @@ pub const AggregatedSignatureSet = struct {
     signature: BLSSignature,
 };
 
-pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) bool {
+pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = Signature.fromBytes(&set.signature, true);
+    const signature = try Signature.fromBytes(&set.signature);
     return verify(&set.signing_root, &set.pubkey, &signature, null, null);
 }
 
-pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) bool {
+pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = try Signature.fromBytes(&set.signature, true);
+    const signature = try Signature.fromBytes(&set.signature);
     return fastAggregateVerify(allocator, &set.signing_root, set.pubkeys, &signature, null);
 }
 

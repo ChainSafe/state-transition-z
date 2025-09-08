@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
 const state_transition = @import("state_transition");
+const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const ReusedEpochTransitionCache = state_transition.ReusedEpochTransitionCache;
 const EpochTransitionCache = state_transition.EpochTransitionCache;
 const processParticipationFlagUpdates = state_transition.processParticipationFlagUpdates;
@@ -27,6 +27,6 @@ test "processParticipationFlagUpdates - sanity" {
         );
         defer epoch_transition_cache.deinit();
 
-        processParticipationFlagUpdates(allocator, test_state.cached_state);
+        try processParticipationFlagUpdates(test_state.cached_state, allocator);
     }
 }

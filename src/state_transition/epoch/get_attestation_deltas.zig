@@ -64,7 +64,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     const total_balance_in_gwei_f64: f64 = @floatFromInt(total_balance_in_gwei);
     const total_balance_in_gwei_sqrt: f64 = @sqrt(total_balance_in_gwei_f64);
     const balance_sq_root: u64 = @intFromFloat(total_balance_in_gwei_sqrt);
-    const finality_delay = cache.prev_epoch - state.getFinalizedCheckpoint().epoch;
+    const finality_delay = cache.prev_epoch - state.finalizedCheckpoint().epoch;
 
     const BASE_REWARDS_PER_EPOCH = BASE_REWARDS_PER_EPOCH_CONST;
     const proposer_reward_quotient = PROPOSER_REWARD_QUOTIENT;
@@ -72,6 +72,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
 
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
     // so there are limited values of them like 32, 31, 30
+    // TODO(bing): do not deinit and only clear for future use
     var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 

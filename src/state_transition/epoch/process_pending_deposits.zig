@@ -1,10 +1,10 @@
 const std = @import("std");
+const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
-const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("consensus_types").preset;
 const isValidatorKnown = @import("../utils/electra.zig").isValidatorKnown;
 const ForkSeq = @import("params").ForkSeq;
 const isValidDepositSignature = @import("../block/process_deposit.zig").isValidDepositSignature;
@@ -12,8 +12,7 @@ const addValidatorToRegistry = @import("../block/process_deposit.zig").addValida
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
-const types = @import("../type.zig");
-const PendingDeposit = types.PendingDeposit;
+const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const params = @import("params");
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
@@ -21,27 +20,29 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
     const next_epoch = epoch_cache.epoch + 1;
-    const available_for_processing = state.getDepositBalanceToConsume() + getActivationExitChurnLimit(epoch_cache);
+    const deposit_balance_to_consume = state.depositBalanceToConsume();
+    const available_for_processing = deposit_balance_to_consume.* + getActivationExitChurnLimit(epoch_cache);
     var processed_amount: u64 = 0;
     var next_deposit_index: u64 = 0;
     var is_churn_limit_reached = false;
-    const finalized_slot = computeStartSlotAtEpoch(state.getFinalizedCheckpoint().epoch);
+    const finalized_slot = computeStartSlotAtEpoch(state.finalizedCheckpoint().epoch);
 
     var start_index: usize = 0;
     // TODO: is this a good number?
     const chunk = 100;
-    const pending_deposits_len = state.getPendingDepositCount();
+    const pending_deposits = state.pendingDeposits();
+    const pending_deposits_len = pending_deposits.items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
-        // TODO(ssz): implement getReadonlyByRange api for TreeView
+        // TODO(ssz.primitive): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
-        const deposits: []PendingDeposit = state.getPendingDeposits()[start_index..@min(start_index + chunk, pending_deposits_len)];
+        const deposits: []PendingDeposit = pending_deposits.items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {
             // Do not process deposit requests if Eth1 bridge deposits are not yet applied.
             if (
             // Is deposit request
             deposit.slot > params.GENESIS_SLOT and
                 // There are pending Eth1 bridge deposits
-                state.getEth1DepositIndex() < state.getDepositRequestsStartIndex())
+                state.eth1DepositIndex() < state.depositRequestsStartIndex().*)
             {
                 break :outer;
             }
@@ -53,18 +54,17 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
             // Check if number of processed deposits has not reached the limit, otherwise, stop processing.
             // TODO(ssz): define MAX_PENDING_DEPOSITS_PER_EPOCH in preset
-            const MAX_PENDING_DEPOSITS_PER_EPOCH = 16;
-            if (next_deposit_index >= MAX_PENDING_DEPOSITS_PER_EPOCH) {
+            if (next_deposit_index >= preset.MAX_PENDING_DEPOSITS_PER_EPOCH) {
                 break :outer;
             }
 
             // Read validator state
             var is_validator_exited = false;
             var is_validator_withdrawn = false;
-            const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey);
+            const validator_index = epoch_cache.getValidatorIndex(&deposit.pubkey);
 
             if (isValidatorKnown(state, validator_index)) {
-                const validator = state.getValidator(validator_index.?);
+                const validator = state.validators().items[validator_index.?];
                 is_validator_exited = validator.exit_epoch < params.FAR_FUTURE_EPOCH;
                 is_validator_withdrawn = validator.withdrawable_epoch < next_epoch;
             }
@@ -74,7 +74,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
                 try applyPendingDeposit(allocator, cached_state, deposit, cache);
             } else if (is_validator_exited) {
                 // TODO: typescript version accumulate to temp array while in zig we append directly
-                try state.appendPendingDeposit(allocator, &deposit);
+                try pending_deposits.append(allocator, deposit);
             } else {
                 // Check if deposit fits in the churn, otherwise, do no more deposit processing in this epoch.
                 is_churn_limit_reached = processed_amount + deposit.amount > available_for_processing;
@@ -92,8 +92,8 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     }
 
     if (next_deposit_index > 0) {
-        const remaining_pending_deposits = try state.sliceFromPendingDeposits(allocator, next_deposit_index);
-        state.setPendingDeposits(remaining_pending_deposits);
+        try pending_deposits.resize(allocator, pending_deposits_len - next_deposit_index);
+        @memcpy(pending_deposits.items[0..], pending_deposits.items[next_deposit_index..]);
     }
 
     // TODO: consider doing this for TreeView
@@ -103,18 +103,18 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
     // no need to append to pending_deposits again because we did that in the for loop above already
     // Accumulate churn only if the churn limit has been hit.
-    if (is_churn_limit_reached) {
-        state.setDepositBalanceToConsume(available_for_processing - processed_amount);
-    } else {
-        state.setDepositBalanceToConsume(0);
-    }
+    deposit_balance_to_consume.* =
+        if (is_churn_limit_reached)
+            available_for_processing - processed_amount
+        else
+            0;
 }
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
 fn applyPendingDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, deposit: PendingDeposit, cache: *EpochTransitionCache) !void {
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const validator_index = epoch_cache.getValidatorIndex(deposit.pubkey) orelse return error.ValidatorNotFound;
+    const validator_index = epoch_cache.getValidatorIndex(&deposit.pubkey) orelse return error.ValidatorNotFound;
     const pubkey = deposit.pubkey;
     // TODO: is this withdrawal_credential(s) the same to spec?
     const withdrawal_credential = deposit.withdrawal_credentials;

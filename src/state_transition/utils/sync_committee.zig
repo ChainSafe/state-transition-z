@@ -4,30 +4,30 @@ const BlstPublicKey = blst.PublicKey;
 const AggregatePublicKey = blst.AggregatePublicKey;
 const Allocator = std.mem.Allocator;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const ValidatorIndices = @import("../type.zig").ValidatorIndices;
 const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
 const ForkSeq = @import("params").ForkSeq;
 
 pub const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
 const SyncCommitteeInfo = struct {
-    indices: ValidatorIndices,
+    indices: std.ArrayList(ValidatorIndex),
     sync_committee: *SyncCommittee,
 };
 
 /// Consumer must deallocate the returned `SyncCommitteeInfo` struct
-pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: ValidatorIndices, effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
-    const indices = ValidatorIndices.init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
+pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: std.ArrayList(ValidatorIndex), effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
+    const indices = std.ArrayList(ValidatorIndex).init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
     try getNextSyncCommitteeIndices(allocator, state, active_validators_indices, effecitve_balance_increment, indices.items);
 
     // Using the index2pubkey cache is slower because it needs the serialized pubkey.
     var pubkeys: [preset.SYNC_COMMITTEE_SIZE]PublicKey = undefined;
     for (indices, 0..) |index, i| {
-        pubkeys[i] = state.getValidator(index).pubkey;
+        pubkeys[i] = state.validators()[index].pubkey;
     }
 
     const aggregated_pk = try AggregatePublicKey.aggregateSerialized(pubkeys[0..], false);

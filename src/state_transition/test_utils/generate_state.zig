@@ -8,7 +8,7 @@ const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = ssz.preset;
 const BeaconConfig = @import("config").BeaconConfig;
 const ChainConfig = @import("config").ChainConfig;
-const state_transition = @import("state_transition");
+const state_transition = @import("../root.zig");
 const CachedBeaconStateAllForks = state_transition.CachedBeaconStateAllForks;
 const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const PubkeyIndexMap = state_transition.PubkeyIndexMap(ValidatorIndex);
@@ -68,9 +68,9 @@ pub const TestCachedBeaconStateAllForks = struct {
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
         const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
-        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.getGenesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
 
-        try syncPubkeys(allocator, state.getValidators().items, pubkey_index_map, index_pubkey_cache);
+        try syncPubkeys(allocator, state.validators().items, pubkey_index_map, index_pubkey_cache);
 
         const immutable_data = state_transition.EpochCacheImmutableData{
             .config = config,

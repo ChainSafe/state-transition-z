@@ -34,12 +34,29 @@ pub const processParticipationRecordUpdates = @import("./epoch/process_participa
 pub const processParticipationFlagUpdates = @import("./epoch/process_participation_flag_updates.zig").processParticipationFlagUpdates;
 pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_updates.zig").processSyncCommitteeUpdates;
 
+// Block
+pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
+pub const processWithdrawals = @import("./block/process_withdrawals.zig").processWithdrawals;
+pub const getExpectedWithdrawalsResult = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
+pub const processExecutionPayload = @import("./block/process_execution_payload.zig").processExecutionPayload;
+pub const processRandao = @import("./block/process_randao.zig").processRandao;
+pub const processEth1Data = @import("./block/process_eth1_data.zig").processEth1Data;
+pub const processOperations = @import("./block/process_operations.zig").processOperations;
+pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
+pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
+
+pub const test_utils = @import("test_utils/root.zig");
+
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
+pub const state_transition = @import("./state_transition.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");
+pub const SignedBlock = @import("./types/signed_block.zig").SignedBlock;
+pub const SignedBeaconBlock = @import("./types/beacon_block.zig").SignedBeaconBlock;
 
 test {
     testing.refAllDecls(@This());
     testing.refAllDecls(seed);
+    testing.refAllDecls(state_transition);
     testing.refAllDecls(EpochShuffling);
 }
