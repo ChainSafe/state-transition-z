@@ -74,9 +74,9 @@ fn processSlotsWithTransientCache(
         //epochTransitionTimer
         const state_epoch = computeEpochAtSlot(post_state_slot);
 
-        for (post_state.config.forks_descending_epoch_order) |e| {
-            if (state_epoch == e) {
-                post_state.state.upgrade(allocator);
+        for (post_state.config.forks_descending_epoch_order) |f| {
+            if (state_epoch == f.epoch) {
+                _ = try post_state.state.upgrade(allocator);
                 break; // no need to check all forks once one hits
             }
         }
