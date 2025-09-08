@@ -25,7 +25,7 @@ const ssz = @import("consensus_types");
 const config = @import("config");
 
 const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+const TestCachedBeaconStateAllForks = @import("state_transition").test_utils.TestCachedBeaconStateAllForks;
 
 const state_transition = @import("state_transition");
 const processSyncAggregate = state_transition.processSyncAggregate;
