@@ -347,4 +347,5 @@ pub fn build(b: *std.Build) void {
     module_spec_tests.addImport("params", module_params);
     module_spec_tests.addImport("snappy", dep_snappy.module("snappy"));
     module_spec_tests.addImport("state_transition", module_state_transition);
+    module_spec_tests.addImport("ssz", dep_ssz.module("ssz"));
 }

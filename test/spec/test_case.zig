@@ -1,6 +1,7 @@
 const std = @import("std");
 const snappy = @import("snappy");
 const ForkSeq = @import("params").ForkSeq;
+const isFixedType = @import("ssz").isFixedType;
 const BeaconStateAllForks = @import("state_transition").BeaconStateAllForks;
 
 const consensus_types = @import("consensus_types");
@@ -16,8 +17,8 @@ const electra = consensus_types.electra;
 // There is an exception which is `transition`. One needs to read meta.yaml to figure out
 // whether a block_x.ssz_snappy belong to old fork or new fork. Current design of loadTestCase
 // does not handle this.
-pub fn loadTestCase(comptime Schema: type, dir: std.fs.Dir, allocator: std.mem.Allocator) !Schema {
-    var out: Schema = undefined;
+pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs.Dir, allocator: std.mem.Allocator) !SchemaOut {
+    var out: SchemaOut = undefined;
     var it = dir.iterate();
 
     while (try it.next()) |entry| {
@@ -25,7 +26,8 @@ pub fn loadTestCase(comptime Schema: type, dir: std.fs.Dir, allocator: std.mem.A
         if (entry.kind != .file) continue;
         const name = entry.name;
         // Ignore all hidden files
-        if (name.len == 0 || (name.len > 0 and name[0] == '.')) continue;
+        if (name.len == 0) continue;
+        if (name[0] == '.') continue;
 
         const dot_idx = std.mem.lastIndexOfScalar(u8, name, '.').?;
         const file_name = name[0..dot_idx];
@@ -36,27 +38,30 @@ pub fn loadTestCase(comptime Schema: type, dir: std.fs.Dir, allocator: std.mem.A
 
         var handled = false;
         inline for (@typeInfo(Schema).@"struct".fields) |fld| {
-            // TODO: eql works for now. but really should do startsWith
-            if (!std.mem.startsWith(u8, file_name, fld.name)) continue;
+            if (std.mem.startsWith(u8, file_name, fld.name)) {
+                const ST = fld.type;
+                var object_file = try dir.openFile(name, .{});
+                defer object_file.close();
 
-            const ST = fld.type;
-            var object_file = try dir.openFile(name, .{});
-            defer object_file.close();
+                const value_bytes = try object_file.readToEndAlloc(allocator, 100_000_000);
+                defer allocator.free(value_bytes);
 
-            const value_bytes = try object_file.readToEndAlloc(allocator, 100_000_000);
-            defer allocator.free(value_bytes);
+                const serialized_buf = try allocator.alloc(u8, try snappy.uncompressedLength(value_bytes));
+                defer allocator.free(serialized_buf);
+                const serialized_len = try snappy.uncompress(value_bytes, serialized_buf);
+                const serialized = serialized_buf[0..serialized_len];
 
-            const serialized_buf = try allocator.alloc(u8, try snappy.uncompressedLength(value_bytes));
-            defer allocator.free(serialized_buf);
-            const serialized_len = try snappy.uncompress(value_bytes, serialized_buf);
-            const serialized = serialized_buf[0..serialized_len];
+                const value = try allocator.create(ST.Type);
+                if (comptime isFixedType(ST)) {
+                    try ST.deserializeFromBytes(serialized, value);
+                } else {
+                    try ST.deserializeFromBytes(allocator, serialized, value);
+                }
 
-            const value = try allocator.create(ST);
-            try ST.deserializeFromBytes(allocator, serialized, value);
-
-            @field(out, fld.name) = value.*;
-            handled = true;
-            break;
+                @field(out, fld.name) = value.*;
+                handled = true;
+                break;
+            }
         }
 
         if (!handled) {

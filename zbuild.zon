@@ -129,6 +129,7 @@
                     .params,
                     .snappy,
                     .state_transition,
+                    .ssz,
                 },
             },
         },

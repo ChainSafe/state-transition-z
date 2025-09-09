@@ -16,16 +16,33 @@ const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTest
 const Schema = @import("../test_type/schema/operations.zig");
 const loadTestCase = @import("../test_case.zig").loadTestCase;
 
-pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, gpa: std.mem.Allocator, dir: std.fs.Dir) void {
-    const test_case = switch (fork) {
-        .phase0 => loadTestCase(Schema.Phase0Operations, dir, gpa),
-        .altair => loadTestCase(Schema.AltairOperations, dir, gpa),
-        .bellatrix => loadTestCase(Schema.BellatrixOperations, dir, gpa),
-        .capella => loadTestCase(Schema.CapellaOperations, dir, gpa),
-        .deneb => loadTestCase(Schema.DenebOperations, dir, gpa),
-        .electra => loadTestCase(Schema.ElectraOperations, dir, gpa),
-        else => loadTestCase(Schema.Phase0Operations, dir, gpa), // TODO: Handle this case
-    };
+pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, gpa: std.mem.Allocator, dir: std.fs.Dir) !void {
+    switch (fork) {
+        .phase0 => {
+            const tc = try loadTestCase(Schema.Phase0Operations, Schema.Phase0OperationsOut, dir, gpa);
+            _ = tc;
+        },
+        .altair => {
+            const tc = try loadTestCase(Schema.AltairOperations, Schema.AltairOperationsOut, dir, gpa);
+            _ = tc;
+        },
+        .bellatrix => {
+            const tc = try loadTestCase(Schema.BellatrixOperations, Schema.BellatrixOperationsOut, dir, gpa);
+            _ = tc;
+        },
+        .capella => {
+            const tc = try loadTestCase(Schema.CapellaOperations, Schema.CapellaOperationsOut, dir, gpa);
+            _ = tc;
+        },
+        .deneb => {
+            const tc = try loadTestCase(Schema.DenebOperations, Schema.DenebOperationsOut, dir, gpa);
+            _ = tc;
+        },
+        .electra => {
+            const tc = try loadTestCase(Schema.ElectraOperations, Schema.ElectraOperationsOut, dir, gpa);
+            _ = tc;
+        },
+    }
 
     switch (handler) {
         .attestation => {
@@ -35,7 +52,10 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, gpa: std.mem.A
 
             // const postState = processAttestations(gpa, preState, attestation);
         },
+        else => {
+            // todo
+        },
     }
 
-    _ = test_case;
+    // _ = test_case;
 }
