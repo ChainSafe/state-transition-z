@@ -123,10 +123,12 @@
         },
         .spec_tests = .{
             .root_module = .{
-                .root_source_file = "test/spec/test_case/tests.zig",
+                .root_source_file = "test/spec/root.zig",
                 .imports = .{
                     .consensus_types,
+                    .params,
                     .snappy,
+                    .state_transition,
                 },
             },
         },

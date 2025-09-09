@@ -284,7 +284,7 @@ pub fn build(b: *std.Build) void {
     tls_run_test.dependOn(&run_test_int.step);
 
     const module_spec_tests = b.createModule(.{
-        .root_source_file = b.path("test/spec/test_case/tests.zig"),
+        .root_source_file = b.path("test/spec/root.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -344,5 +344,7 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("consensus_types", module_consensus_types);
 
     module_spec_tests.addImport("consensus_types", module_consensus_types);
+    module_spec_tests.addImport("params", module_params);
     module_spec_tests.addImport("snappy", dep_snappy.module("snappy"));
+    module_spec_tests.addImport("state_transition", module_state_transition);
 }

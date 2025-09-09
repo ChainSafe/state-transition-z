@@ -56,15 +56,15 @@ pub fn main() !void {
     });
     defer allocator.free(preset_tests_dir_name);
 
-    for (supported_forks) |fork| {
-        inline for (supported_test_runners) |test_runner| {
-            const test_case_file = test_case_dir ++ @tagName(test_runner) ++ "_tests.zig";
-            const out = try std.fs.cwd().createFile(test_case_file, .{});
-            defer out.close();
+    inline for (supported_test_runners) |test_runner| {
+        const test_case_file = test_case_dir ++ @tagName(test_runner) ++ "_tests.zig";
+        const out = try std.fs.cwd().createFile(test_case_file, .{});
+        defer out.close();
 
-            const writer = out.writer().any();
-            try writeTestCaseHeader(writer, test_runner);
+        const writer = out.writer().any();
+        try writeTestCaseHeader(writer, test_runner);
 
+        for (supported_forks) |fork| {
             const test_runner_dir_name = try std.fs.path.join(allocator, &[_][]const u8{
                 preset_tests_dir_name,
                 @tagName(fork),

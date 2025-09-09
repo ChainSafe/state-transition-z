@@ -6,8 +6,6 @@ pub const OPERATIONS_HEADER =
     \\// Do not commit changes by hand.
     \\
     \\const std = @import("std");
-    \\const spec_test_options = @import("spec_test_options");
-    \\const build_options = @import("build_options");
     \\const types = @import("consensus_types");
     \\const ForkSeq = @import("params").ForkSeq;
     \\const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
