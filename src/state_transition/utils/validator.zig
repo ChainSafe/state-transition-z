@@ -47,15 +47,15 @@ pub fn getChurnLimit(config: *const BeaconConfig, active_validator_count: usize)
 }
 
 pub fn getBalanceChurnLimit(total_active_balance_increments: u64, churn_limit_quotient: u64, min_per_epoch_churn_limit: u64) u64 {
-    const churnLimitByTotalActiveBalance = (total_active_balance_increments / churn_limit_quotient) * preset.EFFECTIVE_BALANCE_INCREMENT;
+    const churn_limit_by_total_active_balance = (total_active_balance_increments / churn_limit_quotient) * preset.EFFECTIVE_BALANCE_INCREMENT;
 
-    const churn = @max(churnLimitByTotalActiveBalance, min_per_epoch_churn_limit);
+    const churn = @max(churn_limit_by_total_active_balance, min_per_epoch_churn_limit);
 
     return churn - (churn % preset.EFFECTIVE_BALANCE_INCREMENT);
 }
 
 pub fn getBalanceChurnLimitFromCache(epoch_cache: *const EpochCache) u64 {
-    return getBalanceChurnLimit(epoch_cache.total_acrive_balance_increments, epoch_cache.config.chain.CHURN_LIMIT_QUOTIENT, epoch_cache.config.chain.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
+    return getBalanceChurnLimit(epoch_cache.total_active_balance_increments, epoch_cache.config.chain.CHURN_LIMIT_QUOTIENT, epoch_cache.config.chain.MIN_PER_EPOCH_CHURN_LIMIT_ELECTRA);
 }
 
 pub fn getActivationExitChurnLimit(epoch_cache: *const EpochCache) u64 {

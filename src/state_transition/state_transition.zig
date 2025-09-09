@@ -35,13 +35,6 @@ const processSlot = @import("slot/process_slot.zig").processSlot;
 
 const SignedBlock = @import("types/signed_block.zig").SignedBlock;
 
-const Options = struct {
-    verify_state_root: bool = true,
-    verify_proposer: bool = true,
-    verify_signatures: bool = false,
-    do_not_transfer_cache: bool = false,
-};
-
 fn processSlotsWithTransientCache(
     allocator: std.mem.Allocator,
     post_state: *CachedBeaconStateAllForks,
@@ -63,13 +56,14 @@ fn processSlotsWithTransientCache(
 
         if ((post_state_slot + 1) % preset.SLOTS_PER_EPOCH == 0) {
             _ = post_state.config.forkSeq(post_state_slot);
-            // TODO(bing): implement
+            // TODO(bing): metrics
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
+            // TODO(bing): metrics: time beforeProcessEpoch
             try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache, &epoch_transition_cache);
             try processEpoch(allocator, post_state, &epoch_transition_cache);
 
-            // registerValidatorStatuses
+            // TODO(bing): registerValidatorStatuses
 
             post_state_slot += 1;
 
@@ -78,15 +72,14 @@ fn processSlotsWithTransientCache(
         }
 
         //epochTransitionTimer
-        // upgrade state
-        _ = computeEpochAtSlot(post_state_slot);
-        _ = post_state.config;
+        const state_epoch = computeEpochAtSlot(post_state_slot);
 
-        //TODO(bing): upgradeState to forks
-        //switch (true) {
-        //    state_epoch == config.chain.DENEB_FORK_EPOCH => post_state = upgradeState();
-        //
-        //}
+        for (post_state.config.forks_descending_epoch_order) |f| {
+            if (state_epoch == f.epoch) {
+                _ = try post_state.state.upgrade(allocator);
+                break; // no need to check all forks once one hits
+            }
+        }
     }
 }
 
@@ -94,7 +87,12 @@ pub fn stateTransition(
     allocator: std.mem.Allocator,
     state: *CachedBeaconStateAllForks,
     signed_block: SignedBlock,
-    opts: Options,
+    opts: struct {
+        verify_state_root: bool = true,
+        verify_proposer: bool = true,
+        verify_signatures: bool = false,
+        do_not_transfer_cache: bool = false,
+    },
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.message();
     const block_slot = switch (block) {
@@ -102,9 +100,7 @@ pub fn stateTransition(
         .blinded => |b| b.slot(),
     };
 
-    //TODO(bing): deep clone
-    // const post_state = state.clone();
-    const post_state = state;
+    const post_state = try state.clone(allocator);
 
     //TODO(bing): metrics
     //if (metrics) {
@@ -162,5 +158,5 @@ pub fn stateTransition(
         }
     }
 
-    return state;
+    return post_state;
 }

@@ -3,12 +3,11 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
-const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const AggregatedSignatureSet = @import("../utils/signature_sets.zig").AggregatedSignatureSet;
 const ssz = @import("consensus_types");
-const primitives = @import("../types/primitives.zig");
 const preset = ssz.preset;
-const Root = primitives.Root;
+const Root = ssz.primitive.Root.Type;
 const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
 const params = @import("params");
 const blst = @import("blst_min_pk");
@@ -23,14 +22,14 @@ pub fn processSyncAggregate(
     allocator: Allocator,
     cached_state: *CachedBeaconStateAllForks,
     block: *const SignedBlock,
-    verify_signatures: ?bool,
+    verify_signatures: bool,
 ) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const committee_indices = @as(*const [preset.SYNC_COMMITTEE_SIZE]u64, @ptrCast(epoch_cache.current_sync_committee_indexed.get().getValidatorIndices()));
 
     // different from the spec but not sure how to get through signature verification for default/empty SyncAggregate in the spec test
-    if (verify_signatures orelse true) {
+    if (verify_signatures) {
         const participant_indices = try block.beaconBlockBody().syncAggregate().sync_committee_bits.intersectValues(
             ValidatorIndex,
             allocator,

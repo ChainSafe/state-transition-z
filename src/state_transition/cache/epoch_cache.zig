@@ -1,16 +1,15 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const preset = @import("consensus_types").preset;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 const params = @import("params");
 const blst = @import("blst_min_pk");
-const Epoch = primitives.Epoch;
-const Slot = primitives.Slot;
-const BLSSignature = primitives.BLSSignature;
-const SyncPeriod = primitives.SyncPeriod;
-const ValidatorIndex = primitives.ValidatorIndex;
-const CommitteeIndex = primitives.CommitteeIndex;
+const Epoch = ssz.primitive.Epoch.Type;
+const Slot = ssz.primitive.Slot.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
+const SyncPeriod = ssz.primitive.SyncPeriod.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
 const ForkSeq = @import("params").ForkSeq;
 const BeaconConfig = @import("config").BeaconConfig;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
@@ -110,7 +109,7 @@ pub const EpochCache = struct {
 
     base_reward_per_increment: u64,
 
-    total_acrive_balance_increments: u64,
+    total_active_balance_increments: u64,
 
     churn_limit: u64,
 
@@ -295,7 +294,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = sync_participant_reward,
             .sync_proposer_reward = sync_proposer_reward,
             .base_reward_per_increment = base_reward_pre_increment,
-            .total_acrive_balance_increments = total_active_balance_increments,
+            .total_active_balance_increments = total_active_balance_increments,
             .churn_limit = churn_limit,
             .activation_churn_limit = activation_churn_limit,
             .exit_queue_epoch = exit_queue_epoch,
@@ -351,7 +350,7 @@ pub const EpochCache = struct {
             .sync_participant_reward = self.sync_participant_reward,
             .sync_proposer_reward = self.sync_proposer_reward,
             .base_reward_per_increment = self.base_reward_per_increment,
-            .total_acrive_balance_increments = self.total_acrive_balance_increments,
+            .total_active_balance_increments = self.total_active_balance_increments,
             .churn_limit = self.churn_limit,
             .activation_churn_limit = self.activation_churn_limit,
             .exit_queue_epoch = self.exit_queue_epoch,
@@ -428,11 +427,11 @@ pub const EpochCache = struct {
             self.exit_queue_churn = 0;
         }
 
-        self.total_acrive_balance_increments = epoch_transition_cache.total_active_balance_increments;
+        self.total_active_balance_increments = epoch_transition_cache.total_active_balance_increments;
         if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
-            self.sync_participant_reward = computeSyncParticipantReward(self.total_acrive_balance_increments);
+            self.sync_participant_reward = computeSyncParticipantReward(self.total_active_balance_increments);
             self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
-            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_acrive_balance_increments);
+            self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_active_balance_increments);
         }
 
         self.previous_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments;
@@ -577,16 +576,16 @@ pub const EpochCache = struct {
         return isAggregatorFromCommitteeLength(committee.length, slot_signature);
     }
 
-    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?primitives.BLSPubkey {
+    pub fn getPubkey(self: *const EpochCache, index: ValidatorIndex) ?ssz.primitive.BLSPubkey {
         return if (index < self.index_to_pubkey.items.len) self.index_to_pubkey[index] else null;
     }
 
-    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const primitives.BLSPubkey) ?ValidatorIndex {
+    pub fn getValidatorIndex(self: *const EpochCache, pubkey: *const ssz.primitive.BLSPubkey.Type) ?ValidatorIndex {
         return self.pubkey_to_index.get(pubkey[0..]);
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: primitives.BLSPubkey) !void {
+    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
         const pk_ptr = try allocator.create(blst.PublicKey);

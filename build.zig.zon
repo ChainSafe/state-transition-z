@@ -7,12 +7,12 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z.git#46c205e7844002c353d176c5f57863ce8a37f99f",
-            .hash = "ssz-0.1.0-yORmzGedBABHz9VoJVSwNOWiY9mMR2-xkKPLon2tVRP5",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
+            .hash = "ssz-0.1.0-yORmzAXKBABgcjHn54mdHaCO8_AU1rdM-ZHfJcYppP1_",
         },
         .blst_z = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git?ref=te/fix_state_transition#d32eae183f19e5171fcb95a9d9fff6b7a8a7e4f7",
-            .hash = "blst_z-0.0.0-td3FNPapAgBsI_LW6ef2NWvGL56PNHvrSv7qEyp8vcFL",
+            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
+            .hash = "blst_z-0.0.0-td3FNFusAgCb9QSUjHFnQpWzvxamthe1XjEGmLG57yTj",
         },
         .blst_min_pk = .{
             .url = "git+https://github.com/ChainSafe/blst-z.git#ece895f9ca8cb64f2217955d292c692c28157090",

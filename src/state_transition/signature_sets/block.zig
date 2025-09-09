@@ -5,7 +5,7 @@ const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatur
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const SignedBeaconBlock = @import("../state_transition.zig").SignedBeaconBlock;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+const TestCachedBeaconStateAllForks = @import("../test_utils/root.zig").TestCachedBeaconStateAllForks;
 const randaoRevealSignatureSet = @import("./randao.zig").randaoRevealSignatureSet;
 const proposerSlashingsSignatureSets = @import("./proposer_slashings.zig").proposerSlashingsSignatureSets;
 

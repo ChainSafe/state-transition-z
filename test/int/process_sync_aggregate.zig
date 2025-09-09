@@ -17,7 +17,7 @@ test "process sync aggregate - sanity" {
     const signed_beacon_block = SignedBeaconBlock{ .electra = &beacon_block };
     const block = SignedBlock{ .regular = &signed_beacon_block };
 
-    try processSyncAggregate(allocator, test_state.cached_state, &block, null);
+    try processSyncAggregate(allocator, test_state.cached_state, &block, true);
 }
 
 const std = @import("std");
@@ -25,11 +25,12 @@ const ssz = @import("consensus_types");
 const config = @import("config");
 
 const Allocator = std.mem.Allocator;
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
+const TestCachedBeaconStateAllForks = @import("state_transition").test_utils.TestCachedBeaconStateAllForks;
 
-const processSyncAggregate = @import("state_transition").processSyncAggregate;
-const SignedBlock = @import("state_transition").SignedBlock;
-const SignedBeaconBlock = @import("state_transition").SignedBeaconBlock;
+const state_transition = @import("state_transition");
+const processSyncAggregate = state_transition.processSyncAggregate;
+const SignedBlock = state_transition.SignedBlock;
+const SignedBeaconBlock = state_transition.SignedBeaconBlock;
 const G2_POINT_AT_INFINITY = blk: {
     const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
     const byte_array_len = hex_string.len / 2;

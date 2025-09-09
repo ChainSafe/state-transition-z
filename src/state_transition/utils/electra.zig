@@ -2,13 +2,12 @@ const std = @import("std");
 const params = @import("params");
 const COMPOUNDING_WITHDRAWAL_PREFIX = params.COMPOUNDING_WITHDRAWAL_PREFIX;
 const ssz = @import("consensus_types");
-const primitives = @import("../types/primitives.zig");
 const MIN_ACTIVATION_BALANCE = ssz.preset.MIN_ACTIVATION_BALANCE;
 
-pub const WithdrawalCredentials = primitives.WithdrawalCredentials;
-pub const WithdrawalCredentialsLength = primitives.WithdrawalCredentialsLength;
-const BLSPubkey = primitives.BLSPubkey;
-const ValidatorIndex = primitives.ValidatorIndex;
+pub const WithdrawalCredentials = ssz.primitive.Root.Type;
+pub const WithdrawalCredentialsLength = ssz.primitive.Root.length;
+const BLSPubkey = ssz.primitive.BLSPubkey.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
@@ -27,7 +26,7 @@ pub fn hasExecutionWithdrawalCredential(withdrawal_credentials: WithdrawalCreden
 pub fn switchToCompoundingValidator(allocator: Allocator, state_cache: *CachedBeaconStateAllForks, index: ValidatorIndex) !void {
     var validator = state_cache.state.validators().items[index];
 
-    // directly modifying the byte leads to primitives missing the modification resulting into
+    // directly modifying the byte leads to ssz.primitive missing the modification resulting into
     // wrong root compute, although slicing can be avoided but anyway this is not going
     // to be a hot path so its better to clean slice and avoid side effects
     var new_withdrawal_credentials = [_]u8{0} ** WithdrawalCredentialsLength;

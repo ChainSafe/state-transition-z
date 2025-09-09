@@ -6,12 +6,12 @@ test "process withdrawals - sanity" {
 
     var ewr = try getExpectedWithdrawalsResult(allocator, test_state.cached_state);
     defer ewr.deinit(allocator);
-    try processWithdrawals(allocator, test_state.cached_state, ewr);
+    try processWithdrawals(test_state.cached_state, ewr);
 }
 
 const std = @import("std");
 
-const TestCachedBeaconStateAllForks = @import("test_utils").TestCachedBeaconStateAllForks;
-
-const processWithdrawals = @import("state_transition").processWithdrawals;
-const getExpectedWithdrawalsResult = @import("state_transition").getExpectedWithdrawalsResult;
+const state_transition = @import("state_transition");
+const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
+const processWithdrawals = state_transition.processWithdrawals;
+const getExpectedWithdrawalsResult = state_transition.getExpectedWithdrawalsResult;

@@ -1,6 +1,6 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const ForkSeq = @import("params").ForkSeq;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;

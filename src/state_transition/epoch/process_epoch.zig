@@ -30,6 +30,7 @@ pub fn processEpoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSta
 
     try processRegistryUpdates(cached_state, cache);
 
+    // TODO(bing): In lodestar-ts we accumulate slashing penalties and only update in processRewardsAndPenalties. Do the same?
     try processSlashings(allocator, cached_state, cache);
 
     try processRewardsAndPenalties(allocator, cached_state, cache);
@@ -54,9 +55,9 @@ pub fn processEpoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSta
     }
 
     if (state.isPhase0()) {
-        processParticipationRecordUpdates(allocator, cached_state);
+        processParticipationRecordUpdates(cached_state);
     } else {
-        processParticipationFlagUpdates(allocator, cached_state);
+        try processParticipationFlagUpdates(cached_state, allocator);
     }
 
     try processSyncCommitteeUpdates(allocator, cached_state);

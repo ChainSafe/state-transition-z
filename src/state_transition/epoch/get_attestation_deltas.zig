@@ -72,6 +72,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
 
     // effectiveBalance is multiple of EFFECTIVE_BALANCE_INCREMENT and less than MAX_EFFECTIVE_BALANCE
     // so there are limited values of them like 32, 31, 30
+    // TODO(bing): do not deinit and only clear for future use
     var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
     defer reward_penalty_item_cache.deinit();
 

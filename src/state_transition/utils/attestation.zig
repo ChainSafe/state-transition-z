@@ -4,10 +4,9 @@ const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const AttestationData = ssz.phase0.AttestationData.Type;
 const AttesterSlashing = ssz.phase0.AttesterSlashing.Type;
-const primitives = @import("../types/primitives.zig");
 
-const ValidatorIndex = primitives.ValidatorIndex;
-const Slot = primitives.Slot;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
+const Slot = ssz.primitive.Slot.Type;
 
 pub fn isSlashableAttestationData(data1: *const AttestationData, data2: *const AttestationData) bool {
     // Double vote

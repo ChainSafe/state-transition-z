@@ -1,11 +1,11 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const types = @import("../types/primitives.zig");
+const ssz = @import("consensus_types");
 pub const blst = @import("blst_min_pk");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
-const Root = types.Root;
-const BLSSignature = types.BLSSignature;
+const Root = ssz.primitive.Root.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
 const verify = @import("./bls.zig").verify;
 const fastAggregateVerify = @import("./bls.zig").fastAggregateVerify;
 

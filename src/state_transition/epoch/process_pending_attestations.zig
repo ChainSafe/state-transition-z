@@ -1,14 +1,13 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
 const getBlockRootAtSlot = @import("../utils/block_root.zig").getBlockRootAtSlot;
 
-const Epoch = primitives.Epoch;
-const ValidatorIndex = primitives.ValidatorIndex;
+const Epoch = ssz.primitive.Epoch.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
 pub fn processPendingAttestations(

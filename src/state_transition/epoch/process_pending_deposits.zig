@@ -12,7 +12,6 @@ const addValidatorToRegistry = @import("../block/process_deposit.zig").addValida
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
-const primitives = @import("../types/primitives.zig");
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const params = @import("params");
 
@@ -34,7 +33,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
     const pending_deposits = state.pendingDeposits();
     const pending_deposits_len = pending_deposits.items.len;
     outer: while (start_index < pending_deposits_len) : (start_index += chunk) {
-        // TODO(primitives): implement getReadonlyByRange api for TreeView
+        // TODO(ssz.primitive): implement getReadonlyByRange api for TreeView
         // const deposits: []PendingDeposit = state.getPendingDeposits().getReadonlyByRange(start_index, chunk);
         const deposits: []PendingDeposit = pending_deposits.items[start_index..@min(start_index + chunk, pending_deposits_len)];
         for (deposits) |deposit| {
@@ -104,11 +103,11 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
     // no need to append to pending_deposits again because we did that in the for loop above already
     // Accumulate churn only if the churn limit has been hit.
-    if (is_churn_limit_reached) {
-        deposit_balance_to_consume.* = available_for_processing - processed_amount;
-    } else {
-        deposit_balance_to_consume.* = 0;
-    }
+    deposit_balance_to_consume.* =
+        if (is_churn_limit_reached)
+            available_for_processing - processed_amount
+        else
+            0;
 }
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow

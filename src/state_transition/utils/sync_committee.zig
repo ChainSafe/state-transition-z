@@ -6,11 +6,10 @@ const Allocator = std.mem.Allocator;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const EffiectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 const ssz = @import("consensus_types");
-const primitives = @import("../types/primitives.zig");
 const preset = ssz.preset;
 const params = @import("params");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
-const ValidatorIndex = primitives.ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
 const ForkSeq = @import("params").ForkSeq;
 

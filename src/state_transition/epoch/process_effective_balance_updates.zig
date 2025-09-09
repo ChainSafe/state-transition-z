@@ -67,14 +67,16 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
                 const previous_epoch_participation = state.previousEpochParticipations().items;
                 const current_epoch_participation = state.currentEpochParticipations().items;
 
-                if (!validator.slashed and (previous_epoch_participation[i] & TIMELY_TARGET) == TIMELY_TARGET) {
-                    epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;
-                }
+                if (!validator.slashed) {
+                    if (previous_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
+                        epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    }
 
-                // currentTargetUnslashedBalanceIncrements is transfered to previousTargetUnslashedBalanceIncrements in afterEpochTransitionCache
-                // at epoch transition of next epoch (in EpochTransitionCache), prevTargetUnslStake is calculated based on newEffectiveBalanceIncrement
-                if (!validator.slashed and (current_epoch_participation[i] & TIMELY_TARGET) == TIMELY_TARGET) {
-                    epoch_cache.current_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    // currentTargetUnslashedBalanceIncrements is transfered to previousTargetUnslashedBalanceIncrements in afterEpochTransitionCache
+                    // at epoch transition of next epoch (in EpochTransitionCache), prevTargetUnslStake is calculated based on newEffectiveBalanceIncrement
+                    if (current_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
+                        epoch_cache.current_target_unslashed_balance_increments += delta_effective_balance_increment;
+                    }
                 }
             }
 

@@ -54,6 +54,8 @@ pub const processDepositRequest = @import("./block/process_deposit_request.zig")
 pub const processWithdrawalRequest = @import("./block/process_withdrawal_request.zig").processWithdrawalRequest;
 pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
 
+pub const test_utils = @import("test_utils/root.zig");
+
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
 pub const state_transition = @import("./state_transition.zig");

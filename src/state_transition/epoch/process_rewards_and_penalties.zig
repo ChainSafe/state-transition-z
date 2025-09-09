@@ -32,5 +32,8 @@ pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBea
 pub fn getRewardsAndPenalties(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, cache: *const EpochTransitionCache, rewards: []u64, penalties: []u64) !void {
     const state = cached_state.state;
     const fork = cached_state.config.forkSeq(state.slot());
-    return if (fork == ForkSeq.phase0) try getAttestationDeltas(allocator, cached_state, cache, rewards, penalties) else try getRewardsAndPenaltiesAltair(allocator, cached_state, cache, rewards, penalties);
+    return if (fork == ForkSeq.phase0)
+        try getAttestationDeltas(allocator, cached_state, cache, rewards, penalties)
+    else
+        try getRewardsAndPenaltiesAltair(allocator, cached_state, cache, rewards, penalties);
 }

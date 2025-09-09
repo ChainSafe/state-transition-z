@@ -1,6 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
+const TestCachedBeaconStateAllForks = @import("../test_utils/root.zig").TestCachedBeaconStateAllForks;
+const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
+const EpochCacheImmutableData = @import("../cache/epoch_cache.zig").EpochCacheImmutableData;
 const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
 const preset = ssz.preset;
@@ -30,4 +33,27 @@ pub fn processAttestations(allocator: Allocator, cached_state: *CachedBeaconStat
     }
 }
 
-// TODO: unit tests
+test "process attestations - sanity" {
+    const allocator = std.testing.allocator;
+
+    {
+        var test_state = try TestCachedBeaconStateAllForks.init(allocator, 16);
+        defer test_state.deinit();
+        var phase0: std.ArrayListUnmanaged(ssz.phase0.Attestation.Type) = .empty;
+        const attestation = ssz.phase0.Attestation.default_value;
+        try phase0.append(allocator, attestation);
+        const attestations = Attestations{ .phase0 = &phase0 };
+        try std.testing.expectError(error.EpochShufflingNotFound, processAttestations(allocator, test_state.cached_state, attestations, true));
+        phase0.deinit(allocator);
+    }
+    {
+        var test_state = try TestCachedBeaconStateAllForks.init(allocator, 16);
+        defer test_state.deinit();
+        var electra: std.ArrayListUnmanaged(ssz.electra.Attestation.Type) = .empty;
+        const attestation = ssz.electra.Attestation.default_value;
+        try electra.append(allocator, attestation);
+        const attestations = Attestations{ .electra = &electra };
+        try std.testing.expectError(error.EpochShufflingNotFound, processAttestations(allocator, test_state.cached_state, attestations, true));
+        electra.deinit(allocator);
+    }
+}

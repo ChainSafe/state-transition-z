@@ -1,8 +1,9 @@
 const ForkSeq = @import("params").ForkSeq;
-const preset = @import("consensus_types").preset;
+const ssz = @import("consensus_types");
+const preset = ssz.preset;
 const params = @import("params");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ValidatorIndex = @import("../types/primitives.zig").ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateValidatorExit;
@@ -44,25 +45,26 @@ pub fn slashValidator(
     epoch_cache.total_slashings_by_increment += effective_balance_increments.get().items[slashed_index];
 
     // TODO(ssz): define MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA
-    const min_slashing_penalty_quotient: usize = if (state.isPhase0())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT
-    else if (state.isAltair())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR
-    else if (state.isPreElectra())
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX
-    else
-        preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA;
+    const min_slashing_penalty_quotient: usize = switch (state.*) {
+        .phase0 => preset.MIN_SLASHING_PENALTY_QUOTIENT,
+        .altair => preset.MIN_SLASHING_PENALTY_QUOTIENT_ALTAIR,
+        .bellatrix, .capella, .deneb => preset.MIN_SLASHING_PENALTY_QUOTIENT_BELLATRIX,
+        .electra => preset.MIN_SLASHING_PENALTY_QUOTIENT_ELECTRA,
+    };
 
     decreaseBalance(state, slashed_index, @divFloor(effective_balance, min_slashing_penalty_quotient));
 
     // apply proposer and whistleblower rewards
     // TODO(ssz): define WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA
-    const whistleblower_reward =
-        if (state.isPreElectra()) @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT) else @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA);
-    const proposer_reward = if (state.isPhase0())
-        @divFloor(whistleblower_reward, preset.PROPOSER_REWARD_QUOTIENT)
-    else
-        @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR);
+    const whistleblower_reward = switch (state.*) {
+        .electra => @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT_ELECTRA),
+        else => @divFloor(effective_balance, preset.WHISTLEBLOWER_REWARD_QUOTIENT),
+    };
+
+    const proposer_reward = switch (state.*) {
+        .phase0 => @divFloor(whistleblower_reward, preset.PROPOSER_REWARD_QUOTIENT),
+        else => @divFloor(whistleblower_reward * params.PROPOSER_WEIGHT, params.WEIGHT_DENOMINATOR),
+    };
 
     const proposer_index = try epoch_cache.getBeaconProposer(state.slot());
 

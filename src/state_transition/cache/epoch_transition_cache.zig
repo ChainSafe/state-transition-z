@@ -1,10 +1,11 @@
 const std = @import("std");
+const ssz = @import("consensus_types");
+
 const Allocator = std.mem.Allocator;
-const primitives = @import("../types/primitives.zig");
-const ValidatorIndex = primitives.ValidatorIndex;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const ForkSeq = @import("params").ForkSeq;
-const Epoch = primitives.Epoch;
-const preset = @import("consensus_types").preset;
+const Epoch = ssz.primitive.Epoch.Type;
+const preset = ssz.preset;
 const CachedBeaconStateAllForks = @import("./state_cache.zig").CachedBeaconStateAllForks;
 
 const attester_status = @import("../utils/attester_status.zig");
@@ -320,8 +321,32 @@ pub const EpochTransitionCache = struct {
             @memset(reused_cache.proposer_indices.items, validator_count);
             try reused_cache.inclusion_delays.resize(validator_count);
             @memset(reused_cache.inclusion_delays.items, 0);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.previousEpochPendingAttestations().items, prev_epoch, FLAG_PREV_SOURCE_ATTESTER, FLAG_PREV_TARGET_ATTESTER, FLAG_PREV_HEAD_ATTESTER);
-            try processPendingAttestations(allocator, cached_state, reused_cache.proposer_indices.items, validator_count, reused_cache.inclusion_delays.items, reused_cache.flags.items, state.currentEpochPendingAttestations().items, current_epoch, FLAG_CURR_SOURCE_ATTESTER, FLAG_CURR_TARGET_ATTESTER, FLAG_CURR_HEAD_ATTESTER);
+            try processPendingAttestations(
+                allocator,
+                cached_state,
+                reused_cache.proposer_indices.items,
+                validator_count,
+                reused_cache.inclusion_delays.items,
+                reused_cache.flags.items,
+                state.previousEpochPendingAttestations().items,
+                prev_epoch,
+                FLAG_PREV_SOURCE_ATTESTER,
+                FLAG_PREV_TARGET_ATTESTER,
+                FLAG_PREV_HEAD_ATTESTER,
+            );
+            try processPendingAttestations(
+                allocator,
+                cached_state,
+                reused_cache.proposer_indices.items,
+                validator_count,
+                reused_cache.inclusion_delays.items,
+                reused_cache.flags.items,
+                state.currentEpochPendingAttestations().items,
+                current_epoch,
+                FLAG_CURR_SOURCE_ATTESTER,
+                FLAG_CURR_TARGET_ATTESTER,
+                FLAG_CURR_HEAD_ATTESTER,
+            );
         } else {
             try reused_cache.previous_epoch_participation.resize(validator_count);
             try reused_cache.current_epoch_participation.resize(validator_count);
@@ -394,7 +419,7 @@ pub const EpochTransitionCache = struct {
         }
 
         // zig specific map function similar to "indicesEligibleForActivation.map(({validatorIndex}) => validatorIndex)"
-        var indices_eligible_for_activation = std.ArrayList(ValidatorIndex).init(allocator);
+        var indices_eligible_for_activation = try std.ArrayList(ValidatorIndex).initCapacity(allocator, validator_activation_list.items.len);
         for (validator_activation_list.items) |activation| {
             try indices_eligible_for_activation.append(activation.validator_index);
         }

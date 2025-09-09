@@ -1,7 +1,6 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
-const Epoch = primitives.Epoch;
+const Epoch = ssz.primitive.Epoch.Type;
 const Checkpoint = ssz.phase0.Checkpoint.Type;
 const JustificationBits = ssz.phase0.JustificationBits.Type;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
@@ -34,9 +33,7 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
     old_previous_justified_checkpoint.* = old_current_justified_checkpoint.*;
     const justification_bits = state.justificationBits();
     var bits = [_]bool{false} ** JustificationBits.length;
-    for (0..bits.len) |i| {
-        bits[i] = try justification_bits.get(i);
-    }
+    justification_bits.toBoolArray(&bits);
 
     // Rotate bits
     var i: usize = bits.len - 1;

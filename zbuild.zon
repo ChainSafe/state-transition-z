@@ -13,10 +13,10 @@
             .url = "git+https://github.com/chainsafe/snappy#7f30207aadbf9509b51ce9e0d4cdb7ae83a2a86e",
         },
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z.git#46c205e7844002c353d176c5f57863ce8a37f99f",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
         },
         .blst_z = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git?ref=te/fix_state_transition#d32eae183f19e5171fcb95a9d9fff6b7a8a7e4f7",
+            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
         },
     },
     .options_modules = .{
@@ -68,16 +68,6 @@
                 .params,
             },
         },
-        .test_utils = .{
-            .root_source_file = "src/test_utils/root.zig",
-            .imports = .{
-                .build_options,
-                .config,
-                .state_transition,
-                .consensus_types,
-                .blst_min_pk,
-            },
-        },
     },
     .executables = .{
         .download_spec_tests = .{
@@ -103,6 +93,21 @@
         },
     },
     .tests = .{
+        .unit = .{
+            .root_module = .{
+                .root_source_file = "src/state_transition/root.zig",
+                .imports = .{
+                    .build_options,
+                    .ssz,
+                    .state_transition,
+                    .config,
+                    .params,
+                    .consensus_types,
+                    .blst_min_pk,
+                },
+            },
+            .filters = .{},
+        },
         .int = .{
             .root_module = .{
                 .root_source_file = "test/int/root.zig",
@@ -110,7 +115,6 @@
                     .build_options,
                     .ssz,
                     .state_transition,
-                    .test_utils,
                     .config,
                     .consensus_types,
                 },

@@ -8,13 +8,12 @@ const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const params = @import("params");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
-const primitives = @import("../types/primitives.zig");
 const ssz = @import("consensus_types");
 
 const AttestationData = ssz.phase0.AttestationData.Type;
-const Attestation = primitives.Attestation;
-const BLSSignature = primitives.BLSSignature;
-const Root = primitives.Root;
+const Attestation = ssz.primitive.Attestation.Type;
+const BLSSignature = ssz.primitive.BLSSignature.Type;
+const Root = ssz.primitive.Root.Type;
 const AggregatedSignatureSet = @import("../utils/signature_sets.zig").AggregatedSignatureSet;
 const createAggregateSignatureSetFromComponents = @import("../utils/signature_sets.zig").createAggregateSignatureSetFromComponents;
 const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestation;
