@@ -9,6 +9,9 @@
         "src",
     },
     .dependencies = .{
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy#7f30207aadbf9509b51ce9e0d4cdb7ae83a2a86e",
+        },
         .ssz = .{
             .url = "git+https://github.com/chainsafe/ssz-z.git#46c205e7844002c353d176c5f57863ce8a37f99f",
         },
@@ -76,17 +79,20 @@
             },
         },
     },
-    .executables = .{ .download_spec_tests = .{
-        .root_module = .{
-            .root_source_file = "test/spec/download_spec_tests.zig",
-            .imports = .{.spec_test_options},
+    .executables = .{
+        .download_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/download_spec_tests.zig",
+                .imports = .{.spec_test_options},
+            },
         },
-    }, .write_spec_tests = .{
-        .root_module = .{
-            .root_source_file = "test/spec/write_spec_tests.zig",
-            .imports = .{ .spec_test_options, .params },
+        .write_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/write_spec_tests.zig",
+                .imports = .{ .spec_test_options, .params, .consensus_types, .state_transition },
+            },
         },
-    } },
+    },
     .libraries = .{
         .state_transition_utils = .{
             .root_module = .{
@@ -110,6 +116,15 @@
                 },
             },
             .filters = .{},
+        },
+        .spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/test_case/tests.zig",
+                .imports = .{
+                    .consensus_types,
+                    .snappy,
+                },
+            },
         },
     },
 }

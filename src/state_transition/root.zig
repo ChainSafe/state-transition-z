@@ -44,6 +44,15 @@ pub const processEth1Data = @import("./block/process_eth1_data.zig").processEth1
 pub const processOperations = @import("./block/process_operations.zig").processOperations;
 pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
 pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
+pub const processAttestations = @import("./block/process_attestations.zig").processAttestations;
+pub const processAttesterSlashing = @import("./block/process_attester_slashing.zig").processAttesterSlashing;
+pub const processDeposit = @import("./block/process_deposit.zig").processDeposit;
+pub const processProposerSlashing = @import("./block/process_proposer_slashing.zig").processProposerSlashing;
+pub const processVoluntaryExit = @import("./block/process_voluntary_exit.zig").processVoluntaryExit;
+pub const processBlsToExecutionChange = @import("./block/process_bls_to_execution_change.zig").processBlsToExecutionChange;
+pub const processDepositRequest = @import("./block/process_deposit_request.zig").processDepositRequest;
+pub const processWithdrawalRequest = @import("./block/process_withdrawal_request.zig").processWithdrawalRequest;
+pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
 
 pub const bls = @import("utils/bls.zig");
 const seed = @import("./utils/seed.zig");
