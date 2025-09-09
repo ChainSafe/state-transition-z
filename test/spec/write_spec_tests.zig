@@ -2,7 +2,7 @@ const std = @import("std");
 const params = @import("params");
 const ForkSeq = params.ForkSeq;
 const Preset = params.Preset;
-const SpecTestRunner = @import("test_type.zig").SpecTestRunner;
+const SpecTestRunner = @import("./test_type/runner.zig").SpecTestRunner;
 const test_template = @import("test_templates.zig");
 const spec_test_options = @import("spec_test_options");
 
