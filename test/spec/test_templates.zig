@@ -11,7 +11,7 @@ pub const OPERATIONS_HEADER =
     \\const types = @import("consensus_types");
     \\const ForkSeq = @import("params").ForkSeq;
     \\const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
-    \\const test_case = @import("./test_case/operations.zig");
+    \\const test_case = @import("./operations.zig");
     \\
     \\
     \\const allocator = std.testing.allocator;
