@@ -18,6 +18,10 @@
             .url = "git+https://github.com/ChainSafe/blst-z.git#ece895f9ca8cb64f2217955d292c692c28157090",
             .hash = "blst_z-0.0.0-td3FNCmjAgBFbOvNv7GhKnPDUfJ0ApbwCOwN-9PajThg",
         },
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy#7f30207aadbf9509b51ce9e0d4cdb7ae83a2a86e",
+            .hash = "snappy-0.1.0-n4Aaqnm2AgAAPFpcJoE2b7uCXteQ4LvhceYrwDrn02LM",
+        },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },
 }
