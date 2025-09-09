@@ -73,8 +73,20 @@ pub fn main() !void {
             defer allocator.free(test_runner_dir_name);
 
             const test_handler_dir_names = try listSubdirectories(allocator, &[_][]const u8{test_runner_dir_name});
+            defer {
+                for (test_handler_dir_names) |el| allocator.free(el);
+                allocator.free(test_handler_dir_names);
+            }
             const test_suite_dir_names = try listSubdirectories(allocator, test_handler_dir_names);
+            defer {
+                for (test_suite_dir_names) |el| allocator.free(el);
+                allocator.free(test_suite_dir_names);
+            }
             const test_case_dir_names = try listSubdirectories(allocator, test_suite_dir_names);
+            defer {
+                for (test_case_dir_names) |el| allocator.free(el);
+                allocator.free(test_case_dir_names);
+            }
 
             for (test_case_dir_names) |test_case_dir_name| {
                 var split_it = std.mem.splitBackwardsSequence(u8, test_case_dir_name, "/");
@@ -92,10 +104,14 @@ pub fn main() !void {
 // of subdirectory paths that join with `directory_names`
 fn listSubdirectories(allocator: std.mem.Allocator, directory_names: []const []const u8) ![][]const u8 {
     var subdirectories = std.ArrayList([]const u8).init(allocator);
-    errdefer subdirectories.deinit();
+    errdefer {
+        for (subdirectories.items) |el| allocator.free(el);
+        subdirectories.deinit();
+    }
 
     for (directory_names) |directory_name| {
-        const directory = try std.fs.cwd().openDir(directory_name, .{ .iterate = true });
+        var directory = try std.fs.cwd().openDir(directory_name, .{ .iterate = true });
+        defer directory.close();
         var it = directory.iterate();
         while (try it.next()) |entry| {
             if (entry.kind == .directory) {
@@ -135,7 +151,7 @@ fn writeTestCase(
 ) !void {
     switch (test_runner) {
         .operations => {
-            try writer.print(test_template.OPERATIONS_TEST_TEMPLATE, .{ @tagName(fork), @tagName(test_runner), test_handler, test_case, test_case_dir_name, "hihi", "hihi" });
+            try writer.print(test_template.OPERATIONS_TEST_TEMPLATE, .{ @tagName(fork), @tagName(test_runner), test_handler, test_case, test_case_dir_name, @tagName(fork), test_handler });
         },
         else => {
             return error.UnsupportedTestRunner;

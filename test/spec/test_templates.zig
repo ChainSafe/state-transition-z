@@ -9,7 +9,10 @@ pub const OPERATIONS_HEADER =
     \\const spec_test_options = @import("spec_test_options");
     \\const build_options = @import("build_options");
     \\const types = @import("consensus_types");
-    \\const test_case = @import("test_case.zig");
+    \\const ForkSeq = @import("params").ForkSeq;
+    \\const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
+    \\const test_case = @import("./test_case/operations.zig");
+    \\
     \\
     \\const allocator = std.testing.allocator;
     \\
@@ -18,11 +21,12 @@ pub const OPERATIONS_HEADER =
 
 pub const OPERATIONS_TEST_TEMPLATE =
     \\test "Static - {s} {s} {s} {s}" {{
-    \\    const test_dir_name = try std.fs.path.join(allocator, {s});
-    \\    defer allocator.free(test_dir_name);
+    \\    const test_dir_name = "{s}";
     \\
-    \\    const test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
-    \\    try test_case.validTestCase(types.{s}.{s}, allocator, test_dir, "roots.yaml");
+    \\    var test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
+    \\    defer test_dir.close();
+    \\
+    \\    try test_case.runTestCase(ForkSeq.{s}, OperationsTestHandler.{s}, allocator, test_dir);
     \\}}
     \\
     \\
