@@ -52,6 +52,12 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
                 const serialized = serialized_buf[0..serialized_len];
 
                 const value = try allocator.create(ST.Type);
+                value.* = ST.default_value;
+                errdefer {
+                    ST.deinit(allocator, value);
+                    allocator.destroy(value);
+                }
+
                 if (comptime isFixedType(ST)) {
                     try ST.deserializeFromBytes(serialized, value);
                 } else {

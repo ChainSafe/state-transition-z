@@ -92,7 +92,7 @@ pub const ElectraOperations = struct {
 
 pub const Phase0OperationsOut = struct {
     pre: phase0.BeaconState.Type,
-    post: phase0.BeaconState.Type,
+    post: ?phase0.BeaconState.Type,
     attestation: ?phase0.Attestation.Type,
     attester_slashing: ?phase0.AttesterSlashing.Type,
     block: ?phase0.BeaconBlock.Type,
@@ -103,7 +103,7 @@ pub const Phase0OperationsOut = struct {
 
 pub const AltairOperationsOut = struct {
     pre: altair.BeaconState.Type,
-    post: altair.BeaconState.Type,
+    post: ?altair.BeaconState.Type,
     attestation: ?altair.Attestation.Type,
     attester_slashing: ?altair.AttesterSlashing.Type,
     block: ?altair.BeaconBlock.Type,
@@ -115,7 +115,7 @@ pub const AltairOperationsOut = struct {
 
 pub const BellatrixOperationsOut = struct {
     pre: bellatrix.BeaconState.Type,
-    post: bellatrix.BeaconState.Type,
+    post: ?bellatrix.BeaconState.Type,
     attestation: ?bellatrix.Attestation.Type,
     attester_slashing: ?bellatrix.AttesterSlashing.Type,
     block: ?bellatrix.BeaconBlock.Type,
@@ -128,7 +128,7 @@ pub const BellatrixOperationsOut = struct {
 
 pub const CapellaOperationsOut = struct {
     pre: capella.BeaconState.Type,
-    post: capella.BeaconState.Type,
+    post: ?capella.BeaconState.Type,
     attestation: ?capella.Attestation.Type,
     attester_slashing: ?capella.AttesterSlashing.Type,
     block: ?capella.BeaconBlock.Type,
@@ -143,7 +143,7 @@ pub const CapellaOperationsOut = struct {
 
 pub const DenebOperationsOut = struct {
     pre: deneb.BeaconState.Type,
-    post: deneb.BeaconState.Type,
+    post: ?deneb.BeaconState.Type,
     attestation: ?deneb.Attestation.Type,
     attester_slashing: ?deneb.AttesterSlashing.Type,
     block: ?deneb.BeaconBlock.Type,
@@ -158,7 +158,7 @@ pub const DenebOperationsOut = struct {
 
 pub const ElectraOperationsOut = struct {
     pre: electra.BeaconState.Type,
-    post: electra.BeaconState.Type,
+    post: ?electra.BeaconState.Type,
     attestation: ?electra.Attestation.Type,
     attester_slashing: ?electra.AttesterSlashing.Type,
     block: ?electra.BeaconBlock.Type,

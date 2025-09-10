@@ -36,7 +36,7 @@ pub fn main() !void {
 
     // minimal preset includes many more testcases
     // so use that for generating tests
-    const preset = Preset.minimal;
+    const preset = Preset.mainnet;
     const supported_forks = [_]ForkSeq{
         .phase0,
         .altair,
