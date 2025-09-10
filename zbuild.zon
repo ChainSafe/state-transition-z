@@ -13,7 +13,7 @@
             .url = "git+https://github.com/chainsafe/snappy#7f30207aadbf9509b51ce9e0d4cdb7ae83a2a86e",
         },
         .ssz = .{
-            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#7a68f5437d18e17ba8b04e98fca6992e7405e946",
         },
         .blst_z = .{
             .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
