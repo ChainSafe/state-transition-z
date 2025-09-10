@@ -53,10 +53,12 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
 
                 const value = try allocator.create(ST.Type);
                 value.* = ST.default_value;
-                errdefer {
-                    ST.deinit(allocator, value);
-                    allocator.destroy(value);
-                }
+                // errdefer {
+                // if (!comptime isFixedType(ST)) {
+                //     ST.deinit(allocator, value);
+                // }
+                // allocator.destroy(value);
+                // }
 
                 if (comptime isFixedType(ST)) {
                     try ST.deserializeFromBytes(serialized, value);
