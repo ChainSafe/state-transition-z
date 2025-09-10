@@ -85,22 +85,22 @@ pub fn expectEqualBeaconStates(expected: BeaconStateAllForks, actual: BeaconStat
 
     switch (expected.forkSeq()) {
         .phase0 => {
-            if (phase0.BeaconState.equals(expected.phase0, actual.phase0)) return error.NotEqual;
+            if (!phase0.BeaconState.equals(expected.phase0, actual.phase0)) return error.NotEqual;
         },
         .altair => {
-            if (altair.BeaconState.equals(expected.altair, actual.altair)) return error.NotEqual;
+            if (!altair.BeaconState.equals(expected.altair, actual.altair)) return error.NotEqual;
         },
         .bellatrix => {
-            if (bellatrix.BeaconState.equals(expected.bellatrix, actual.bellatrix)) return error.NotEqual;
+            if (!bellatrix.BeaconState.equals(expected.bellatrix, actual.bellatrix)) return error.NotEqual;
         },
         .capella => {
-            if (capella.BeaconState.equals(expected.capella, actual.capella)) return error.NotEqual;
+            if (!capella.BeaconState.equals(expected.capella, actual.capella)) return error.NotEqual;
         },
         .deneb => {
-            if (deneb.BeaconState.equals(expected.deneb, actual.deneb)) return error.NotEqual;
+            if (!deneb.BeaconState.equals(expected.deneb, actual.deneb)) return error.NotEqual;
         },
         .electra => {
-            if (electra.BeaconState.equals(expected.electra, actual.electra)) return error.NotEqual;
+            if (!electra.BeaconState.equals(expected.electra, actual.electra)) return error.NotEqual;
         },
         else => return error.UnsupportedFork,
     }
