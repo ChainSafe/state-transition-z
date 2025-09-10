@@ -18,7 +18,7 @@ const electra = consensus_types.electra;
 // whether a block_x.ssz_snappy belong to old fork or new fork. Current design of loadTestCase
 // does not handle this.
 pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs.Dir, allocator: std.mem.Allocator) !SchemaOut {
-    var out: SchemaOut = undefined;
+    var out: SchemaOut = .{};
     var it = dir.iterate();
 
     while (try it.next()) |entry| {
@@ -53,12 +53,12 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
 
                 const value = try allocator.create(ST.Type);
                 value.* = ST.default_value;
-                // errdefer {
-                // if (!comptime isFixedType(ST)) {
-                //     ST.deinit(allocator, value);
-                // }
-                // allocator.destroy(value);
-                // }
+                errdefer {
+                    if (!comptime isFixedType(ST)) {
+                        ST.deinit(allocator, value);
+                    }
+                    allocator.destroy(value);
+                }
 
                 if (comptime isFixedType(ST)) {
                     try ST.deserializeFromBytes(serialized, value);
@@ -66,7 +66,7 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
                     try ST.deserializeFromBytes(allocator, serialized, value);
                 }
 
-                @field(out, fld.name) = value.*;
+                @field(out, fld.name) = value;
                 handled = true;
                 break;
             }
