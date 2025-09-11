@@ -3,6 +3,7 @@ const ssz = @import("consensus_types");
 
 const state_transition = @import("state_transition");
 const processAttestations = state_transition.processAttestations;
+const processAttesterSlashing = state_transition.processAttesterSlashing;
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const Attestations = state_transition.Attestations;
@@ -12,6 +13,8 @@ const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTest
 const Schema = @import("../test_type/schema/operations.zig");
 const loadTestCase = @import("../test_case.zig").loadTestCase;
 const isFixedType = @import("ssz").isFixedType;
+
+const blst = @import("blst_min_pk");
 
 pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
     switch (fork) {
@@ -116,6 +119,8 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 }
 
 fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, test_case: anytype) !void {
+    try blst.initializeThreadPool(allocator);
+    defer blst.deinitializeThreadPool();
     _ = fork;
     switch (handler) {
         .attestation => {
@@ -124,28 +129,70 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
             const attestation: *ssz.altair.Attestation.Type = test_case.attestation.?;
 
             // These may or may not exist
-            const expected_post_state = test_case.post;
-
+            const expected_post_state = test_case.post; // null means invalid test case (expect error)
             const is_valid_test_case = test_case.post != null;
 
-            _ = expected_post_state;
-            _ = is_valid_test_case;
+            const pre_state_altair_clone = try allocator.create(ssz.altair.BeaconState.Type);
+            pre_state_altair_clone.* = ssz.altair.BeaconState.default_value;
+            // Clone pre state to avoid double freeing after passing to TestCachedBeaconStateAllForks
+            try ssz.altair.BeaconState.clone(allocator, pre_state_altair, pre_state_altair_clone);
 
             const pre_state = try allocator.create(BeaconStateAllForks);
-            pre_state.* = .{ .altair = pre_state_altair };
+            pre_state.* = .{ .altair = pre_state_altair_clone };
 
             var cached_pre_state = try TestCachedBeaconStateAllForks.initFromState(allocator, pre_state);
             defer cached_pre_state.deinit();
 
             var attestationArray: std.ArrayListUnmanaged(ssz.altair.Attestation.Type) = .empty;
+            defer attestationArray.deinit(allocator);
             try attestationArray.append(allocator, attestation.*);
             const attestations = Attestations{ .phase0 = &attestationArray };
 
-            const post_state = try processAttestations(allocator, cached_pre_state.cached_state, attestations, true);
-
-            _ = post_state;
+            if (is_valid_test_case) {
+                try processAttestations(allocator, cached_pre_state.cached_state, attestations, true);
+                const expected: BeaconStateAllForks = .{ .altair = expected_post_state.? };
+                try (@import("../test_case.zig").expectEqualBeaconStates(expected, cached_pre_state.cached_state.state.*));
+            } else {
+                if (processAttestations(allocator, cached_pre_state.cached_state, attestations, true)) |_| {
+                    return error.ExpectedFailure;
+                } else |e| {
+                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
+                }
+            }
         },
-        .attester_slashing => {},
+        .attester_slashing => {
+            // These are mandatory fields
+            const pre_state_altair: *ssz.altair.BeaconState.Type = test_case.pre.?;
+            const attester_slashing: *ssz.altair.AttesterSlashing.Type = test_case.attester_slashing.?;
+
+            // These may or may not exist
+            const expected_post_state = test_case.post; // null means invalid test case (expect error)
+            const is_valid_test_case = test_case.post != null;
+
+            const pre_state_altair_clone = try allocator.create(ssz.altair.BeaconState.Type);
+            pre_state_altair_clone.* = ssz.altair.BeaconState.default_value;
+            // Clone pre state to avoid double freeing after passing to TestCachedBeaconStateAllForks
+            try ssz.altair.BeaconState.clone(allocator, pre_state_altair, pre_state_altair_clone);
+
+            const pre_state = try allocator.create(BeaconStateAllForks);
+            pre_state.* = .{ .altair = pre_state_altair_clone };
+
+            var cached_pre_state = try TestCachedBeaconStateAllForks.initFromState(allocator, pre_state);
+            defer cached_pre_state.deinit();
+
+            if (is_valid_test_case) {
+                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, false);
+                const expected: BeaconStateAllForks = .{ .altair = expected_post_state.? };
+
+                try (@import("../test_case.zig").expectEqualBeaconStates(expected, cached_pre_state.cached_state.state.*));
+            } else {
+                if (processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, false)) |_| {
+                    return error.ExpectedFailure;
+                } else |e| {
+                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
+                }
+            }
+        },
         .block_header => {},
         .deposit => {},
         .proposer_slashing => {},

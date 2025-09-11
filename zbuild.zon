@@ -130,6 +130,7 @@
                     .snappy,
                     .state_transition,
                     .ssz,
+                    .blst_min_pk,
                 },
             },
         },

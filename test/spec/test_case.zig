@@ -102,6 +102,5 @@ pub fn expectEqualBeaconStates(expected: BeaconStateAllForks, actual: BeaconStat
         .electra => {
             if (!electra.BeaconState.equals(expected.electra, actual.electra)) return error.NotEqual;
         },
-        else => return error.UnsupportedFork,
     }
 }
