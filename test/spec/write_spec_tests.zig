@@ -97,6 +97,8 @@ pub fn main() !void {
                 try writeTestCase(writer, fork, test_runner, test_handler_name, test_case_name, test_case_dir_name);
             }
         }
+
+        try writeTestCaseFooter(writer, test_runner);
     }
 }
 
@@ -141,6 +143,21 @@ fn writeTestCaseHeader(writer: std.io.AnyWriter, test_runner: SpecTestRunner) !v
     try writer.writeAll(header);
 }
 
+fn writeTestCaseFooter(writer: std.io.AnyWriter, test_runner: SpecTestRunner) !void {
+    var header: []const u8 = undefined;
+
+    switch (test_runner) {
+        .operations => {
+            header = test_template.OPERATIONS_FOOTER;
+        },
+        else => {
+            return error.UnsupportedTestRunner;
+        },
+    }
+
+    try writer.writeAll(header);
+}
+
 fn writeTestCase(
     writer: std.io.AnyWriter,
     fork: ForkSeq,
@@ -151,7 +168,19 @@ fn writeTestCase(
 ) !void {
     switch (test_runner) {
         .operations => {
-            try writer.print(test_template.OPERATIONS_TEST_TEMPLATE, .{ @tagName(fork), @tagName(test_runner), test_handler, test_case, test_case_dir_name, @tagName(fork), test_handler });
+            try writer.print(test_template.OPERATIONS_TEST_TEMPLATE, .{
+                @tagName(fork),
+                @tagName(test_runner),
+                test_handler,
+                test_case,
+                @tagName(fork),
+                @tagName(test_runner),
+                test_handler,
+                test_case,
+                test_case_dir_name,
+                @tagName(fork),
+                test_handler,
+            });
         },
         else => {
             return error.UnsupportedTestRunner;

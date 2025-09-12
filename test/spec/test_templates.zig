@@ -10,6 +10,7 @@ pub const OPERATIONS_HEADER =
     \\const ForkSeq = @import("params").ForkSeq;
     \\const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
     \\const test_case = @import("./operations.zig");
+    \\var TL = @import("../utils/test_logger.zig").TestLogger{};
     \\
     \\
     \\const allocator = std.testing.allocator;
@@ -19,13 +20,24 @@ pub const OPERATIONS_HEADER =
 
 pub const OPERATIONS_TEST_TEMPLATE =
     \\test "Static - {s} {s} {s} {s}" {{
-    \\    const test_dir_name = "{s}";
-    \\
-    \\    var test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
-    \\    defer test_dir.close();
-    \\
-    \\    try test_case.runTestCase(ForkSeq.{s}, OperationsTestHandler.{s}, allocator, test_dir);
+    \\    try TL.run(
+    \\        "Static - {s} {s} {s} {s}",
+    \\        struct {{
+    \\            fn body() !void {{
+    \\                const test_dir_name = "{s}";
+    \\                var test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
+    \\                defer test_dir.close();
+    \\                try test_case.runTestCase(ForkSeq.{s}, OperationsTestHandler.{s}, allocator, test_dir);
+    \\            }}
+    \\        }}.body,
+    \\    );
     \\}}
     \\
     \\
+;
+
+pub const OPERATIONS_FOOTER =
+    \\test "__summary__(Operations Tests)" { 
+    \\    TL.summary("Operations Tests");
+    \\}
 ;
