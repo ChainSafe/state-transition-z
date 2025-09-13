@@ -4,6 +4,7 @@ const ssz = @import("consensus_types");
 const state_transition = @import("state_transition");
 const processAttestations = state_transition.processAttestations;
 const processAttesterSlashing = state_transition.processAttesterSlashing;
+const processProposerSlashing = state_transition.processProposerSlashing;
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const Attestations = state_transition.Attestations;
@@ -180,7 +181,27 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
         },
         .block_header => {},
         .deposit => {},
-        .proposer_slashing => {},
+        .proposer_slashing => {
+            // These are mandatory fields
+            const proposer_slashing = test_case.proposer_slashing.?;
+
+            // These may or may not exist
+            const expected_post_state_any = test_case.post; // null means invalid test case (expect error)
+            const is_valid_test_case = expected_post_state_any != null;
+
+            if (is_valid_test_case) {
+                try processProposerSlashing(cached_pre_state.cached_state, proposer_slashing, false);
+                const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
+
+                try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
+            } else {
+                if (processProposerSlashing(cached_pre_state.cached_state, proposer_slashing, false)) |_| {
+                    return error.ExpectedFailure;
+                } else |e| {
+                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
+                }
+            }
+        },
         .voluntary_exit => {},
         .sync_aggregate => {},
         .execution_payload => {},
@@ -192,6 +213,8 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
     }
 }
 
+// run_attester_slashing_case
+
 fn run_attestation_case(
     fork: ForkSeq,
     allocator: std.mem.Allocator,
@@ -202,11 +225,11 @@ fn run_attestation_case(
     const is_valid_test_case = expected_post_state_any != null;
 
     if (is_valid_test_case) {
-        try processAttestations(allocator, cached_state, attestations, false);
+        try processAttestations(allocator, cached_state, attestations, true);
         const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
         try expectEqualBeaconStates(expected_post_state, cached_state.state.*);
     } else {
-        if (processAttestations(allocator, cached_state, attestations, false)) |_| {
+        if (processAttestations(allocator, cached_state, attestations, true)) |_| {
             return error.ExpectedFailure;
         } else |e| {
             std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
