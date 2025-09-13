@@ -9,6 +9,8 @@ pub const TestLogger = struct {
     total: usize = 0,
     failed: usize = 0,
     skipped: usize = 0,
+    // Silence failed tests' stacktrace
+    silence_stacktrace: bool = true,
 
     pub fn run(self: *TestLogger, comptime name: []const u8, body: anytype) !void {
         self.total += 1;
@@ -20,6 +22,9 @@ pub const TestLogger = struct {
             self.failed += 1;
             std.debug.print("{s}❌ FAIL{s} {s}\n", .{ RED, RESET, name });
 
+            if (self.silence_stacktrace) {
+                return;
+            }
             return e;
         };
 
