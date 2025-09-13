@@ -41,7 +41,6 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
                 inline for (@typeInfo(Schema.AltairOperations).@"struct".fields) |fld| {
                     const ST = fld.type;
                     if (@field(tc, fld.name)) |val_ptr| {
-                        std.debug.print("name {s}\n", .{fld.name});
                         if (@hasDecl(ST, "deinit")) {
                             ST.deinit(allocator, val_ptr);
                         }
@@ -121,7 +120,12 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, test_case: anytype) !void {
     try blst.initializeThreadPool(allocator);
     defer blst.deinitializeThreadPool();
-    _ = fork;
+
+    const pre_state_any = test_case.pre.?;
+    var pre_state = try BeaconStateAllForks.init(fork, pre_state_any);
+    var cached_pre_state = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state);
+    defer cached_pre_state.deinit();
+
     switch (handler) {
         .attestation => {
             // These are mandatory fields
@@ -162,29 +166,17 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
         },
         .attester_slashing => {
             // These are mandatory fields
-            const pre_state_altair: *ssz.altair.BeaconState.Type = test_case.pre.?;
             const attester_slashing: *ssz.altair.AttesterSlashing.Type = test_case.attester_slashing.?;
 
             // These may or may not exist
-            const expected_post_state = test_case.post; // null means invalid test case (expect error)
+            const expected_post_state_any = test_case.post; // null means invalid test case (expect error)
             const is_valid_test_case = test_case.post != null;
-
-            const pre_state_altair_clone = try allocator.create(ssz.altair.BeaconState.Type);
-            pre_state_altair_clone.* = ssz.altair.BeaconState.default_value;
-            // Clone pre state to avoid double freeing after passing to TestCachedBeaconStateAllForks
-            try ssz.altair.BeaconState.clone(allocator, pre_state_altair, pre_state_altair_clone);
-
-            const pre_state = try allocator.create(BeaconStateAllForks);
-            pre_state.* = .{ .altair = pre_state_altair_clone };
-
-            var cached_pre_state = try TestCachedBeaconStateAllForks.initFromState(allocator, pre_state);
-            defer cached_pre_state.deinit();
 
             if (is_valid_test_case) {
                 try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, false);
-                const expected: BeaconStateAllForks = .{ .altair = expected_post_state.? };
+                const expected_post_state = try BeaconStateAllForks.init(allocator, fork, expected_post_state_any);
 
-                try (@import("../test_case.zig").expectEqualBeaconStates(expected, cached_pre_state.cached_state.state.*));
+                try (@import("../test_case.zig").expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*));
             } else {
                 if (processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, false)) |_| {
                     return error.ExpectedFailure;

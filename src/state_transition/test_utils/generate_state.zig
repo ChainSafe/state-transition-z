@@ -82,7 +82,7 @@ pub const TestCachedBeaconStateAllForks = struct {
             .pubkey_to_index = pubkey_index_map,
         };
         const cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
-            .skip_sync_committee_cache = false,
+            .skip_sync_committee_cache = state.isPhase0(),
             .skip_sync_pubkeys = false,
         });
 
@@ -103,7 +103,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         self.pubkey_index_map.deinit();
         self.index_pubkey_cache.deinit();
         self.allocator.destroy(self.index_pubkey_cache);
-        self.cached_state.deinit(self.allocator);
+        // self.cached_state.deinit(self.allocator);
         self.allocator.destroy(self.cached_state);
     }
 };
