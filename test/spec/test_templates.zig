@@ -13,7 +13,7 @@ pub const OPERATIONS_HEADER =
     \\var TL = @import("../utils/test_logger.zig").TestLogger{};
     \\
     \\
-    \\const allocator = std.testing.allocator;
+    \\const allocator = std.heap.page_allocator;
     \\
     \\
 ;
