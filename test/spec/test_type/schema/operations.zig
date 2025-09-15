@@ -8,7 +8,7 @@ pub const Phase0Operations = struct {
     block: ssz.phase0.BeaconBlock,
     deposit: ssz.phase0.Deposit,
     proposer_slashing: ssz.phase0.ProposerSlashing,
-    voluntary_exit: ssz.phase0.VoluntaryExit,
+    voluntary_exit: ssz.phase0.SignedVoluntaryExit,
 };
 
 pub const AltairOperations = struct {
@@ -19,7 +19,7 @@ pub const AltairOperations = struct {
     block: ssz.altair.BeaconBlock,
     deposit: ssz.altair.Deposit,
     proposer_slashing: ssz.altair.ProposerSlashing,
-    voluntary_exit: ssz.altair.VoluntaryExit,
+    voluntary_exit: ssz.altair.SignedVoluntaryExit,
     sync_aggregate: ssz.altair.SyncAggregate,
 };
 
@@ -31,7 +31,7 @@ pub const BellatrixOperations = struct {
     block: ssz.bellatrix.BeaconBlock,
     deposit: ssz.bellatrix.Deposit,
     proposer_slashing: ssz.bellatrix.ProposerSlashing,
-    voluntary_exit: ssz.bellatrix.VoluntaryExit,
+    voluntary_exit: ssz.bellatrix.SignedVoluntaryExit,
     sync_aggregate: ssz.bellatrix.SyncAggregate,
     body: ssz.bellatrix.BeaconBlockBody,
 };
@@ -44,7 +44,7 @@ pub const CapellaOperations = struct {
     block: ssz.capella.BeaconBlock,
     deposit: ssz.capella.Deposit,
     proposer_slashing: ssz.capella.ProposerSlashing,
-    voluntary_exit: ssz.capella.VoluntaryExit,
+    voluntary_exit: ssz.capella.SignedVoluntaryExit,
     sync_aggregate: ssz.capella.SyncAggregate,
     body: ssz.capella.BeaconBlockBody,
     execution_payload: ssz.capella.ExecutionPayload,
@@ -59,7 +59,7 @@ pub const DenebOperations = struct {
     block: ssz.deneb.BeaconBlock,
     deposit: ssz.deneb.Deposit,
     proposer_slashing: ssz.deneb.ProposerSlashing,
-    voluntary_exit: ssz.deneb.VoluntaryExit,
+    voluntary_exit: ssz.deneb.SignedVoluntaryExit,
     sync_aggregate: ssz.deneb.SyncAggregate,
     body: ssz.deneb.BeaconBlockBody,
     execution_payload: ssz.deneb.ExecutionPayload,
@@ -74,7 +74,7 @@ pub const ElectraOperations = struct {
     block: ssz.electra.BeaconBlock,
     deposit: ssz.electra.Deposit,
     proposer_slashing: ssz.electra.ProposerSlashing,
-    voluntary_exit: ssz.electra.VoluntaryExit,
+    voluntary_exit: ssz.electra.SignedVoluntaryExit,
     sync_aggregate: ssz.electra.SyncAggregate,
     body: ssz.electra.BeaconBlockBody,
     execution_payload: ssz.electra.ExecutionPayload,
@@ -92,7 +92,7 @@ pub const Phase0OperationsOut = struct {
     block: ?*ssz.phase0.BeaconBlock.Type = null,
     deposit: ?*ssz.phase0.Deposit.Type = null,
     proposer_slashing: ?*ssz.phase0.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.phase0.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.phase0.SignedVoluntaryExit.Type = null,
 };
 
 pub const AltairOperationsOut = struct {
@@ -103,7 +103,7 @@ pub const AltairOperationsOut = struct {
     block: ?*ssz.altair.BeaconBlock.Type = null,
     deposit: ?*ssz.altair.Deposit.Type = null,
     proposer_slashing: ?*ssz.altair.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.altair.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.altair.SignedVoluntaryExit.Type = null,
     sync_aggregate: ?*ssz.altair.SyncAggregate.Type = null,
 };
 
@@ -115,7 +115,7 @@ pub const BellatrixOperationsOut = struct {
     block: ?*ssz.bellatrix.BeaconBlock.Type = null,
     deposit: ?*ssz.bellatrix.Deposit.Type = null,
     proposer_slashing: ?*ssz.bellatrix.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.bellatrix.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.bellatrix.SignedVoluntaryExit.Type = null,
     sync_aggregate: ?*ssz.bellatrix.SyncAggregate.Type = null,
     body: ?*ssz.bellatrix.BeaconBlockBody.Type = null,
 };
@@ -128,7 +128,7 @@ pub const CapellaOperationsOut = struct {
     block: ?*ssz.capella.BeaconBlock.Type = null,
     deposit: ?*ssz.capella.Deposit.Type = null,
     proposer_slashing: ?*ssz.capella.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.capella.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.capella.SignedVoluntaryExit.Type = null,
     sync_aggregate: ?*ssz.capella.SyncAggregate.Type = null,
     body: ?*ssz.capella.BeaconBlockBody.Type = null,
     execution_payload: ?*ssz.capella.ExecutionPayload.Type = null,
@@ -143,7 +143,7 @@ pub const DenebOperationsOut = struct {
     block: ?*ssz.deneb.BeaconBlock.Type = null,
     deposit: ?*ssz.deneb.Deposit.Type = null,
     proposer_slashing: ?*ssz.deneb.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.deneb.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.deneb.SignedVoluntaryExit.Type = null,
     sync_aggregate: ?*ssz.deneb.SyncAggregate.Type = null,
     body: ?*ssz.deneb.BeaconBlockBody.Type = null,
     execution_payload: ?*ssz.deneb.ExecutionPayload.Type = null,
@@ -158,7 +158,7 @@ pub const ElectraOperationsOut = struct {
     block: ?*ssz.electra.BeaconBlock.Type = null,
     deposit: ?*ssz.electra.Deposit.Type = null,
     proposer_slashing: ?*ssz.electra.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.electra.VoluntaryExit.Type = null,
+    voluntary_exit: ?*ssz.electra.SignedVoluntaryExit.Type = null,
     sync_aggregate: ?*ssz.electra.SyncAggregate.Type = null,
     body: ?*ssz.electra.BeaconBlockBody.Type = null,
     execution_payload: ?*ssz.electra.ExecutionPayload.Type = null,
