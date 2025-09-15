@@ -14,7 +14,9 @@ pub fn getBlockRootAtSlot(state: *const BeaconStateAllForks, slot: Slot) !Root {
         return error.SlotTooBig;
     }
 
-    if (slot < state_slot - SLOTS_PER_HISTORICAL_ROOT) {
+    const oldestStoredSlot = if (state_slot > SLOTS_PER_HISTORICAL_ROOT) state_slot - SLOTS_PER_HISTORICAL_ROOT else 0;
+
+    if (slot < oldestStoredSlot) {
         return error.SlotTooSmall;
     }
 

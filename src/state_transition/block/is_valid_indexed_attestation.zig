@@ -13,9 +13,13 @@ pub fn isValidIndexedAttestation(comptime IA: type, allocator: std.mem.Allocator
         return false;
     }
 
-    if (verify_signature) |_| {
-        const signature_set = try getIndexedAttestationSignatureSet(IA, cached_state.allocator, cached_state, indexed_attestation);
-        return verifyAggregatedSignatureSet(allocator, &signature_set);
+    if (verify_signature) |vs| {
+        if (vs) {
+            const signature_set = try getIndexedAttestationSignatureSet(IA, cached_state.allocator, cached_state, indexed_attestation);
+            return verifyAggregatedSignatureSet(allocator, &signature_set);
+        } else {
+            return true;
+        }
     } else {
         return true;
     }

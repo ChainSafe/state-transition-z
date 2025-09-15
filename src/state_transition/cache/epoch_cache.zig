@@ -590,6 +590,10 @@ pub const EpochCache = struct {
         // this is deinit() by application
         const pk_ptr = try allocator.create(blst.PublicKey);
         pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
+        if (index == self.index_to_pubkey.items.len) {
+            try self.index_to_pubkey.append(pk_ptr);
+            return;
+        }
         self.index_to_pubkey.items[index] = pk_ptr;
     }
 
@@ -600,6 +604,11 @@ pub const EpochCache = struct {
     }
 
     pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
+        if (self.epoch == 0) {
+            if (epoch == -1) return self.getPreviousShuffling();
+            if (epoch == 0) return self.getCurrentShuffling();
+            return null;
+        }
         const shuffling = if (epoch == self.epoch - 1)
             self.getPreviousShuffling()
         else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
