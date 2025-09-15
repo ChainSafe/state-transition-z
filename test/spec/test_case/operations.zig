@@ -128,42 +128,45 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
     var cached_pre_state = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state);
     defer cached_pre_state.deinit();
 
+    const maybe_expected_post_state = if (expected_post_state_any) |s| try BeaconStateAllForks.init(fork, s) else null;
+
     switch (handler) {
         .attestation => {
             const attestation = test_case.attestation.?;
 
-            if (@TypeOf(attestation.*) == ssz.electra.Attestations.Element.Type) {
-                const ST = ssz.electra.Attestations;
-                var arr = ST.default_value;
-                defer arr.deinit(allocator);
+            const ST = if (@TypeOf(attestation.*) == ssz.electra.Attestations.Element.Type) ssz.electra.Attestations else ssz.phase0.Attestations;
 
-                var attestation_clone: ST.Element.Type = undefined;
-                try ST.Element.clone(allocator, attestation, &attestation_clone);
+            var arr = ST.default_value;
+            defer arr.deinit(allocator);
 
-                try arr.append(allocator, attestation_clone);
-                const attestations = Attestations{ .electra = &arr };
-                try runAttestationCase(allocator, cached_pre_state.cached_state, attestations, expected_post_state_any);
-            } else {
-                const ST = ssz.phase0.Attestations;
-                var arr = ST.default_value;
-                defer arr.deinit(allocator);
+            var attestation_clone: ST.Element.Type = undefined;
+            try ST.Element.clone(allocator, attestation, &attestation_clone);
 
-                var attestation_clone: ST.Element.Type = undefined;
-                try ST.Element.clone(allocator, attestation, &attestation_clone);
+            try arr.append(allocator, attestation_clone);
 
-                try arr.append(allocator, attestation_clone);
-                const attestations = Attestations{ .phase0 = &arr };
-                try runAttestationCase(allocator, cached_pre_state.cached_state, attestations, expected_post_state_any);
-            }
+            const attestations = if (@TypeOf(attestation.*) == ssz.electra.Attestations.Element.Type)
+                Attestations{ .electra = &arr }
+            else
+                Attestations{ .phase0 = &arr };
+
+            try runOperationCase(
+                state_transition.processAttestations,
+                .{ allocator, cached_pre_state.cached_state, attestations, true },
+                cached_pre_state,
+                maybe_expected_post_state,
+            );
         },
         .attester_slashing => {
             const attester_slashing = test_case.attester_slashing.?;
 
-            if (@TypeOf(attester_slashing.*) == ssz.electra.AttesterSlashing.Type) {
-                try runAttesterSlashingCase(ssz.electra.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, expected_post_state_any);
-            } else {
-                try runAttesterSlashingCase(ssz.phase0.AttesterSlashing.Type, allocator, cached_pre_state.cached_state, attester_slashing, expected_post_state_any);
-            }
+            const ST = if (@TypeOf(attester_slashing.*) == ssz.electra.AttesterSlashing.Type) ssz.electra.AttesterSlashing.Type else ssz.phase0.AttesterSlashing;
+
+            try runOperationCase(
+                state_transition.processAttesterSlashing,
+                .{ ST, allocator, cached_pre_state.cached_state, attester_slashing, true },
+                cached_pre_state,
+                maybe_expected_post_state,
+            );
         },
         .block_header => {
             const block = test_case.block.?;
@@ -197,54 +200,33 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
         },
         .deposit => {
             const deposit = test_case.deposit.?;
-            const is_valid_test_case = expected_post_state_any != null;
 
-            if (is_valid_test_case) {
-                try state_transition.processDeposit(allocator, cached_pre_state.cached_state, deposit);
-                const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
-
-                try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
-            } else {
-                if (state_transition.processDeposit(allocator, cached_pre_state.cached_state, deposit)) |_| {
-                    return error.ExpectedFailure;
-                } else |e| {
-                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
-                }
-            }
+            try runOperationCase(
+                state_transition.processDeposit,
+                .{ allocator, cached_pre_state.cached_state, deposit },
+                cached_pre_state,
+                maybe_expected_post_state,
+            );
         },
         .proposer_slashing => {
             const proposer_slashing = test_case.proposer_slashing.?;
-            const is_valid_test_case = expected_post_state_any != null;
 
-            if (is_valid_test_case) {
-                try state_transition.processProposerSlashing(cached_pre_state.cached_state, proposer_slashing, false);
-                const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
-
-                try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
-            } else {
-                if (state_transition.processProposerSlashing(cached_pre_state.cached_state, proposer_slashing, false)) |_| {
-                    return error.ExpectedFailure;
-                } else |e| {
-                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
-                }
-            }
+            try runOperationCase(
+                state_transition.processProposerSlashing,
+                .{ cached_pre_state.cached_state, proposer_slashing, false },
+                cached_pre_state,
+                maybe_expected_post_state,
+            );
         },
         .voluntary_exit => {
             const voluntary_exit = test_case.voluntary_exit.?;
-            const is_valid_test_case = expected_post_state_any != null;
 
-            if (is_valid_test_case) {
-                try state_transition.processVoluntaryExit(cached_pre_state.cached_state, voluntary_exit, false);
-                const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
-
-                try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
-            } else {
-                if (state_transition.processVoluntaryExit(cached_pre_state.cached_state, voluntary_exit, false)) |_| {
-                    return error.ExpectedFailure;
-                } else |e| {
-                    std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
-                }
-            }
+            try runOperationCase(
+                state_transition.processVoluntaryExit,
+                .{ cached_pre_state.cached_state, voluntary_exit, false },
+                cached_pre_state,
+                maybe_expected_post_state,
+            );
         },
         .sync_aggregate => {
             // TODO: processSyncAggregate currently takes block which is incorrect and not sync aggregate. Wait for it to accept sync aggregate.
@@ -253,18 +235,14 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
             //     const sync_aggregate = test_case.sync_aggregate.?;
             //     const is_valid_test_case = expected_post_state_any != null;
 
-            //     if (is_valid_test_case) {
-            //         try state_transition.processSyncAggregate(allocator, cached_pre_state.cached_state, sync_aggregate, false);
-            //         const expected_post_state = try BeaconStateAllForks.init(fork, expected_post_state_any);
-
-            //         try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
-            //     } else {
-            //         if (state_transition.processSyncAggregate(allocator, cached_pre_state.cached_state, sync_aggregate, false)) |_| {
-            //             return error.ExpectedFailure;
-            //         } else |e| {
-            //             std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
-            //         }
-            //     }
+            //     try runOperationCase(
+            //         state_transition.processSyncAggregate,
+            //         .{ allocator, cached_pre_state.cached_state, sync_aggregate, false },
+            //         is_valid_test_case,
+            //         expected_post_state_any,
+            //         fork,
+            //         &cached_pre_state,
+            //     );
             // } else {
             //     @panic("sync_aggregate field not found in test case");
             // }
@@ -278,43 +256,20 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
     }
 }
 
-fn runAttestationCase(
-    allocator: std.mem.Allocator,
-    cached_state: *state_transition.CachedBeaconStateAllForks,
-    attestations: Attestations,
-    expected_post_state_any: anytype,
+fn runOperationCase(
+    comptime Fn: anytype,
+    args: anytype,
+    cached_pre_state: TestCachedBeaconStateAllForks,
+    maybe_expected_post_state: ?BeaconStateAllForks,
 ) !void {
-    const is_valid_test_case = expected_post_state_any != null;
+    const call_result = @call(.auto, Fn, args);
 
-    if (is_valid_test_case) {
-        try state_transition.processAttestations(allocator, cached_state, attestations, true);
-        const expected_post_state = try BeaconStateAllForks.init(cached_state.state.forkSeq(), expected_post_state_any);
-        try expectEqualBeaconStates(expected_post_state, cached_state.state.*);
+    // If post state is provided, the operation is expected to succeed and the resulting state should match.
+    if (maybe_expected_post_state) |expected_post_state| {
+        try call_result;
+        try expectEqualBeaconStates(expected_post_state, cached_pre_state.cached_state.state.*);
     } else {
-        if (state_transition.processAttestations(allocator, cached_state, attestations, true)) |_| {
-            return error.ExpectedFailure;
-        } else |e| {
-            std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
-        }
-    }
-}
-
-fn runAttesterSlashingCase(
-    comptime AS: type,
-    allocator: std.mem.Allocator,
-    cached_state: *state_transition.CachedBeaconStateAllForks,
-    attester_slashing: *const AS,
-    expected_post_state_any: anytype,
-) !void {
-    const is_valid_test_case = expected_post_state_any != null;
-
-    if (is_valid_test_case) {
-        try state_transition.processAttesterSlashing(AS, allocator, cached_state, attester_slashing, true);
-        const expected_post_state = try BeaconStateAllForks.init(cached_state.state.forkSeq(), expected_post_state_any);
-
-        try expectEqualBeaconStates(expected_post_state, cached_state.state.*);
-    } else {
-        if (state_transition.processAttesterSlashing(AS, allocator, cached_state, attester_slashing, true)) |_| {
+        if (call_result) |_| {
             return error.ExpectedFailure;
         } else |e| {
             std.debug.print("make sure it failed with an expected reason: {any}\n", .{e});
