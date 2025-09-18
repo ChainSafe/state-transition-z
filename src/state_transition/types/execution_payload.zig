@@ -22,14 +22,16 @@ pub const ExecutionPayload = union(enum) {
     pub fn toPayloadHeader(self: *const ExecutionPayload, allocator: Allocator) !ExecutionPayloadHeader {
         return switch (self.*) {
             .bellatrix => |payload| {
-                var header = toExecutionPayloadHeader(ssz.bellatrix.ExecutionPayloadHeader.Type, payload);
+                var header = try toExecutionPayloadHeader(ssz.bellatrix.ExecutionPayloadHeader.Type, allocator, payload);
+                errdefer header.extra_data.deinit(allocator);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 return .{
                     .bellatrix = header,
                 };
             },
             .capella => |payload| {
-                var header = toExecutionPayloadHeader(ssz.capella.ExecutionPayloadHeader.Type, payload);
+                var header = try toExecutionPayloadHeader(ssz.capella.ExecutionPayloadHeader.Type, allocator, payload);
+                errdefer header.extra_data.deinit(allocator);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 return .{
@@ -37,7 +39,8 @@ pub const ExecutionPayload = union(enum) {
                 };
             },
             .deneb => |payload| {
-                var header = toExecutionPayloadHeader(ssz.deneb.ExecutionPayloadHeader.Type, payload);
+                var header = try toExecutionPayloadHeader(ssz.deneb.ExecutionPayloadHeader.Type, allocator, payload);
+                errdefer header.extra_data.deinit(allocator);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 header.blob_gas_used = payload.blob_gas_used;
@@ -48,7 +51,8 @@ pub const ExecutionPayload = union(enum) {
             },
             .electra => |payload| {
                 // TODO: dedup to deneb?
-                var header = toExecutionPayloadHeader(ssz.electra.ExecutionPayloadHeader.Type, payload);
+                var header = try toExecutionPayloadHeader(ssz.electra.ExecutionPayloadHeader.Type, allocator, payload);
+                errdefer header.extra_data.deinit(allocator);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 header.blob_gas_used = payload.blob_gas_used;
@@ -286,8 +290,14 @@ pub const ExecutionPayloadHeader = union(enum) {
 };
 
 /// Converts some basic fields of ExecutionPayload to ExecutionPayloadHeader.
-pub fn toExecutionPayloadHeader(comptime execution_payload_header_type: type, payload: anytype) execution_payload_header_type {
+pub fn toExecutionPayloadHeader(
+    comptime execution_payload_header_type: type,
+    allocator: Allocator,
+    payload: anytype,
+) !execution_payload_header_type {
     var result: execution_payload_header_type = undefined;
+    result.extra_data = @TypeOf(payload.extra_data).empty;
+    errdefer result.extra_data.deinit(allocator);
 
     result.parent_hash = payload.parent_hash;
     result.fee_recipient = payload.fee_recipient;
@@ -299,9 +309,12 @@ pub fn toExecutionPayloadHeader(comptime execution_payload_header_type: type, pa
     result.gas_limit = payload.gas_limit;
     result.gas_used = payload.gas_used;
     result.timestamp = payload.timestamp;
-    result.extra_data = payload.extra_data;
     result.base_fee_per_gas = payload.base_fee_per_gas;
     result.block_hash = payload.block_hash;
+    // Need to clone extra_data because it's a variable-length byte array
+    // This is to avoid double-free when caller deinit both the payload and beacon state
+    // that contains the header
+    result.extra_data = try payload.extra_data.clone(allocator);
     // remaining fields are left unset
 
     return result;
