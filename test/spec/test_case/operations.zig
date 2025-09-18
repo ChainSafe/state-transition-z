@@ -282,13 +282,65 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
                     maybe_expected_post_state,
                 );
             } else {
-                @panic("block body not found in withdrawals test");
+                @panic("execution payload not found in withdrawals test");
             }
         },
-        .bls_to_execution_change => {},
-        .deposit_request => {},
-        .withdrawal_request => {},
-        .consolidation_request => {},
+        .bls_to_execution_change => {
+            if (comptime @hasField(@TypeOf(test_case), "address_change")) {
+                const signed_bls_to_execution_change = test_case.address_change.?;
+
+                try runOperationCase(
+                    state_transition.processBlsToExecutionChange,
+                    .{ cached_pre_state.cached_state, signed_bls_to_execution_change },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("address change not found in bls_to_execution_change test");
+            }
+        },
+        .deposit_request => {
+            if (comptime @hasField(@TypeOf(test_case), "deposit_request")) {
+                const deposit_request = test_case.deposit_request.?;
+
+                try runOperationCase(
+                    state_transition.processDepositRequest,
+                    .{ allocator, cached_pre_state.cached_state, deposit_request },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("deposit request not found in depost_request test");
+            }
+        },
+        .withdrawal_request => {
+            if (comptime @hasField(@TypeOf(test_case), "withdrawal_request")) {
+                const withdrawal_request = test_case.withdrawal_request.?;
+
+                try runOperationCase(
+                    state_transition.processWithdrawalRequest,
+                    .{ allocator, cached_pre_state.cached_state, withdrawal_request },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("withdrawal request not found in withdrawal_request test");
+            }
+        },
+        .consolidation_request => {
+            if (comptime @hasField(@TypeOf(test_case), "consolidation_request")) {
+                const consolidation_request = test_case.consolidation_request.?;
+
+                try runOperationCase(
+                    state_transition.processConsolidationRequest,
+                    .{ allocator, cached_pre_state.cached_state, consolidation_request },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("consolidation request not found in consolidation_request test");
+            }
+        },
     }
 }
 

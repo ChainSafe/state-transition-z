@@ -40,6 +40,10 @@ pub fn main() !void {
     const supported_forks = [_]ForkSeq{
         .phase0,
         .altair,
+        .bellatrix,
+        .capella,
+        .deneb,
+        .electra,
     };
     const supported_test_runners = [_]SpecTestRunner{
         .operations,

@@ -38,7 +38,7 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
 
         var handled = false;
         inline for (@typeInfo(Schema).@"struct".fields) |fld| {
-            if (std.mem.startsWith(u8, file_name, fld.name)) {
+            if (std.mem.eql(u8, file_name, fld.name)) {
                 const ST = fld.type;
                 var object_file = try dir.openFile(name, .{});
                 defer object_file.close();
