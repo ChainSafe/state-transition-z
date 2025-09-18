@@ -16,8 +16,6 @@ more expensive than a problem solved in implementation, or a problem solved in d
 Since it's hard enough to discover showstoppers, when we do find them, we solve them. We don't allow
 potential memcpy latency spikes, or exponential complexity algorithms to slip through.
 
-> “You shall not pass!” — Gandalf
-
 In other words, TigerBeetle has a “zero technical debt” policy. We do it right the first time. This
 is important because the second time may not transpire, and because doing good work, that we can be
 proud of, builds momentum.
