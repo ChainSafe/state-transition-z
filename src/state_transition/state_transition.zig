@@ -14,7 +14,6 @@ const CachedBeaconStateAllForks = @import("cache/state_cache.zig").CachedBeaconS
 pub const SignedBeaconBlock = @import("types/beacon_block.zig").SignedBeaconBlock;
 const verifyProposerSignature = @import("./signature_sets/proposer.zig").verifyProposerSignature;
 const processBlock = @import("./block/process_block.zig").processBlock;
-const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 const BeaconBlock = @import("types/beacon_block.zig").BeaconBlock;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const Attestation = @import("types/attestation.zig").Attestation;
@@ -34,6 +33,19 @@ const computeEpochAtSlot = @import("utils/epoch.zig").computeEpochAtSlot;
 const processSlot = @import("slot/process_slot.zig").processSlot;
 
 const SignedBlock = @import("types/signed_block.zig").SignedBlock;
+
+pub const BlockExternalData = struct {
+    execution_payload_status: enum(u8) {
+        pre_merge,
+        invalid,
+        valid,
+    },
+    data_availability_status: enum(u8) {
+        pre_data,
+        out_of_range,
+        available,
+    },
+};
 
 fn processSlotsWithTransientCache(
     allocator: std.mem.Allocator,

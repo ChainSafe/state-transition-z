@@ -1,4 +1,4 @@
-const BlockExternalData = @import("./external_data.zig").BlockExternalData;
+const BlockExternalData = @import("../state_transition.zig").BlockExternalData;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 
 pub fn processBlobKzgCommitments(external_data: BlockExternalData) !void {

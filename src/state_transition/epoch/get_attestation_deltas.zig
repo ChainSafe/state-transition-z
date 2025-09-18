@@ -74,6 +74,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     // so there are limited values of them like 32, 31, 30
     // TODO(bing): do not deinit and only clear for future use
     var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    reward_penalty_item_cache.clearAndFree();
     defer reward_penalty_item_cache.deinit();
 
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();

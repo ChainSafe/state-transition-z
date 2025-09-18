@@ -34,6 +34,7 @@ const WithdrawalsResult = struct {
 };
 
 pub fn processWithdrawals(
+    _: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
     expected_withdrawals_result: WithdrawalsResult,
 ) !void {
