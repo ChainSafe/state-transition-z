@@ -6,6 +6,8 @@ const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeac
 const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const Attestations = state_transition.Attestations;
 const BeaconBlock = state_transition.BeaconBlock;
+const SignedBlock = state_transition.SignedBlock;
+const BlockExternalData = state_transition.BlockExternalData;
 
 const ForkSeq = @import("params").ForkSeq;
 const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
@@ -56,6 +58,7 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
             defer {
                 inline for (@typeInfo(Schema.BellatrixOperations).@"struct".fields) |fld| {
                     const ST = fld.type;
+                    // std.debug.print("Deinitializing field: {s}\n", .{fld.name});
                     if (@field(tc, fld.name)) |val_ptr| {
                         if (@hasDecl(ST, "deinit")) {
                             ST.deinit(allocator, val_ptr);
@@ -151,7 +154,7 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 
             try runOperationCase(
                 state_transition.processAttestations,
-                .{ allocator, cached_pre_state.cached_state, attestations, true },
+                .{ allocator, cached_pre_state.cached_state, attestations, false },
                 cached_pre_state,
                 maybe_expected_post_state,
             );
@@ -163,7 +166,7 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 
             try runOperationCase(
                 state_transition.processAttesterSlashing,
-                .{ ST, allocator, cached_pre_state.cached_state, attester_slashing, true },
+                .{ ST, allocator, cached_pre_state.cached_state, attester_slashing, false },
                 cached_pre_state,
                 maybe_expected_post_state,
             );
@@ -247,7 +250,28 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
             //     @panic("sync_aggregate field not found in test case");
             // }
         },
-        .execution_payload => {},
+        .execution_payload => {
+            if (comptime @hasField(@TypeOf(test_case), "body")) {
+                const body = test_case.body.?;
+                // std.debug.print("body {any}\n", .{body.execution_payload});
+                const beacon_block_body: SignedBlock.Body = switch (@TypeOf(body.*)) {
+                    ssz.bellatrix.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .bellatrix = body } },
+                    ssz.capella.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .capella = body } },
+                    ssz.deneb.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .deneb = body } },
+                    ssz.electra.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .electra = body } },
+                    else => @panic("unsupported block body type"),
+                };
+
+                try runOperationCase(
+                    state_transition.processExecutionPayload,
+                    .{ allocator, cached_pre_state.cached_state, beacon_block_body, BlockExternalData{ .execution_payload_status = .valid, .data_availability_status = .available } },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("block body not found in execution_payload test");
+            }
+        },
         .withdrawals => {},
         .bls_to_execution_change => {},
         .deposit_request => {},
