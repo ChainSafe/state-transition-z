@@ -34,6 +34,12 @@ const processSlot = @import("slot/process_slot.zig").processSlot;
 
 const SignedBlock = @import("types/signed_block.zig").SignedBlock;
 
+pub const ExecutionPayloadStatus = enum(u8) {
+    pre_merge,
+    invalid,
+    valid,
+};
+
 pub const BlockExternalData = struct {
     execution_payload_status: enum(u8) {
         pre_merge,
