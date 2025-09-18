@@ -41,11 +41,7 @@ pub const ExecutionPayloadStatus = enum(u8) {
 };
 
 pub const BlockExternalData = struct {
-    execution_payload_status: enum(u8) {
-        pre_merge,
-        invalid,
-        valid,
-    },
+    execution_payload_status: ExecutionPayloadStatus,
     data_availability_status: enum(u8) {
         pre_data,
         out_of_range,
