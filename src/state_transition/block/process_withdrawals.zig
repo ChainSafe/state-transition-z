@@ -9,6 +9,7 @@ const Withdrawal = ssz.capella.Withdrawal.Type;
 const Withdrawals = ssz.capella.Withdrawals.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const ExecutionAddress = ssz.primitive.ExecutionAddress.Type;
+const PendingPartialWithdrawal = ssz.electra.PendingPartialWithdrawal.Type;
 const ExecutionPayload = @import("../types/execution_payload.zig").ExecutionPayload;
 const hasExecutionWithdrawalCredential = @import("../utils/electra.zig").hasExecutionWithdrawalCredential;
 const hasEth1WithdrawalCredential = @import("../utils/capella.zig").hasEth1WithdrawalCredential;
@@ -50,7 +51,10 @@ pub fn processWithdrawals(
 
     if (state.isPostElectra()) {
         const pending_partial_withdrawals = state.pendingPartialWithdrawals();
-        @memcpy(pending_partial_withdrawals.items, state.pendingPartialWithdrawals().items[processed_partial_withdrawals_count..]);
+        const keep_len = pending_partial_withdrawals.items.len - processed_partial_withdrawals_count;
+
+        std.mem.copyForwards(PendingPartialWithdrawal, pending_partial_withdrawals.items[0..keep_len], pending_partial_withdrawals.items[processed_partial_withdrawals_count..]);
+        pending_partial_withdrawals.shrinkRetainingCapacity(keep_len);
     }
 
     const next_withdrawal_index = state.nextWithdrawalIndex();
@@ -144,7 +148,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
         const withdraw_balance: u64 = if (withdraw_balance_gop.found_existing) withdraw_balance_gop.value_ptr.* else 0;
         const balance = if (state.isPostElectra())
             // Deduct partially withdrawn balance already queued above
-            balances.items[validator_index] - withdraw_balance
+            if (balances.items[validator_index] > withdraw_balance) balances.items[validator_index] - withdraw_balance else 0
         else
             balances.items[validator_index];
 

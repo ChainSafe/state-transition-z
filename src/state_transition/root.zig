@@ -37,7 +37,7 @@ pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_
 // Block
 pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
 pub const processWithdrawals = @import("./block/process_withdrawals.zig").processWithdrawals;
-pub const getExpectedWithdrawalsResult = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
+pub const getExpectedWithdrawals = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
 pub const processExecutionPayload = @import("./block/process_execution_payload.zig").processExecutionPayload;
 pub const processRandao = @import("./block/process_randao.zig").processRandao;
 pub const processEth1Data = @import("./block/process_eth1_data.zig").processEth1Data;
