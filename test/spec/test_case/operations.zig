@@ -253,7 +253,6 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
         .execution_payload => {
             if (comptime @hasField(@TypeOf(test_case), "body")) {
                 const body = test_case.body.?;
-                // std.debug.print("body {any}\n", .{body.execution_payload});
                 const beacon_block_body: SignedBlock.Body = switch (@TypeOf(body.*)) {
                     ssz.bellatrix.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .bellatrix = body } },
                     ssz.capella.BeaconBlockBody.Type => SignedBlock.Body{ .regular = .{ .capella = body } },
@@ -272,7 +271,20 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
                 @panic("block body not found in execution_payload test");
             }
         },
-        .withdrawals => {},
+        .withdrawals => {
+            if (comptime @hasField(@TypeOf(test_case), "execution_payload")) {
+                var withdrawals = try state_transition.getExpectedWithdrawals(allocator, cached_pre_state.cached_state);
+                defer withdrawals.deinit(allocator);
+                try runOperationCase(
+                    state_transition.processWithdrawals,
+                    .{ cached_pre_state.cached_state, withdrawals },
+                    cached_pre_state,
+                    maybe_expected_post_state,
+                );
+            } else {
+                @panic("block body not found in withdrawals test");
+            }
+        },
         .bls_to_execution_change => {},
         .deposit_request => {},
         .withdrawal_request => {},
