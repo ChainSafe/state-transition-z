@@ -586,10 +586,15 @@ pub const EpochCache = struct {
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
     pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
+        std.debug.assert(index <= self.index_to_pubkey.items.len);
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
         const pk_ptr = try allocator.create(blst.PublicKey);
         pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
+        if (index == self.index_to_pubkey.items.len) {
+            try self.index_to_pubkey.append(pk_ptr);
+            return;
+        }
         self.index_to_pubkey.items[index] = pk_ptr;
     }
 
