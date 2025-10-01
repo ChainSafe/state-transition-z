@@ -6,11 +6,6 @@ const c = @import("constants");
 
 // TODO: currently preset is imported from ssz, consider redefining it here
 pub const preset = ssz.preset;
-const fork_defs = @import("./fork.zig");
-pub const ForkSeq = fork_defs.ForkSeq;
-pub const forkSeqByForkName = fork_defs.forkSeqByForkName;
-pub const ForkInfo = fork_defs.ForkInfo;
-pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
 
 pub const Preset = @import("./preset.zig").Preset;
 

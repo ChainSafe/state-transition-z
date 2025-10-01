@@ -1,4 +1,4 @@
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");

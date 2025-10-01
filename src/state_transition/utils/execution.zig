@@ -1,5 +1,5 @@
 const std = @import("std");
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;

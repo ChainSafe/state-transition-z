@@ -10,11 +10,11 @@ const Root = ssz.primitive.Root.Type;
 const DomainType = ssz.primitive.DomainType.Type;
 const c = @import("constants");
 const DOMAIN_VOLUNTARY_EXIT = c.DOMAIN_VOLUNTARY_EXIT;
-const params = @import("params");
-const ForkSeq = params.ForkSeq;
-const ForkInfo = params.ForkInfo;
-const TOTAL_FORKS = params.TOTAL_FORKS;
-const forkSeqByForkName = params.forkSeqByForkName;
+const forks = @import("./fork.zig");
+const ForkSeq = forks.ForkSeq;
+const ForkInfo = forks.ForkInfo;
+const TOTAL_FORKS = forks.TOTAL_FORKS;
+const forkSeqByForkName = forks.forkSeqByForkName;
 
 const DomainByTypeHashMap = std.StringHashMap([]const u8);
 const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);

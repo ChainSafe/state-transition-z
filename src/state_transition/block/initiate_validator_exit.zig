@@ -1,5 +1,5 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
 const Validator = ssz.phase0.Validator.Type;
 const c = @import("constants");

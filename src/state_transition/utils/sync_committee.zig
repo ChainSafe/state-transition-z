@@ -12,7 +12,7 @@ const c = @import("constants");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 
 pub const getNextSyncCommitteeIndices = @import("./seed.zig").getNextSyncCommitteeIndices;
 const SyncCommitteeInfo = struct {
