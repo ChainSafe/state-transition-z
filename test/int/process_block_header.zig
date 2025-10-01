@@ -31,7 +31,7 @@ const config = @import("config");
 const state_transition = @import("state_transition");
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 
-const preset = ssz.preset;
+const preset = @import("params").preset;
 
 const processBlockHeader = state_transition.processBlockHeader;
 const SignedBlock = state_transition.SignedBlock;

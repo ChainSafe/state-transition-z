@@ -1,6 +1,6 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const params = @import("params");
 const Slot = ssz.primitive.Slot.Type;
 const Epoch = ssz.primitive.Epoch.Type;

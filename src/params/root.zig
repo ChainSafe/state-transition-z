@@ -4,9 +4,7 @@ const ssz = @import("consensus_types");
 const preset_str = @import("build_options").preset;
 const c = @import("constants");
 
-// TODO: currently preset is imported from ssz, consider redefining it here
-pub const preset = ssz.preset;
-
+pub const preset = @import("./preset.zig").active_preset;
 pub const Preset = @import("./preset.zig").Preset;
 
 // not in use for now, copied from lodestar ts params

@@ -2,7 +2,7 @@ const std = @import("std");
 const ssz = @import("ssz");
 const p = @import("primitive.zig");
 const c = @import("constants");
-const preset = @import("preset.zig").active_preset;
+const preset = @import("params").preset;
 const phase0 = @import("phase0.zig");
 
 pub const Fork = phase0.Fork;

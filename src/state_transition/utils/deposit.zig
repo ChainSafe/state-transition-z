@@ -1,6 +1,6 @@
 const params = @import("params");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const Eth1Data = ssz.phase0.Eth1Data.Type;
 const MAX_DEPOSITS = preset.MAX_DEPOSITS;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;

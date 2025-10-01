@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const preset = @import("consensus_types").preset;
+const preset = @import("params").preset;
 const ssz = @import("consensus_types");
 const params = @import("params");
 const c = @import("constants");

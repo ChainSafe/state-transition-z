@@ -5,7 +5,7 @@ const Allocator = std.mem.Allocator;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const ForkSeq = @import("config").ForkSeq;
 const Epoch = ssz.primitive.Epoch.Type;
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const CachedBeaconStateAllForks = @import("./state_cache.zig").CachedBeaconStateAllForks;
 
 const attester_status = @import("../utils/attester_status.zig");

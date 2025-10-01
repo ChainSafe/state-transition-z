@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const AttestationData = ssz.phase0.AttestationData.Type;
 const AttesterSlashing = ssz.phase0.AttesterSlashing.Type;
 

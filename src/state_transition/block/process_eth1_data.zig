@@ -2,7 +2,7 @@ const std = @import("std");
 const ssz = @import("consensus_types");
 const Eth1Data = ssz.phase0.Eth1Data.Type;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const preset = ssz.preset;
+const preset = @import("params").preset;
 
 pub fn processEth1Data(allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, eth1_data: *const Eth1Data) !void {
     const state = cached_state.state;

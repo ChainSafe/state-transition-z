@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const ForkSeq = @import("config").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 
 pub fn processRandaoMixesReset(cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) void {
     const state = cached_state.state;

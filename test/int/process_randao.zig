@@ -32,7 +32,7 @@ const Allocator = std.mem.Allocator;
 const state_transition = @import("state_transition");
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 
-const preset = ssz.preset;
+const preset = @import("params").preset;
 
 const processRandao = state_transition.processRandao;
 const SignedBlock = state_transition.SignedBlock;

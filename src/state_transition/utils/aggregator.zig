@@ -1,6 +1,6 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const params = @import("params");
 const digest = @import("./sha256.zig").digest;
 const BLSSignature = ssz.primitive.BLSSignature.Type;

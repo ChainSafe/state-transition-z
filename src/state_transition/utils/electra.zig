@@ -3,7 +3,7 @@ const params = @import("params");
 const c = @import("constants");
 const COMPOUNDING_WITHDRAWAL_PREFIX = c.COMPOUNDING_WITHDRAWAL_PREFIX;
 const ssz = @import("consensus_types");
-const MIN_ACTIVATION_BALANCE = ssz.preset.MIN_ACTIVATION_BALANCE;
+const MIN_ACTIVATION_BALANCE = params.preset.MIN_ACTIVATION_BALANCE;
 
 pub const WithdrawalCredentials = ssz.primitive.Root.Type;
 pub const WithdrawalCredentialsLength = ssz.primitive.Root.length;

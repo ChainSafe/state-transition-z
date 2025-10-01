@@ -257,6 +257,7 @@ pub fn build(b: *std.Build) void {
     module_consensus_types.addImport("build_options", options_module_build_options);
     module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
     module_consensus_types.addImport("constants", module_constants);
+    module_consensus_types.addImport("params", module_params);
 
     module_params.addImport("build_options", options_module_build_options);
     module_params.addImport("consensus_types", module_consensus_types);
@@ -284,6 +285,7 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("state_transition", module_state_transition);
     module_int.addImport("config", module_config);
     module_int.addImport("consensus_types", module_consensus_types);
+    module_int.addImport("params", module_params);
     module_int.addImport("constants", module_constants);
 
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);

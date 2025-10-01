@@ -1,6 +1,6 @@
 const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const params = @import("params");
 const c = @import("constants");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;

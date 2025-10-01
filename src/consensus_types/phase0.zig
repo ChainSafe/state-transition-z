@@ -2,7 +2,7 @@ const std = @import("std");
 const ssz = @import("ssz");
 const p = @import("primitive.zig");
 const c = @import("constants");
-const preset = @import("preset.zig").active_preset;
+const preset = @import("params").preset;
 
 pub const Fork = ssz.FixedContainerType(struct {
     previous_version: p.Version,

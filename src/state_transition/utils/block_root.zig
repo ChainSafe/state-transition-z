@@ -1,5 +1,5 @@
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("params").preset;
 const Root = ssz.primitive.Root.Type;
 const Slot = ssz.primitive.Slot.Type;
 const Epoch = ssz.primitive.Epoch.Type;
