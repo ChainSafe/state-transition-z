@@ -1,6 +1,5 @@
 const std = @import("std");
 const testing = std.testing;
-const ssz = @import("consensus_types");
 const preset_str = @import("build_options").preset;
 const c = @import("constants");
 

@@ -260,7 +260,6 @@ pub fn build(b: *std.Build) void {
     module_consensus_types.addImport("params", module_params);
 
     module_params.addImport("build_options", options_module_build_options);
-    module_params.addImport("consensus_types", module_consensus_types);
     module_params.addImport("constants", module_constants);
 
     module_state_transition.addImport("build_options", options_module_build_options);
