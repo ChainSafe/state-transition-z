@@ -3,10 +3,10 @@ const Validators = ssz.phase0.Validators.Type;
 const Validator = ssz.phase0.Validator.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const preset = ssz.preset;
-const params = @import("params");
+const c = @import("constants");
 const isActiveValidator = @import("./validator.zig").isActiveValidator;
 
-const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
+const TIMELY_TARGET = 1 << c.TIMELY_TARGET_FLAG_INDEX;
 
 pub fn sumTargetUnslashedBalanceIncrements(participations: []const u8, epoch: Epoch, validators: []Validator) u64 {
     var total: u64 = 0;

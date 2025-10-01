@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
+const c = @import("constants");
 const params = @import("params");
 const ForkSeq = params.ForkSeq;
 const Withdrawal = ssz.capella.Withdrawal.Type;
@@ -101,7 +102,7 @@ pub fn getExpectedWithdrawals(
             const total_withdrawn: u64 = if (total_withdrawn_gop.found_existing) total_withdrawn_gop.value_ptr.* else 0;
             const balance = balances.items[withdrawal.validator_index] - total_withdrawn;
 
-            if (validator.exit_epoch == params.FAR_FUTURE_EPOCH and
+            if (validator.exit_epoch == c.FAR_FUTURE_EPOCH and
                 validator.effective_balance >= preset.MIN_ACTIVATION_BALANCE and
                 balance > preset.MIN_ACTIVATION_BALANCE)
             {

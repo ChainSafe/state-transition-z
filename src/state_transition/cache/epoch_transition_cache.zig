@@ -20,7 +20,8 @@ const FLAG_UNSLASHED = attester_status.FLAG_UNSLASHED;
 const hasMarkers = attester_status.hasMarkers;
 
 const params = @import("params");
-const FAR_FUTURE_EPOCH = params.FAR_FUTURE_EPOCH;
+const c = @import("constants");
+const FAR_FUTURE_EPOCH = c.FAR_FUTURE_EPOCH;
 const MIN_ACTIVATION_BALANCE = preset.MIN_ACTIVATION_BALANCE;
 
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;

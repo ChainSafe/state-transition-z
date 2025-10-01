@@ -14,6 +14,7 @@ const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const params = @import("params");
+const c = @import("constants");
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
 pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
@@ -65,7 +66,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
             if (isValidatorKnown(state, validator_index)) {
                 const validator = state.validators().items[validator_index.?];
-                is_validator_exited = validator.exit_epoch < params.FAR_FUTURE_EPOCH;
+                is_validator_exited = validator.exit_epoch < c.FAR_FUTURE_EPOCH;
                 is_validator_withdrawn = validator.withdrawable_epoch < next_epoch;
             }
 

@@ -4,10 +4,10 @@ const ForkSeq = @import("params").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
-const params = @import("params");
+const c = @import("constants");
 
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
-const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
+const TIMELY_TARGET = 1 << c.TIMELY_TARGET_FLAG_INDEX;
 
 const HYSTERESIS_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT / preset.HYSTERESIS_QUOTIENT;
 const DOWNWARD_THRESHOLD = HYSTERESIS_INCREMENT * preset.HYSTERESIS_DOWNWARD_MULTIPLIER;

@@ -6,6 +6,7 @@ const BeaconConfig = @import("config").BeaconConfig;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const params = @import("params");
 const ForkSeq = params.ForkSeq;
+const c = @import("constants");
 const blst = @import("blst_min_pk");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const Root = ssz.primitive.Root.Type;
@@ -20,7 +21,7 @@ pub fn verifyBlsToExecutionChangeSignature(cached_state: *const CachedBeaconStat
 
 pub fn getBlsToExecutionChangeSignatureSet(config: *const BeaconConfig, signed_bls_to_execution_change: *const SignedBLSToExecutionChange) !SingleSignatureSet {
     // signatureFork for signing domain is fixed
-    const domain = try config.getDomainByForkSeq(.phase0, params.DOMAIN_BLS_TO_EXECUTION_CHANGE);
+    const domain = try config.getDomainByForkSeq(.phase0, c.DOMAIN_BLS_TO_EXECUTION_CHANGE);
     var signing_root: Root = undefined;
     try computeSigningRoot(ssz.capella.BLSToExecutionChange, &signed_bls_to_execution_change.message, domain, &signing_root);
 

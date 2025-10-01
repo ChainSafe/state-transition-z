@@ -7,8 +7,9 @@ const digest = @import("./sha256.zig").digest;
 const Epoch = ssz.primitive.Epoch.Type;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const DomainType = ssz.primitive.DomainType.Type;
-const ForkSeq = @import("params").ForkSeq;
 const params = @import("params");
+const ForkSeq = params.ForkSeq;
+const c = @import("constants");
 const EPOCHS_PER_HISTORICAL_VECTOR = ssz.preset.EPOCHS_PER_HISTORICAL_VECTOR;
 const MIN_SEED_LOOKAHEAD = ssz.preset.MIN_SEED_LOOKAHEAD;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
@@ -59,7 +60,7 @@ pub fn getNextSyncCommitteeIndices(allocator: Allocator, state: *const BeaconSta
 
     const epoch = computeEpochAtSlot(state.slot() + 1);
     var seed: [32]u8 = undefined;
-    try getSeed(state, epoch, params.DOMAIN_SYNC_COMMITTEE, &seed);
+    try getSeed(state, epoch, c.DOMAIN_SYNC_COMMITTEE, &seed);
     try computeSyncCommitteeIndices(allocator, &seed, active_indices, effective_balance_increments.items, rand_byte_count, max_effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT, preset.SHUFFLE_ROUND_COUNT, out);
 }
 

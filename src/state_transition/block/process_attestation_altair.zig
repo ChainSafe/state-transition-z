@@ -7,6 +7,7 @@ const Epoch = ssz.primitive.Epoch.Type;
 const preset = ssz.preset;
 const params = @import("params");
 const ForkSeq = @import("params").ForkSeq;
+const c = @import("constants");
 const RootCache = @import("../utils/root_cache.zig").RootCache;
 const validateAttestation = @import("./process_attestation_phase0.zig").validateAttestation;
 const getAttestationWithIndicesSignatureSet = @import("../signature_sets/indexed_attestation.zig").getAttestationWithIndicesSignatureSet;
@@ -17,12 +18,12 @@ const Checkpoint = ssz.phase0.Checkpoint.Type;
 const isTimelyTarget = @import("./process_attestation_phase0.zig").isTimelyTarget;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 
-const PROPOSER_REWARD_DOMINATOR = ((params.WEIGHT_DENOMINATOR - params.PROPOSER_WEIGHT) * params.WEIGHT_DENOMINATOR) / params.PROPOSER_WEIGHT;
+const PROPOSER_REWARD_DOMINATOR = ((c.WEIGHT_DENOMINATOR - c.PROPOSER_WEIGHT) * c.WEIGHT_DENOMINATOR) / c.PROPOSER_WEIGHT;
 
 /// Same to https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.5/specs/altair/beacon-chain.md#has_flag
-const TIMELY_SOURCE = 1 << params.TIMELY_SOURCE_FLAG_INDEX;
-const TIMELY_TARGET = 1 << params.TIMELY_TARGET_FLAG_INDEX;
-const TIMELY_HEAD = 1 << params.TIMELY_HEAD_FLAG_INDEX;
+const TIMELY_SOURCE = 1 << c.TIMELY_SOURCE_FLAG_INDEX;
+const TIMELY_TARGET = 1 << c.TIMELY_TARGET_FLAG_INDEX;
+const TIMELY_HEAD = 1 << c.TIMELY_HEAD_FLAG_INDEX;
 const SLOTS_PER_EPOCH_SQRT = std.math.sqrt(preset.SLOTS_PER_EPOCH);
 
 /// AT = AttestationType
@@ -87,9 +88,9 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
             // baseReward = state.validators[index].effectiveBalance / EFFECTIVE_BALANCE_INCREMENT * baseRewardPerIncrement;
             // proposerRewardNumerator += baseReward * totalWeight
             var total_weight: u64 = 0;
-            if ((flags_new_set & TIMELY_SOURCE) == TIMELY_SOURCE) total_weight += params.TIMELY_SOURCE_WEIGHT;
-            if ((flags_new_set & TIMELY_TARGET) == TIMELY_TARGET) total_weight += params.TIMELY_TARGET_WEIGHT;
-            if ((flags_new_set & TIMELY_HEAD) == TIMELY_HEAD) total_weight += params.TIMELY_HEAD_WEIGHT;
+            if ((flags_new_set & TIMELY_SOURCE) == TIMELY_SOURCE) total_weight += c.TIMELY_SOURCE_WEIGHT;
+            if ((flags_new_set & TIMELY_TARGET) == TIMELY_TARGET) total_weight += c.TIMELY_TARGET_WEIGHT;
+            if ((flags_new_set & TIMELY_HEAD) == TIMELY_HEAD) total_weight += c.TIMELY_HEAD_WEIGHT;
 
             if (total_weight > 0) {
                 total_balance_increments_with_weight += effective_balance_increments[validator_index] * total_weight;

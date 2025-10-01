@@ -22,6 +22,13 @@ pub fn build(b: *std.Build) void {
     });
     b.modules.put(b.dupe("hex"), module_hex) catch @panic("OOM");
 
+    const module_constants = b.createModule(.{
+        .root_source_file = b.path("src/constants/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("constants"), module_constants) catch @panic("OOM");
+
     const module_config = b.createModule(.{
         .root_source_file = b.path("src/config/root.zig"),
         .target = target,
@@ -245,12 +252,15 @@ pub fn build(b: *std.Build) void {
     module_config.addImport("params", module_params);
     module_config.addImport("consensus_types", module_consensus_types);
     module_config.addImport("hex", module_hex);
+    module_config.addImport("constants", module_constants);
 
     module_consensus_types.addImport("build_options", options_module_build_options);
     module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
+    module_consensus_types.addImport("constants", module_constants);
 
     module_params.addImport("build_options", options_module_build_options);
     module_params.addImport("consensus_types", module_consensus_types);
+    module_params.addImport("constants", module_constants);
 
     module_state_transition.addImport("build_options", options_module_build_options);
     module_state_transition.addImport("ssz", dep_ssz.module("ssz"));
@@ -258,6 +268,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("consensus_types", module_consensus_types);
     module_state_transition.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
     module_state_transition.addImport("params", module_params);
+    module_state_transition.addImport("constants", module_constants);
 
     module_unit.addImport("build_options", options_module_build_options);
     module_unit.addImport("ssz", dep_ssz.module("ssz"));
@@ -266,11 +277,14 @@ pub fn build(b: *std.Build) void {
     module_unit.addImport("params", module_params);
     module_unit.addImport("consensus_types", module_consensus_types);
     module_unit.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    module_unit.addImport("constants", module_constants);
 
     module_int.addImport("build_options", options_module_build_options);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
     module_int.addImport("state_transition", module_state_transition);
     module_int.addImport("config", module_config);
     module_int.addImport("consensus_types", module_consensus_types);
+    module_int.addImport("constants", module_constants);
+
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 }

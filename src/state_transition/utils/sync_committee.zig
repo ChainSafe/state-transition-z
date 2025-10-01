@@ -8,6 +8,7 @@ const EffiectiveBalanceIncrements = @import("../cache/effective_balance_incremen
 const ssz = @import("consensus_types");
 const preset = ssz.preset;
 const params = @import("params");
+const c = @import("constants");
 const SyncCommittee = ssz.altair.SyncCommittee.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const PublicKey = ssz.primitive.BLSPubkey.Type;
@@ -46,7 +47,7 @@ pub fn computeSyncParticipantReward(total_active_balance_increments: u64) u64 {
     const total_active_balance = total_active_balance_increments * preset.EFFECTIVE_BALANCE_INCREMENT;
     const base_reward_per_increment = @divFloor((preset.EFFECTIVE_BALANCE_INCREMENT * preset.BASE_REWARD_FACTOR), total_active_balance);
     const total_base_rewards = base_reward_per_increment * total_active_balance_increments;
-    const max_participant_rewards = @divFloor(@divFloor(total_base_rewards * params.SYNC_REWARD_WEIGHT, params.WEIGHT_DENOMINATOR), preset.SLOTS_PER_EPOCH);
+    const max_participant_rewards = @divFloor(@divFloor(total_base_rewards * c.SYNC_REWARD_WEIGHT, c.WEIGHT_DENOMINATOR), preset.SLOTS_PER_EPOCH);
     return @divFloor(max_participant_rewards, preset.SYNC_COMMITTEE_SIZE);
 }
 

@@ -9,8 +9,9 @@ const Domain = ssz.primitive.Domain.Type;
 const Root = ssz.primitive.Root.Type;
 const ssz = @import("consensus_types");
 const params = @import("params");
+const c = @import("constants");
 const preset = ssz.preset;
-const DOMAIN_DEPOSIT = params.DOMAIN_DEPOSIT;
+const DOMAIN_DEPOSIT = c.DOMAIN_DEPOSIT;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 const computeDomain = @import("../utils/domain.zig").computeDomain;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
@@ -141,10 +142,10 @@ pub fn addValidatorToRegistry(
     try validators.append(allocator, .{
         .pubkey = pubkey,
         .withdrawal_credentials = withdrawal_credentials,
-        .activation_eligibility_epoch = params.FAR_FUTURE_EPOCH,
-        .activation_epoch = params.FAR_FUTURE_EPOCH,
-        .exit_epoch = params.FAR_FUTURE_EPOCH,
-        .withdrawable_epoch = params.FAR_FUTURE_EPOCH,
+        .activation_eligibility_epoch = c.FAR_FUTURE_EPOCH,
+        .activation_epoch = c.FAR_FUTURE_EPOCH,
+        .exit_epoch = c.FAR_FUTURE_EPOCH,
+        .withdrawable_epoch = c.FAR_FUTURE_EPOCH,
         .effective_balance = effective_balance,
         .slashed = false,
     });

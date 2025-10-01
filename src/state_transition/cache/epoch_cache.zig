@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const preset = @import("consensus_types").preset;
 const ssz = @import("consensus_types");
 const params = @import("params");
+const c = @import("constants");
 const blst = @import("blst_min_pk");
 const Epoch = ssz.primitive.Epoch.Type;
 const Slot = ssz.primitive.Slot.Type;
@@ -59,7 +60,7 @@ pub const EpochCacheOpts = struct {
     skip_sync_pubkeys: bool,
 };
 
-pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOMINATOR - params.PROPOSER_WEIGHT);
+pub const PROPOSER_WEIGHT_FACTOR = c.PROPOSER_WEIGHT / (c.WEIGHT_DENOMINATOR - c.PROPOSER_WEIGHT);
 
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
@@ -190,7 +191,7 @@ pub const EpochCache = struct {
             }
 
             const exit_epoch = validator.exit_epoch;
-            if (exit_epoch != params.FAR_FUTURE_EPOCH) {
+            if (exit_epoch != c.FAR_FUTURE_EPOCH) {
                 if (exit_epoch > exit_queue_epoch) {
                     exit_queue_epoch = exit_epoch;
                     exit_queue_churn = 1;
@@ -224,7 +225,7 @@ pub const EpochCache = struct {
         // TODO: implement proposerLookahead in fulu
         const fork_seq = config.forkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
-        try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
+        try getSeed(state, current_epoch, c.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
         var proposers = [_]ValidatorIndex{0} ** preset.SLOTS_PER_EPOCH;
         if (current_shuffling.active_indices.len > 0) {
             try computeProposers(allocator, fork_seq, current_proposer_seed, current_epoch, current_shuffling.active_indices, effective_balance_increment, &proposers);
