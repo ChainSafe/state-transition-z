@@ -28,7 +28,7 @@ pub fn processSlashings(
     const total_balance_by_increment = cache.total_active_stake_by_increment;
     const fork = config.forkSeq(state.slot());
     const proportional_slashing_multiplier: u64 =
-        if (fork.isPhase0()) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork.isAltair())
+        if (fork == ForkSeq.phase0) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork == ForkSeq.altair)
             PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR
         else
             PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;

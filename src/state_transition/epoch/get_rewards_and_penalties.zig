@@ -56,7 +56,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
     const fork = config.forkSeq(state.slot());
 
     const inactivity_penality_multiplier: u64 =
-        if (fork.isAltair()) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
+        if (fork == ForkSeq.altair) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
     const penalty_denominator = config.chain.INACTIVITY_SCORE_BIAS * inactivity_penality_multiplier;
 
     const flags = cache.flags;
