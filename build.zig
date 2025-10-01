@@ -118,4 +118,6 @@ pub fn build(b: *std.Build) void {
 
     module_consensus_types.addImport("build_options", options_module_build_options);
     module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
+
+    module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 }
