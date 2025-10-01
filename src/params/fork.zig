@@ -3,13 +3,6 @@ const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
 const Version = ssz.primitive.Version.Type;
 
-const Fork_Name_Phase0 = "phase0";
-const Fork_Name_Altair = "altair";
-const Fork_Name_Bellatrix = "bellatrix";
-const Fork_Name_Capella = "capella";
-const Fork_Name_Deneb = "deneb";
-const Fork_Name_Electra = "electra";
-
 pub const TOTAL_FORKS = 6;
 
 pub const ForkSeq = enum(u8) {
@@ -22,14 +15,7 @@ pub const ForkSeq = enum(u8) {
     // TODO: fulu
 
     pub fn forkName(self: ForkSeq) []const u8 {
-        return switch (self) {
-            .phase0 => Fork_Name_Phase0,
-            .altair => Fork_Name_Altair,
-            .bellatrix => Fork_Name_Bellatrix,
-            .capella => Fork_Name_Capella,
-            .deneb => Fork_Name_Deneb,
-            .electra => Fork_Name_Electra,
-        };
+        return @tagName(self);
     }
 
     pub fn isPhase0(self: ForkSeq) bool {
@@ -130,19 +116,19 @@ pub const ForkInfo = struct {
 };
 
 test "fork - forkName" {
-    try std.testing.expectEqualSlices(u8, Fork_Name_Phase0, ForkSeq.phase0.forkName());
-    try std.testing.expectEqualSlices(u8, Fork_Name_Altair, ForkSeq.altair.forkName());
-    try std.testing.expectEqualSlices(u8, Fork_Name_Bellatrix, ForkSeq.bellatrix.forkName());
-    try std.testing.expectEqualSlices(u8, Fork_Name_Capella, ForkSeq.capella.forkName());
-    try std.testing.expectEqualSlices(u8, Fork_Name_Deneb, ForkSeq.deneb.forkName());
-    try std.testing.expectEqualSlices(u8, Fork_Name_Electra, ForkSeq.electra.forkName());
+    try std.testing.expectEqualSlices(u8, "phase0", ForkSeq.phase0.forkName());
+    try std.testing.expectEqualSlices(u8, "altair", ForkSeq.altair.forkName());
+    try std.testing.expectEqualSlices(u8, "bellatrix", ForkSeq.bellatrix.forkName());
+    try std.testing.expectEqualSlices(u8, "capella", ForkSeq.capella.forkName());
+    try std.testing.expectEqualSlices(u8, "deneb", ForkSeq.deneb.forkName());
+    try std.testing.expectEqualSlices(u8, "electra", ForkSeq.electra.forkName());
 }
 
 test "fork - forkSeqByForkName" {
-    try std.testing.expect(ForkSeq.phase0 == forkSeqByForkName(Fork_Name_Phase0));
-    try std.testing.expect(ForkSeq.altair == forkSeqByForkName(Fork_Name_Altair));
-    try std.testing.expect(ForkSeq.bellatrix == forkSeqByForkName(Fork_Name_Bellatrix));
-    try std.testing.expect(ForkSeq.capella == forkSeqByForkName(Fork_Name_Capella));
-    try std.testing.expect(ForkSeq.deneb == forkSeqByForkName(Fork_Name_Deneb));
-    try std.testing.expect(ForkSeq.electra == forkSeqByForkName(Fork_Name_Electra));
+    try std.testing.expect(ForkSeq.phase0 == forkSeqByForkName("phase0"));
+    try std.testing.expect(ForkSeq.altair == forkSeqByForkName("altair"));
+    try std.testing.expect(ForkSeq.bellatrix == forkSeqByForkName("bellatrix"));
+    try std.testing.expect(ForkSeq.capella == forkSeqByForkName("capella"));
+    try std.testing.expect(ForkSeq.deneb == forkSeqByForkName("deneb"));
+    try std.testing.expect(ForkSeq.electra == forkSeqByForkName("electra"));
 }
