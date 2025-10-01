@@ -9,6 +9,33 @@ on:
       - main
 
 jobs:
+  zbuild: 
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: "0.14.0"
+
+      - name: Install zbuild
+        run: |
+          git clone https://github.com/ChainSafe/zbuild.git
+          cd zbuild
+          zig build -Doptimize=ReleaseFast
+          sudo cp zig-out/bin/zbuild /usr/local/bin/zbuild
+
+      - name: Verify zbuild
+        run: zbuild --version
+
+      - name: Check if build.zig is out of sync
+        run: |
+          zbuild sync
+          git diff --exit-code
+
   zig-build-upload:
     strategy:
       matrix:
