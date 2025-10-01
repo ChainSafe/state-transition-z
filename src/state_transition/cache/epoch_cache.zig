@@ -600,7 +600,8 @@ pub const EpochCache = struct {
     }
 
     pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
-        const shuffling = if (epoch == self.epoch - 1)
+        const previous_epoch = if (self.epoch == params.GENESIS_EPOCH) params.GENESIS_EPOCH else self.epoch - 1;
+        const shuffling = if (epoch == previous_epoch)
             self.getPreviousShuffling()
         else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
             self.getNextEpochShuffling()

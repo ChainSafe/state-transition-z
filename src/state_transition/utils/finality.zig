@@ -1,8 +1,11 @@
+const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const preset = @import("consensus_types").preset;
 const MIN_EPOCHS_TO_INACTIVITY_PENALTY = preset.MIN_EPOCHS_TO_INACTIVITY_PENALTY;
 
 pub fn getFinalityDelay(cached_state: *const CachedBeaconStateAllForks) u64 {
+    std.debug.assert(cached_state.getEpochCache().epoch > 0);
+    std.debug.assert(cached_state.getEpochCache().epoch >= cached_state.state.finalizedCheckpoint().epoch + 1);
     // previous_epoch = epoch - 1
     return cached_state.getEpochCache().epoch - 1 - cached_state.state.finalizedCheckpoint().epoch;
 }
