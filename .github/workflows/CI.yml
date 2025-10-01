@@ -41,10 +41,10 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
-      - name: Build and Unit Tests
+      - name: Run Unit Tests
         run: |
           zig build test:unit
-      - name: Build and Int Tests
+      - name: Run Int Tests
         run: |
           zig build test:int
       - name: Install Bun
