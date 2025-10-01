@@ -29,9 +29,9 @@ jobs:
           sudo cp zig-out/bin/zbuild /usr/local/bin/zbuild
 
       - name: Verify zbuild
-        run: zbuild --version
+        run: zbuild version
 
-      - name: Check if build.zig is out of sync
+      - name: Check if build.zig is sync'ed with zbuild.zon
         run: |
           zbuild sync
           git diff --exit-code
