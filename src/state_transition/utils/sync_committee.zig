@@ -1,5 +1,5 @@
 const std = @import("std");
-const blst = @import("blst_min_pk");
+const blst = @import("blst");
 const BlstPublicKey = blst.PublicKey;
 const AggregatePublicKey = blst.AggregatePublicKey;
 const Allocator = std.mem.Allocator;

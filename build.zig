@@ -8,7 +8,7 @@ pub fn build(b: *std.Build) void {
 
     const dep_ssz = b.dependency("ssz", .{});
 
-    const dep_blst_z = b.dependency("blst_z", .{});
+    const dep_blst = b.dependency("blst", .{});
 
     const options_build_options = b.addOptions();
     const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
@@ -266,7 +266,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("ssz", dep_ssz.module("ssz"));
     module_state_transition.addImport("config", module_config);
     module_state_transition.addImport("consensus_types", module_consensus_types);
-    module_state_transition.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    module_state_transition.addImport("blst", dep_blst.module("blst_min_pk"));
     module_state_transition.addImport("preset", module_preset);
     module_state_transition.addImport("constants", module_constants);
 
@@ -276,7 +276,7 @@ pub fn build(b: *std.Build) void {
     module_unit.addImport("config", module_config);
     module_unit.addImport("preset", module_preset);
     module_unit.addImport("consensus_types", module_consensus_types);
-    module_unit.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    module_unit.addImport("blst", dep_blst.module("blst_min_pk"));
     module_unit.addImport("constants", module_constants);
 
     module_int.addImport("build_options", options_module_build_options);

@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-pub const blst = @import("blst_min_pk");
+pub const blst = @import("blst");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
 const Root = ssz.primitive.Root.Type;
