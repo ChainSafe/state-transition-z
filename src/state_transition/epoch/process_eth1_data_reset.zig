@@ -1,7 +1,7 @@
 const ssz = @import("consensus_types");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const EPOCHS_PER_ETH1_VOTING_PERIOD = preset.EPOCHS_PER_ETH1_VOTING_PERIOD;
 
 /// Reset eth1DataVotes tree every `EPOCHS_PER_ETH1_VOTING_PERIOD`.

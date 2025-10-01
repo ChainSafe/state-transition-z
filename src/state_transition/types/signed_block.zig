@@ -137,7 +137,7 @@ pub const SignedBlock = union(enum) {
 
 const std = @import("std");
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 
 const Root = ssz.primitive.Root.Type;

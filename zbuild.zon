@@ -44,14 +44,14 @@
         },
         .config = .{
             .root_source_file = "src/config/root.zig",
-            .imports = .{ .build_options, .params, .consensus_types, .hex },
+            .imports = .{ .build_options, .preset, .consensus_types, .hex },
         },
         .consensus_types = .{
             .root_source_file = "src/consensus_types/root.zig",
             .imports = .{ .build_options, .ssz },
         },
-        .params = .{
-            .root_source_file = "src/params/root.zig",
+        .preset = .{
+            .root_source_file = "src/preset/root.zig",
             .imports = .{ .build_options, .consensus_types },
         },
         .state_transition = .{
@@ -62,7 +62,7 @@
                 .config,
                 .consensus_types,
                 .blst_min_pk,
-                .params,
+                .preset,
             },
         },
     },
@@ -92,7 +92,7 @@
                     .ssz,
                     .state_transition,
                     .config,
-                    .params,
+                    .preset,
                     .consensus_types,
                     .blst_min_pk,
                 },

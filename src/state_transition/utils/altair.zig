@@ -1,4 +1,4 @@
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 const BASE_REWARD_FACTOR = preset.BASE_REWARD_FACTOR;
 

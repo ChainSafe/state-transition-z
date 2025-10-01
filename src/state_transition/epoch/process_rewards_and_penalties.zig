@@ -3,14 +3,14 @@ const Allocator = std.mem.Allocator;
 const ForkSeq = @import("config").ForkSeq;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const preset = @import("params").preset;
-const params = @import("params");
+const preset = @import("preset").preset;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const getAttestationDeltas = @import("./get_attestation_deltas.zig").getAttestationDeltas;
 const getRewardsAndPenaltiesAltair = @import("./get_rewards_and_penalties.zig").getRewardsAndPenaltiesAltair;
 
 pub fn processRewardsAndPenalties(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     // No rewards are applied at the end of `GENESIS_EPOCH` because rewards are for work done in the previous epoch
-    if (cache.current_epoch == params.GENESIS_EPOCH) {
+    if (cache.current_epoch == GENESIS_EPOCH) {
         return;
     }
 

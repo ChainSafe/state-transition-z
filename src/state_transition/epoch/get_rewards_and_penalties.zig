@@ -3,8 +3,7 @@ const Allocator = std.mem.Allocator;
 const attester_status = @import("../utils/attester_status.zig");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const preset = @import("params").preset;
-const params = @import("params");
+const preset = @import("preset").preset;
 const c = @import("constants");
 
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;

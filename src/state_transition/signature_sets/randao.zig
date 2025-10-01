@@ -6,7 +6,6 @@ const Epoch = ssz.primitive.Epoch.Type;
 const Body = @import("../types/signed_block.zig").SignedBlock.Body;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-const params = @import("params");
 const c = @import("constants");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;

@@ -4,8 +4,7 @@ const Epoch = ssz.primitive.Epoch.Type;
 const Checkpoint = ssz.phase0.Checkpoint.Type;
 const JustificationBits = ssz.phase0.JustificationBits.Type;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const params = @import("params");
-const GENESIS_EPOCH = params.GENESIS_EPOCH;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const getBlockRoot = @import("../utils/block_root.zig").getBlockRoot;
 
@@ -24,7 +23,7 @@ pub fn processJustificationAndFinalization(cached_state: *CachedBeaconStateAllFo
 pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllForks, total_active_balance: u64, previous_epoch_target_balance: u64, current_epoch_target_balance: u64) !void {
     const state = cached_state.state;
     const current_epoch = computeEpochAtSlot(state.slot());
-    const previous_epoch = if (current_epoch == params.GENESIS_EPOCH) params.GENESIS_EPOCH else current_epoch - 1;
+    const previous_epoch = if (current_epoch == GENESIS_EPOCH) GENESIS_EPOCH else current_epoch - 1;
 
     const old_previous_justified_checkpoint = state.previousJustifiedCheckpoint();
     const old_current_justified_checkpoint = state.currentJustifiedCheckpoint();

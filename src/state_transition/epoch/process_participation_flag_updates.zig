@@ -4,7 +4,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const ForkSeq = @import("config").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 
 pub fn processParticipationFlagUpdates(cached_state: *CachedBeaconStateAllForks, allocator: std.mem.Allocator) !void {
     const state = cached_state.state;

@@ -5,7 +5,7 @@ const ForkSeq = @import("config").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
 const Root = ssz.primitive.Root.Type;
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 
 pub fn processHistoricalSummariesUpdate(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *const EpochTransitionCache) !void {
     const state = cached_state.state;

@@ -1,8 +1,7 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const params = @import("params");
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const Body = @import("../types/signed_block.zig").SignedBlock.Body;
 
 const getEth1DepositCount = @import("../utils/deposit.zig").getEth1DepositCount;

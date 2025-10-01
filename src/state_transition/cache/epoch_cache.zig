@@ -1,8 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const ssz = @import("consensus_types");
-const params = @import("params");
 const c = @import("constants");
 const blst = @import("blst_min_pk");
 const Epoch = ssz.primitive.Epoch.Type;
@@ -141,8 +141,8 @@ pub const EpochCache = struct {
         const index_to_pubkey = immutable_data.index_to_pubkey;
 
         const current_epoch = computeEpochAtSlot(state.slot());
-        const is_genesis = current_epoch == params.GENESIS_EPOCH;
-        const previous_epoch = if (is_genesis) params.GENESIS_EPOCH else current_epoch - 1;
+        const is_genesis = current_epoch == GENESIS_EPOCH;
+        const previous_epoch = if (is_genesis) GENESIS_EPOCH else current_epoch - 1;
         const next_epoch = current_epoch + 1;
 
         var total_active_balance_increments: u64 = 0;
@@ -416,7 +416,7 @@ pub const EpochCache = struct {
         self.next_shuffling = EpochShufflingRc.init(next_shuffling);
 
         var upcoming_proposer_seed: [32]u8 = undefined;
-        try getSeed(state, upcoming_epoch, params.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
+        try getSeed(state, upcoming_epoch, c.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
         try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
 
         self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
@@ -469,7 +469,7 @@ pub const EpochCache = struct {
         const slots_since_epoch_start = slot % preset.SLOTS_PER_EPOCH;
         const committees_per_slot = try self.getCommitteeCountPerSlot(computeEpochAtSlot(slot));
         const committees_since_epoch_start = committees_per_slot * slots_since_epoch_start;
-        return @intCast((committees_since_epoch_start + committee_index) % params.ATTESTATION_SUBNET_COUNT);
+        return @intCast((committees_since_epoch_start + committee_index) % c.ATTESTATION_SUBNET_COUNT);
     }
 
     pub fn getBeaconProposer(self: *const EpochCache, slot: Slot) !ValidatorIndex {
@@ -606,7 +606,7 @@ pub const EpochCache = struct {
     }
 
     pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
-        const previous_epoch = if (self.epoch == params.GENESIS_EPOCH) params.GENESIS_EPOCH else self.epoch - 1;
+        const previous_epoch = if (self.epoch == GENESIS_EPOCH) GENESIS_EPOCH else self.epoch - 1;
         const shuffling = if (epoch == previous_epoch)
             self.getPreviousShuffling()
         else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)

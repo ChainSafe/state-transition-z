@@ -3,7 +3,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const ForkSeq = @import("config").ForkSeq;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 
 /// Resets slashings for the next epoch.
 /// PERF: Almost no (constant) cost

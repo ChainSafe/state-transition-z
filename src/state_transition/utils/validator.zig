@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const Validator = ssz.phase0.Validator.Type;
 
 const Epoch = ssz.primitive.Epoch.Type;

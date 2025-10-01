@@ -1,6 +1,6 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const preset = @import("params").preset;
+const preset = @import("preset").preset;
 const MIN_EPOCHS_TO_INACTIVITY_PENALTY = preset.MIN_EPOCHS_TO_INACTIVITY_PENALTY;
 
 pub fn getFinalityDelay(cached_state: *const CachedBeaconStateAllForks) u64 {

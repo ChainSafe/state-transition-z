@@ -1,6 +1,5 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
-const params = @import("params");
 const c = @import("constants");
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
 const isActiveValidator = @import("../utils/validator.zig").isActiveValidator;

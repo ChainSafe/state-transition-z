@@ -1,18 +1,18 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
-const preset = @import("params").preset;
-const params = @import("params");
+const preset = @import("preset").preset;
+const c = @import("constants");
 const digest = @import("./sha256.zig").digest;
 const BLSSignature = ssz.primitive.BLSSignature.Type;
 const ZERO_BIGINT = 0;
 
 pub fn isSyncCommitteeAggregator(selection_proof: BLSSignature) bool {
-    const module = @max(1, @divFloor(@divFloor(preset.SYNC_COMMITTEE_SIZE, params.SYNC_COMMITTEE_SUBNET_COUNT), params.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
+    const module = @max(1, @divFloor(@divFloor(preset.SYNC_COMMITTEE_SIZE, c.SYNC_COMMITTEE_SUBNET_COUNT), c.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
     return isSelectionProofValid(selection_proof, module);
 }
 
 pub fn isAggregatorFromCommitteeLength(committee_len: usize, slot_signature: BLSSignature) bool {
-    const module = @max(1, @divFloor(committee_len, params.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
+    const module = @max(1, @divFloor(committee_len, c.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
     return isSelectionProofValid(slot_signature, module);
 }
 
