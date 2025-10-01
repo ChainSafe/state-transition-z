@@ -23,6 +23,20 @@
                 .type = "string",
             },
         },
+        .spec_test_options = .{
+            .spec_test_url = .{
+                .default = "https://github.com/ethereum/consensus-spec-tests",
+                .type = "string",
+            },
+            .spec_test_version = .{
+                .default = "v1.5.0",
+                .type = "string",
+            },
+            .spec_test_out_dir = .{
+                .default = "test/spec/spec_tests",
+                .type = "string",
+            },
+        },
     },
     .modules = .{
         .hex = .{
@@ -49,6 +63,14 @@
                 .consensus_types,
                 .blst_min_pk,
                 .params,
+            },
+        },
+    },
+    .executables = .{
+        .download_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/download_spec_tests.zig",
+                .imports = .{.spec_test_options},
             },
         },
     },

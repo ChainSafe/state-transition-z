@@ -28,6 +28,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     b.modules.put(b.dupe("config"), module_config) catch @panic("OOM");
+    const options_spec_test_options = b.addOptions();
+    const option_spec_test_url = b.option([]const u8, "spec_test_url", "") orelse "https://github.com/ethereum/consensus-spec-tests";
+    options_spec_test_options.addOption([]const u8, "spec_test_url", option_spec_test_url);
+    const option_spec_test_version = b.option([]const u8, "spec_test_version", "") orelse "v1.5.0";
+    options_spec_test_options.addOption([]const u8, "spec_test_version", option_spec_test_version);
+    const option_spec_test_out_dir = b.option([]const u8, "spec_test_out_dir", "") orelse "test/spec/spec_tests";
+    options_spec_test_options.addOption([]const u8, "spec_test_out_dir", option_spec_test_out_dir);
+    const options_module_spec_test_options = options_spec_test_options.createModule();
 
     const module_consensus_types = b.createModule(.{
         .root_source_file = b.path("src/consensus_types/root.zig"),
@@ -49,6 +57,28 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     b.modules.put(b.dupe("state_transition"), module_state_transition) catch @panic("OOM");
+    const module_download_spec_tests = b.createModule(.{
+        .root_source_file = b.path("test/spec/download_spec_tests.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("download_spec_tests"), module_download_spec_tests) catch @panic("OOM");
+
+    const exe_download_spec_tests = b.addExecutable(.{
+        .name = "download_spec_tests",
+        .root_module = module_download_spec_tests,
+    });
+
+    const install_exe_download_spec_tests = b.addInstallArtifact(exe_download_spec_tests, .{});
+
+    const tls_install_exe_download_spec_tests = b.step("build-exe:download_spec_tests", "Install the download_spec_tests executable");
+    tls_install_exe_download_spec_tests.dependOn(&install_exe_download_spec_tests.step);
+    b.getInstallStep().dependOn(&install_exe_download_spec_tests.step);
+
+    const run_exe_download_spec_tests = b.addRunArtifact(exe_download_spec_tests);
+    if (b.args) |args| run_exe_download_spec_tests.addArgs(args);
+    const tls_run_exe_download_spec_tests = b.step("run:download_spec_tests", "Run the download_spec_tests executable");
+    tls_run_exe_download_spec_tests.dependOn(&run_exe_download_spec_tests.step);
 
     const module_state_transition_utils = b.createModule(.{
         .root_source_file = b.path("src/lib_state_transition_utils.zig"),
@@ -141,6 +171,19 @@ pub fn build(b: *std.Build) void {
     const tls_run_test_state_transition = b.step("test:state_transition", "Run the state_transition test");
     tls_run_test_state_transition.dependOn(&run_test_state_transition.step);
     tls_run_test.dependOn(&run_test_state_transition.step);
+    const test_download_spec_tests = b.addTest(.{
+        .name = "download_spec_tests",
+        .root_module = module_download_spec_tests,
+        .filters = &[_][]const u8{},
+    });
+    const install_test_download_spec_tests = b.addInstallArtifact(test_download_spec_tests, .{});
+    const tls_install_test_download_spec_tests = b.step("build-test:download_spec_tests", "Install the download_spec_tests test");
+    tls_install_test_download_spec_tests.dependOn(&install_test_download_spec_tests.step);
+
+    const run_test_download_spec_tests = b.addRunArtifact(test_download_spec_tests);
+    const tls_run_test_download_spec_tests = b.step("test:download_spec_tests", "Run the download_spec_tests test");
+    tls_run_test_download_spec_tests.dependOn(&run_test_download_spec_tests.step);
+    tls_run_test.dependOn(&run_test_download_spec_tests.step);
 
     const test_state_transition_utils = b.addTest(.{
         .name = "state_transition_utils",
@@ -229,4 +272,5 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("state_transition", module_state_transition);
     module_int.addImport("config", module_config);
     module_int.addImport("consensus_types", module_consensus_types);
+    module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 }
