@@ -74,6 +74,14 @@
             },
         },
     },
+    .executables = .{
+        .download_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/download_spec_tests.zig",
+                .imports = .{.spec_test_options},
+            },
+        },
+    },
     .libraries = .{
         .state_transition_utils = .{
             .root_module = .{
