@@ -28,7 +28,7 @@ const SLOTS_PER_EPOCH_SQRT = std.math.sqrt(preset.SLOTS_PER_EPOCH);
 /// AT = AttestationType
 /// for phase0 it's `ssz.phase0.Attestation.Type`
 /// for electra it's `ssz.electra.Attestation.Type`
-pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: ?bool) !void {
+pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, comptime AT: type, attestations: []AT, verify_signature: bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const effective_balance_increments = epoch_cache.effective_balance_increment.get().items;
@@ -55,7 +55,7 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
         // this check is done last because its the most expensive (if signature verification is toggled on)
         // TODO: Why should we verify an indexed attestation that we just created? If it's just for the signature
         // we can verify only that and nothing else.
-        if (verify_signature orelse true) {
+        if (verify_signature) {
             const sig_set = try getAttestationWithIndicesSignatureSet(allocator, cached_state, &attestation.data, attestation.signature, attesting_indices.items);
             if (!try verifyAggregatedSignatureSet(allocator, &sig_set)) {
                 return error.InvalidSignature;

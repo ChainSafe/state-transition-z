@@ -9,7 +9,7 @@ const initiateValidatorExit = @import("./initiate_validator_exit.zig").initiateV
 
 const FAR_FUTURE_EPOCH = c.FAR_FUTURE_EPOCH;
 
-pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) !void {
+pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: bool) !void {
     if (!try isValidVoluntaryExit(cached_state, signed_voluntary_exit, verify_signature)) {
         return error.InvalidVoluntaryExit;
     }
@@ -18,7 +18,7 @@ pub fn processVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
     try initiateValidatorExit(cached_state, &validator);
 }
 
-pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: ?bool) !bool {
+pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_voluntary_exit: *const SignedVoluntaryExit, verify_signature: bool) !bool {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const config = cached_state.config.chain;
@@ -37,7 +37,7 @@ pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
             current_epoch >= validator.activation_epoch + config.SHARD_COMMITTEE_PERIOD and
             (if (state.isPostElectra()) getPendingBalanceToWithdraw(cached_state.state, voluntary_exit.validator_index) == 0 else true) and
             // verify signature
-            (if (verify_signature orelse true) try verifyVoluntaryExitSignature(cached_state, signed_voluntary_exit) else true));
+            if (verify_signature) try verifyVoluntaryExitSignature(cached_state, signed_voluntary_exit) else true);
 }
 
 // TODO: unit test

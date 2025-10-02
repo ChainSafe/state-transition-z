@@ -13,7 +13,7 @@ const Phase0Attestation = ssz.phase0.Attestation.Type;
 const ElectraAttestation = ssz.electra.Attestation.Type;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
-pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) !void {
+pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const slot = state.slot();

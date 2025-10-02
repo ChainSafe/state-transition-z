@@ -12,7 +12,7 @@ const slashValidator = @import("./slash_validator.zig").slashValidator;
 /// AS is the AttesterSlashing type
 /// - for phase0 it is `ssz.phase0.AttesterSlashing.Type`
 /// - for electra it is `ssz.electra.AttesterSlashing.Type`
-pub fn processAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signature: ?bool) !void {
+pub fn processAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signature: bool) !void {
     const state = cached_state.state;
     const epoch = cached_state.getEpochCache().epoch;
     try assertValidAttesterSlashing(AS, allocator, cached_state, attester_slashing, verify_signature);
@@ -38,7 +38,7 @@ pub fn processAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, 
 /// AS is the AttesterSlashing type
 /// - for phase0 it is `ssz.phase0.AttesterSlashing.Type`
 /// - for electra it is `ssz.electra.AttesterSlashing.Type`
-pub fn assertValidAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signatures: ?bool) !void {
+pub fn assertValidAttesterSlashing(comptime AS: type, allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, attester_slashing: *const AS, verify_signatures: bool) !void {
     const attestations = &.{ attester_slashing.attestation_1, attester_slashing.attestation_2 };
     if (!isSlashableAttestationData(&attestations[0].data, &attestations[1].data)) {
         return error.InvalidAttesterSlashingNotSlashable;
