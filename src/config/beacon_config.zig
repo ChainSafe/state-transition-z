@@ -10,13 +10,17 @@ const Root = ssz.primitive.Root.Type;
 const DomainType = ssz.primitive.DomainType.Type;
 const c = @import("constants");
 const DOMAIN_VOLUNTARY_EXIT = c.DOMAIN_VOLUNTARY_EXIT;
+const ALL_DOMAINS = c.ALL_DOMAINS;
 const forks = @import("./fork.zig");
 const ForkSeq = forks.ForkSeq;
 const ForkInfo = forks.ForkInfo;
 const TOTAL_FORKS = forks.TOTAL_FORKS;
 const forkSeqByForkName = forks.forkSeqByForkName;
+const mainnet_chain_config = @import("./chain/networks/mainnet.zig").mainnet_chain_config;
 
-const DomainByTypeHashMap = std.StringHashMap([]const u8);
+// a domain type is 4 bytes, so we can use u32 as the key for hash map
+const DomainTypeKey = u32;
+const DomainByTypeHashMap = std.AutoHashMap(DomainTypeKey, [32]u8);
 const DomainByTypeByFork = std.ArrayList(DomainByTypeHashMap);
 
 pub const ChainConfig = @import("./chain/chain_config.zig").ChainConfig;
@@ -96,8 +100,16 @@ pub const BeaconConfig = struct {
         };
 
         var domain_cache = DomainByTypeByFork.init(allocator);
-        for (0..TOTAL_FORKS) |_| {
-            try domain_cache.append(DomainByTypeHashMap.init(allocator));
+        inline for (0..TOTAL_FORKS) |fork_seq| {
+            var domain_by_type = DomainByTypeHashMap.init(allocator);
+            const fork_info = forks_ascending_epoch_order[fork_seq];
+            inline for (ALL_DOMAINS) |domain_type| {
+                var domain: [32]u8 = undefined;
+                try computeDomain(domain_type, fork_info.version, genesis_validator_root, &domain);
+                const domain_type_key = getDomainTypeKey(&domain_type);
+                try domain_by_type.put(domain_type_key, domain);
+            }
+            try domain_cache.append(domain_by_type);
         }
 
         const beacon_config = try allocator.create(BeaconConfig);
@@ -114,8 +126,8 @@ pub const BeaconConfig = struct {
     }
 
     pub fn deinit(self: *BeaconConfig) void {
-        for (0..TOTAL_FORKS) |i| {
-            self.domain_cache.items[i].deinit();
+        for (self.domain_cache.items) |*domain_by_type| {
+            domain_by_type.deinit();
         }
         self.domain_cache.deinit();
         self.allocator.destroy(self);
@@ -190,19 +202,14 @@ pub const BeaconConfig = struct {
 
     pub fn getDomainByForkSeq(self: *const BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
         if (@intFromEnum(fork_seq) >= TOTAL_FORKS) return error.ForkSeqOutOfRange;
-
         var domain_by_type = self.domain_cache.items[@intFromEnum(fork_seq)];
-        var domain: [32]u8 = undefined;
-
-        if (domain_by_type.get(&domain_type)) |d| @memcpy(&domain, d) else {
-            const out = try self.allocator.create([32]u8);
-            const fork_info = self.forks_ascending_epoch_order[@intFromEnum(fork_seq)];
-            try computeDomain(domain_type, fork_info.version, self.genesis_validator_root, out);
-            try domain_by_type.put(&domain_type, out);
-            @memcpy(&domain, out);
+        const domain_type_key = getDomainTypeKey(&domain_type);
+        if (domain_by_type.get(domain_type_key)) |d| {
+            return d;
         }
 
-        return domain;
+        // all domain types are cached in initialization, if not fix the init() function instead
+        return error.DomainTypeNotFound;
     }
 
     pub fn getDomainForVoluntaryExit(self: *const BeaconConfig, state_slot: Slot, message_slot: ?Slot) ![32]u8 {
@@ -232,4 +239,17 @@ fn computeForkDataRoot(current_version: Version, genesis_validators_root: Root, 
     try ssz.phase0.ForkData.hashTreeRoot(&fork_data, out);
 }
 
-// TODO: unit tests
+inline fn getDomainTypeKey(domain_type: *const DomainType) DomainTypeKey {
+    return std.mem.readInt(DomainTypeKey, domain_type, .little);
+}
+
+test "getDomain" {
+    const allocator = std.testing.allocator;
+    const root = [_]u8{0} ** 32;
+    const beacon_config = try BeaconConfig.init(allocator, mainnet_chain_config, root);
+    defer beacon_config.deinit();
+
+    const domain = try beacon_config.getDomain(100, DOMAIN_VOLUNTARY_EXIT, null);
+    const domain2 = try beacon_config.getDomain(100, DOMAIN_VOLUNTARY_EXIT, null);
+    try std.testing.expectEqualSlices(u8, &domain, &domain2);
+}
