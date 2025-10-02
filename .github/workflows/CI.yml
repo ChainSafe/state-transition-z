@@ -40,15 +40,24 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
+      - name: Run hex tests
+        run: |
+          zig build test:hex
       - name: Run config tests
         run: |
           zig build test:config
+      - name: Run consensus-type tests
+        run: |
+          zig build test:consensus_types
       - name: Run preset tests
         run: |
           zig build test:preset
-      - name: Run Unit Tests
+      - name: Run state-transition tests
         run: |
-          zig build test:unit
+          zig build test:state_transition
+      - name: Run state-transition-utils tests
+        run: |
+          zig build test:state_transition_utils
       - name: Run Int Tests
         run: |
           zig build test:int
