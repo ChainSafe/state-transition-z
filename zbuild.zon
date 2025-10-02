@@ -12,7 +12,7 @@
         .ssz = .{
             .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
         },
-        .blst_z = .{
+        .blst = .{
             .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
         },
     },
@@ -23,6 +23,20 @@
                 .type = "string",
             },
         },
+        .spec_test_options = .{
+            .spec_test_url = .{
+                .default = "https://github.com/ethereum/consensus-spec-tests",
+                .type = "string",
+            },
+            .spec_test_version = .{
+                .default = "v1.5.0",
+                .type = "string",
+            },
+            .spec_test_out_dir = .{
+                .default = "test/spec/spec_tests",
+                .type = "string",
+            },
+        },
     },
     .modules = .{
         .hex = .{
@@ -30,14 +44,14 @@
         },
         .config = .{
             .root_source_file = "src/config/root.zig",
-            .imports = .{ .build_options, .params, .consensus_types, .hex },
+            .imports = .{ .build_options, .preset, .consensus_types, .hex },
         },
         .consensus_types = .{
             .root_source_file = "src/consensus_types/root.zig",
             .imports = .{ .build_options, .ssz },
         },
-        .params = .{
-            .root_source_file = "src/params/root.zig",
+        .preset = .{
+            .root_source_file = "src/preset/root.zig",
             .imports = .{ .build_options, .consensus_types },
         },
         .state_transition = .{
@@ -47,8 +61,16 @@
                 .ssz,
                 .config,
                 .consensus_types,
-                .blst_min_pk,
-                .params,
+                .blst,
+                .preset,
+            },
+        },
+    },
+    .executables = .{
+        .download_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/download_spec_tests.zig",
+                .imports = .{.spec_test_options},
             },
         },
     },
@@ -70,9 +92,9 @@
                     .ssz,
                     .state_transition,
                     .config,
-                    .params,
+                    .preset,
                     .consensus_types,
-                    .blst_min_pk,
+                    .blst,
                 },
             },
             .filters = .{},

@@ -1,6 +1,6 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
 const AttesterSlashing = ssz.phase0.AttesterSlashing.Type;
 const isSlashableAttestationData = @import("../utils/attestation.zig").isSlashableAttestationData;

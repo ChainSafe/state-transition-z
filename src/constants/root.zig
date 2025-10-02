@@ -1,22 +1,4 @@
 const std = @import("std");
-const testing = std.testing;
-const ssz = @import("consensus_types");
-const preset_str = @import("build_options").preset;
-
-// TODO: currently preset is imported from ssz, consider redefining it here
-pub const preset = ssz.preset;
-const fork_defs = @import("./fork.zig");
-pub const ForkSeq = fork_defs.ForkSeq;
-pub const forkSeqByForkName = fork_defs.forkSeqByForkName;
-pub const ForkInfo = fork_defs.ForkInfo;
-pub const TOTAL_FORKS = fork_defs.TOTAL_FORKS;
-
-pub const Preset = @import("./preset.zig").Preset;
-
-// Misc
-
-pub const GENESIS_SLOT = 0;
-pub const GENESIS_EPOCH = 0;
 pub const FAR_FUTURE_EPOCH = std.math.maxInt(u64);
 pub const BASE_REWARDS_PER_EPOCH = 4;
 pub const DEPOSIT_CONTRACT_TREE_DEPTH = std.math.pow(usize, 2, 5); // 32
@@ -48,6 +30,9 @@ pub const DOMAIN_BLS_TO_EXECUTION_CHANGE = [_]u8{ 10, 0, 0, 0 };
 
 pub const DOMAIN_APPLICATION_MASK = [_]u8{ 0, 0, 0, 1 };
 pub const DOMAIN_APPLICATION_BUILDER = [_]u8{ 0, 0, 0, 1 };
+
+// need to be updated when new domain is added
+pub const ALL_DOMAINS = .{ DOMAIN_BEACON_PROPOSER, DOMAIN_BEACON_ATTESTER, DOMAIN_RANDAO, DOMAIN_DEPOSIT, DOMAIN_VOLUNTARY_EXIT, DOMAIN_SELECTION_PROOF, DOMAIN_AGGREGATE_AND_PROOF, DOMAIN_SYNC_COMMITTEE, DOMAIN_SYNC_COMMITTEE_SELECTION_PROOF, DOMAIN_CONTRIBUTION_AND_PROOF, DOMAIN_BLS_TO_EXECUTION_CHANGE, DOMAIN_APPLICATION_MASK, DOMAIN_APPLICATION_BUILDER };
 
 // Participation flag indices
 
@@ -84,7 +69,6 @@ pub const EPOCHS_PER_SUBNET_SUBSCRIPTION = 256;
 
 pub const TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE = 16;
 pub const SYNC_COMMITTEE_SUBNET_COUNT = 4;
-pub const SYNC_COMMITTEE_SUBNET_SIZE = @divFloor(preset.SYNC_COMMITTEE_SIZE, SYNC_COMMITTEE_SUBNET_COUNT);
 
 pub const MAX_REQUEST_BLOCKS = std.math.pow(usize, 2, 10);
 pub const MAX_REQUEST_BLOCKS_DENEB = std.math.pow(usize, 2, 7);
@@ -112,14 +96,6 @@ pub const BYTES_PER_FIELD_ELEMENT = 32;
 pub const BLOB_TX_TYPE = 0x03;
 pub const VERSIONED_HASH_VERSION_KZG = 0x01;
 
-// ssz.deneb.BeaconBlockBody.getPathInfo(['blobKzgCommitments',0]).gindex
-// the same to ssz-z
-pub const KZG_COMMITMENT_GINDEX0 = if (std.mem.eql(u8, preset_str, "minimal")) 1728 else 221184;
-pub const KZG_COMMITMENT_SUBTREE_INDEX0 = KZG_COMMITMENT_GINDEX0 - std.math.pow(usize, 2, preset.KZG_COMMITMENT_INCLUSION_PROOF_DEPTH);
-
-// ssz.deneb.BlobSidecars.elementType.fixedSize
-pub const BLOBSIDECAR_FIXED_SIZE = if (std.mem.eql(u8, preset_str, "minimal")) 131704 else 131928;
-
 // Electra Misc
 pub const UNSET_DEPOSIT_REQUESTS_START_INDEX = std.math.maxInt(u64);
 pub const FULL_EXIT_REQUEST_AMOUNT = 0;
@@ -134,19 +110,6 @@ pub const WITHDRAWAL_REQUEST_TYPE = 0x01;
 pub const CONSOLIDATION_REQUEST_TYPE = 0x02;
 pub const PENDING_PARTIAL_WITHDRAWALS_LIMIT = 134_217_728;
 
-// 128
-pub const NUMBER_OF_COLUMNS = (preset.FIELD_ELEMENTS_PER_BLOB * 2) / preset.FIELD_ELEMENTS_PER_CELL;
-pub const BYTES_PER_CELL = preset.FIELD_ELEMENTS_PER_CELL * BYTES_PER_FIELD_ELEMENT;
-pub const CELLS_PER_EXT_BLOB = preset.FIELD_ELEMENTS_PER_EXT_BLOB / preset.FIELD_ELEMENTS_PER_CELL;
-
-// ssz.fulu.BeaconBlockBody.getPathInfo(['blobKzgCommitments']).gindex
-pub const KZG_COMMITMENTS_GINDEX = 27;
-pub const KZG_COMMITMENTS_SUBTREE_INDEX = KZG_COMMITMENTS_GINDEX - std.math.pow(usize, 2, preset.KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH);
-
-pub const MAX_REQUEST_DATA_COLUMN_SIDECARS = MAX_REQUEST_BLOCKS_DENEB * NUMBER_OF_COLUMNS; // 16384
-pub const DATA_COLUMN_SIDECAR_SUBNET_COUNT = 128;
-pub const NUMBER_OF_CUSTODY_GROUPS = 128;
-
-test {
-    testing.refAllDecls(@This());
-}
+pub const CURRENT_SYNC_COMMITTEE_GINDEX = 54;
+pub const EXECUTION_PAYLOAD_GINDEX = 25;
+pub const CURRENT_SYNC_COMMITTEE_GINDEX_ELECTRA = 86;

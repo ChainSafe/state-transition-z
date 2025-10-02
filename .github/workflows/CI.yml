@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-      - te/naive_state_transition
 
 jobs:
   zig-build-upload:
@@ -41,10 +40,16 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
-      - name: Build and Unit Tests
+      - name: Run config tests
+        run: |
+          zig build test:config
+      - name: Run preset tests
+        run: |
+          zig build test:preset
+      - name: Run Unit Tests
         run: |
           zig build test:unit
-      - name: Build and Int Tests
+      - name: Run Int Tests
         run: |
           zig build test:int
       - name: Install Bun

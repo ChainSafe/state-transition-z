@@ -2,8 +2,7 @@ const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const params = @import("params");
-const GENESIS_EPOCH = params.GENESIS_EPOCH;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const isInInactivityLeak = @import("../utils/finality.zig").isInInactivityLeak;
 const attester_status_utils = @import("../utils/attester_status.zig");
 const hasMarkers = attester_status_utils.hasMarkers;

@@ -6,7 +6,7 @@ const Epoch = ssz.primitive.Epoch.Type;
 const Body = @import("../types/signed_block.zig").SignedBlock.Body;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-const params = @import("params");
+const c = @import("constants");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 
@@ -32,7 +32,7 @@ pub fn randaoRevealSignatureSet(
 
     // should not get epoch from epoch_cache
     const epoch = computeEpochAtSlot(slot);
-    const domain = try config.getDomain(state.slot(), params.DOMAIN_RANDAO, slot);
+    const domain = try config.getDomain(state.slot(), c.DOMAIN_RANDAO, slot);
     var signing_root: Root = undefined;
     try computeSigningRoot(ssz.primitive.Epoch, &epoch, domain, &signing_root);
     return .{

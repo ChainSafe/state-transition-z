@@ -20,7 +20,7 @@ test "process withdrawals - sanity" {
 const std = @import("std");
 
 const state_transition = @import("state_transition");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const processWithdrawals = state_transition.processWithdrawals;
 const getExpectedWithdrawalsResult = state_transition.getExpectedWithdrawalsResult;

@@ -8,13 +8,13 @@ const DepositMessage = ssz.phase0.DepositMessage.Type;
 const Domain = ssz.primitive.Domain.Type;
 const Root = ssz.primitive.Root.Type;
 const ssz = @import("consensus_types");
-const params = @import("params");
-const preset = ssz.preset;
-const DOMAIN_DEPOSIT = params.DOMAIN_DEPOSIT;
+const c = @import("constants");
+const preset = @import("preset").preset;
+const DOMAIN_DEPOSIT = c.DOMAIN_DEPOSIT;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 const computeDomain = @import("../utils/domain.zig").computeDomain;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
-const blst = @import("blst_min_pk");
+const blst = @import("blst");
 const verify = @import("../utils/bls.zig").verify;
 const ForkSeq = ssz.primitive.ForkSeq.Type;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
@@ -141,10 +141,10 @@ pub fn addValidatorToRegistry(
     try validators.append(allocator, .{
         .pubkey = pubkey,
         .withdrawal_credentials = withdrawal_credentials,
-        .activation_eligibility_epoch = params.FAR_FUTURE_EPOCH,
-        .activation_epoch = params.FAR_FUTURE_EPOCH,
-        .exit_epoch = params.FAR_FUTURE_EPOCH,
-        .withdrawable_epoch = params.FAR_FUTURE_EPOCH,
+        .activation_eligibility_epoch = c.FAR_FUTURE_EPOCH,
+        .activation_epoch = c.FAR_FUTURE_EPOCH,
+        .exit_epoch = c.FAR_FUTURE_EPOCH,
+        .withdrawable_epoch = c.FAR_FUTURE_EPOCH,
         .effective_balance = effective_balance,
         .slashed = false,
     });

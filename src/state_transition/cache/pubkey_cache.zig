@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst_min_pk");
+const blst = @import("blst");
 const ssz = @import("consensus_types");
 const PublicKey = blst.PublicKey;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;

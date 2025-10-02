@@ -1,12 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst_min_pk");
+const blst = @import("blst");
 const PublicKey = blst.PublicKey;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
 const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-const params = @import("params");
+const c = @import("constants");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const ssz = @import("consensus_types");
 
@@ -22,7 +22,7 @@ pub fn getAttestationDataSigningRoot(cached_state: *const CachedBeaconStateAllFo
     const slot = computeEpochAtSlot(data.target.epoch);
     const config = cached_state.config;
     const state = cached_state.state;
-    const domain = try config.getDomain(state.slot(), params.DOMAIN_BEACON_ATTESTER, slot);
+    const domain = try config.getDomain(state.slot(), c.DOMAIN_BEACON_ATTESTER, slot);
 
     try computeSigningRoot(ssz.phase0.AttestationData, data, domain, out);
 }

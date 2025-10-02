@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst_min_pk");
+const blst = @import("blst");
 const MemoryPool = blst.MemoryPool;
 const initializeThreadPool = blst.initializeThreadPool;
 const deinitializeThreadPool = blst.deinitializeThreadPool;

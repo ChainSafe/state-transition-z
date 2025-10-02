@@ -1,10 +1,9 @@
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const Root = ssz.primitive.Root.Type;
 const Slot = ssz.primitive.Slot.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
-const params = @import("params");
 const SLOTS_PER_HISTORICAL_ROOT = preset.SLOTS_PER_HISTORICAL_ROOT;
 const computeStartSlotAtEpoch = @import("./epoch.zig").computeStartSlotAtEpoch;
 

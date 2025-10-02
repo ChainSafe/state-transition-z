@@ -3,7 +3,7 @@ const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
 const BeaconStateAltair = ssz.altair.BeaconState.Type;
 const BeaconStateBellatrix = ssz.bellatrix.BeaconState.Type;
@@ -29,7 +29,7 @@ const PendingConsolidation = ssz.electra.PendingConsolidation.Type;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const Gwei = ssz.primitive.Gwei.Type;
 const Epoch = ssz.primitive.Epoch.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 
 /// wrapper for all BeaconState types across forks so that we don't have to do switch/case for all methods
 /// right now this works with regular types

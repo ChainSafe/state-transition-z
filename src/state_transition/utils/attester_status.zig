@@ -1,7 +1,7 @@
-const params = @import("params");
-const TIMELY_HEAD_FLAG_INDEX = params.TIMELY_HEAD_FLAG_INDEX;
-const TIMELY_SOURCE_FLAG_INDEX = params.TIMELY_SOURCE_FLAG_INDEX;
-const TIMELY_TARGET_FLAG_INDEX = params.TIMELY_TARGET_FLAG_INDEX;
+const c = @import("constants");
+const TIMELY_HEAD_FLAG_INDEX = c.TIMELY_HEAD_FLAG_INDEX;
+const TIMELY_SOURCE_FLAG_INDEX = c.TIMELY_SOURCE_FLAG_INDEX;
+const TIMELY_TARGET_FLAG_INDEX = c.TIMELY_TARGET_FLAG_INDEX;
 
 // We pack both previous and current epoch attester flags
 // as well as slashed and eligibility flags into a single number

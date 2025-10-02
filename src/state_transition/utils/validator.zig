@@ -1,14 +1,14 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const Validator = ssz.phase0.Validator.Type;
 
 const Epoch = ssz.primitive.Epoch.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const BeaconConfig = @import("config").BeaconConfig;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const EpochCache = @import("../cache/epoch_cache.zig").EpochCache;
 const WithdrawalCredentials = ssz.primitive.Root.Type;
 const hasCompoundingWithdrawalCredential = @import("./electra.zig").hasCompoundingWithdrawalCredential;

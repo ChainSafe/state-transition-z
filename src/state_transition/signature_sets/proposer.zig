@@ -3,7 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
-const params = @import("params");
+const c = @import("constants");
 const ssz = @import("consensus_types");
 const Root = ssz.primitive.Root;
 const computeBlockSigningRoot = @import("../utils/signing_root.zig").computeBlockSigningRoot;
@@ -21,7 +21,7 @@ pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedB
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const domain = try config.getDomain(state.slot(), params.DOMAIN_BEACON_PROPOSER, signed_block.slot());
+    const domain = try config.getDomain(state.slot(), c.DOMAIN_BEACON_PROPOSER, signed_block.slot());
     // var signing_root: Root = undefined;
     var signing_root_buf: [32]u8 = undefined;
     try computeBlockSigningRoot(allocator, signed_block, domain, &signing_root_buf);
@@ -39,7 +39,7 @@ pub fn getBlockHeaderProposerSignatureSet(cached_state: *const CachedBeaconState
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
 
-    const domain = config.getDomain(state.slot(), params.DOMAIN_BEACON_PROPOSER, signed_block_header.message.slot);
+    const domain = config.getDomain(state.slot(), c.DOMAIN_BEACON_PROPOSER, signed_block_header.message.slot);
     var signing_root: Root = undefined;
     try computeSigningRoot(ssz.phase0.SignedBeaconBlockHeader, signed_block_header, domain, &signing_root);
 
