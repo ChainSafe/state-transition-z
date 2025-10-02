@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-      - te/naive_state_transition
 
 jobs:
   zig-build-upload:
