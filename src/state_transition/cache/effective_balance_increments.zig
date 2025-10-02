@@ -9,8 +9,6 @@ const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 pub const EffectiveBalanceIncrements = std.ArrayList(u16);
 pub const EffectiveBalanceIncrementsRc = ReferenceCount(EffectiveBalanceIncrements);
 
-// TODO: implement reference counting strategy
-
 pub fn getEffectiveBalanceIncrementsZeroed(allocator: Allocator, len: usize) !EffectiveBalanceIncrements {
     var increments = try EffectiveBalanceIncrements.initCapacity(allocator, len);
     try increments.resize(len);

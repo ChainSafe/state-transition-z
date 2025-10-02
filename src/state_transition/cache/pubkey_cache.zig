@@ -10,6 +10,7 @@ const Validator = ssz.phase0.Validator.Type;
 const ValidatorList = std.ArrayListUnmanaged(Validator);
 
 // TODO: blst requires *const PublicKey while ssz uses PublicKey inside Validator
+// need to revisit after migrating to the new blst-z https://github.com/ChainSafe/state-transition-z/issues/54
 // so need to convert PublicKey to *const PublicKey
 pub const Index2PubkeyCache = std.ArrayList(*const PublicKey);
 
@@ -32,7 +33,6 @@ pub fn syncPubkeys(
     const new_count = validators.len;
     for (old_len..new_count) |i| {
         const pubkey = validators[i].pubkey;
-        // TODO: make pubkey_to_index generic: accept both usize and u32
         try pubkey_to_index.set(&pubkey, @intCast(i));
         const pk = try PublicKey.fromBytes(&pubkey);
         // index_to_pubkey deinit() consumer should also deinit this

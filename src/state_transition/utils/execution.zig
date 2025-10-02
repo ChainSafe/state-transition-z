@@ -9,7 +9,6 @@ const ExecutionPayload = @import("../types/beacon_block.zig").ExecutionPayload;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 
-// TODO: support BlindedBeaconBlock
 pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const SignedBlock) bool {
     if (!state.isPostBellatrix()) return false;
     if (isMergeTransitionComplete(state)) return true;
