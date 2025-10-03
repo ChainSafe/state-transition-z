@@ -42,17 +42,20 @@
         .hex = .{
             .root_source_file = "src/hex.zig",
         },
+        .constants = .{
+            .root_source_file = "src/constants/root.zig",
+        },
         .config = .{
             .root_source_file = "src/config/root.zig",
-            .imports = .{ .build_options, .preset, .consensus_types, .hex },
+            .imports = .{ .build_options, .preset, .consensus_types, .hex, .constants },
         },
         .consensus_types = .{
             .root_source_file = "src/consensus_types/root.zig",
-            .imports = .{ .build_options, .ssz },
+            .imports = .{ .build_options, .ssz, .constants, .preset },
         },
         .preset = .{
             .root_source_file = "src/preset/root.zig",
-            .imports = .{ .build_options, .consensus_types },
+            .imports = .{ .build_options, .constants },
         },
         .state_transition = .{
             .root_source_file = "src/state_transition/root.zig",
@@ -63,14 +66,7 @@
                 .consensus_types,
                 .blst,
                 .preset,
-            },
-        },
-    },
-    .executables = .{
-        .download_spec_tests = .{
-            .root_module = .{
-                .root_source_file = "test/spec/download_spec_tests.zig",
-                .imports = .{.spec_test_options},
+                .constants,
             },
         },
     },
@@ -92,21 +88,6 @@
         },
     },
     .tests = .{
-        .unit = .{
-            .root_module = .{
-                .root_source_file = "src/state_transition/root.zig",
-                .imports = .{
-                    .build_options,
-                    .ssz,
-                    .state_transition,
-                    .config,
-                    .preset,
-                    .consensus_types,
-                    .blst,
-                },
-            },
-            .filters = .{},
-        },
         .int = .{
             .root_module = .{
                 .root_source_file = "test/int/root.zig",
@@ -116,6 +97,8 @@
                     .state_transition,
                     .config,
                     .consensus_types,
+                    .preset,
+                    .constants,
                 },
             },
             .filters = .{},
