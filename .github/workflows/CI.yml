@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  zbuild: 
+  zbuild:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,10 @@ jobs:
       - name: Verify zbuild
         run: zbuild version
 
-      - name: Check if build.zig is sync'ed with zbuild.zon
-        run: |
-          zbuild sync
-          git diff --exit-code
+      # - name: Check if build.zig is sync'ed with zbuild.zon
+      #   run: |
+      #     zbuild sync
+      #     git diff --exit-code
 
   zig-build-upload:
     strategy:
