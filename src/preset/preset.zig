@@ -5,7 +5,7 @@ pub const Preset = enum(u8) {
     minimal = 1,
     gnosis = 2,
 
-    pub fn getPresetName(self: Preset) []const u8 {
+    pub fn name(self: Preset) []const u8 {
         @tagName(self);
     }
 };
