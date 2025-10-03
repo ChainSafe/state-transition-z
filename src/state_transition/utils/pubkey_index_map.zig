@@ -4,83 +4,86 @@ const Allocator = std.mem.Allocator;
 pub const PUBKEY_INDEX_MAP_KEY_SIZE = 48;
 // max value of u32 is 4,294,967,295 which is enough for Ethereum
 // this value is the same to napi-rs binding, see https://github.com/ChainSafe/pubkey-index-map/blob/09cf357940e43742bcb29c1c35472d82a8aa52cb/src/lib.rs#L9
-pub const Val = u32;
-pub const Key = [PUBKEY_INDEX_MAP_KEY_SIZE]u8;
-const AutoHashMap = std.AutoHashMap(Key, Val);
 
 /// a generic implementation for both zig application and Bun ffi
-pub const PubkeyIndexMap = struct {
-    // this HashMap copies key/value using its own allocator
-    // this duplicates all items at Bun side
-    map: AutoHashMap,
+/// T is u32 for Bun ffi and u64 for zig consumers
+pub fn PubkeyIndexMap(comptime T: type) type {
+    const Val = T;
+    const Key = [PUBKEY_INDEX_MAP_KEY_SIZE]u8;
 
-    pub fn init(allocator: Allocator) !*PubkeyIndexMap {
-        const instance = try allocator.create(PubkeyIndexMap);
-        instance.* = .{ .map = AutoHashMap.init(allocator) };
-        return instance;
-    }
+    return struct {
+        // this HashMap copies key/value using its own allocator
+        // this duplicates all items at Bun side
+        map: std.AutoHashMap(Key, Val),
 
-    pub fn deinit(self: *PubkeyIndexMap) void {
-        const allocator = self.map.allocator;
-        self.map.deinit();
-        allocator.destroy(self);
-    }
-
-    pub fn set(self: *PubkeyIndexMap, key: []const u8, value: Val) !void {
-        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
-            return error.InvalidKeyLen;
+        pub fn init(allocator: Allocator) !*@This() {
+            const instance = try allocator.create(@This());
+            instance.* = .{ .map = std.AutoHashMap(Key, Val).init(allocator) };
+            return instance;
         }
-        var fixed_key: Key = undefined;
-        @memcpy(&fixed_key, key);
-        try self.map.put(fixed_key, value);
-    }
 
-    pub fn get(self: *const PubkeyIndexMap, key: []const u8) ?Val {
-        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
-            return null;
+        pub fn deinit(self: *@This()) void {
+            const allocator = self.map.allocator;
+            self.map.deinit();
+            allocator.destroy(self);
         }
-        var fixed_key: Key = undefined;
-        @memcpy(&fixed_key, key);
-        return self.map.get(fixed_key);
-    }
 
-    pub fn has(self: *const PubkeyIndexMap, key: []const u8) bool {
-        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
-            return false;
+        pub fn set(self: *@This(), key: []const u8, value: Val) !void {
+            if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+                return error.InvalidKeyLen;
+            }
+            var fixed_key: Key = undefined;
+            @memcpy(&fixed_key, key);
+            try self.map.put(fixed_key, value);
         }
-        var fixed_key: Key = undefined;
-        @memcpy(&fixed_key, key);
-        return self.map.getKey(fixed_key) != null;
-    }
 
-    pub fn delete(self: *PubkeyIndexMap, key: []const u8) bool {
-        if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
-            return false;
+        pub fn get(self: *const @This(), key: []const u8) ?Val {
+            if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+                return null;
+            }
+            var fixed_key: Key = undefined;
+            @memcpy(&fixed_key, key);
+            return self.map.get(fixed_key);
         }
-        var fixed_key: Key = undefined;
-        @memcpy(&fixed_key, key);
-        return self.map.remove(fixed_key);
-    }
 
-    pub fn size(self: *const PubkeyIndexMap) u32 {
-        return self.map.count();
-    }
+        pub fn has(self: *const @This(), key: []const u8) bool {
+            if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+                return false;
+            }
+            var fixed_key: Key = undefined;
+            @memcpy(&fixed_key, key);
+            return self.map.getKey(fixed_key) != null;
+        }
 
-    pub fn clear(self: *PubkeyIndexMap) void {
-        self.map.clearAndFree();
-    }
+        pub fn delete(self: *@This(), key: []const u8) bool {
+            if (key.len != PUBKEY_INDEX_MAP_KEY_SIZE) {
+                return false;
+            }
+            var fixed_key: Key = undefined;
+            @memcpy(&fixed_key, key);
+            return self.map.remove(fixed_key);
+        }
 
-    pub fn clone(self: *const PubkeyIndexMap) !*PubkeyIndexMap {
-        const allocator = self.map.allocator;
-        const instance = try allocator.create(PubkeyIndexMap);
-        instance.* = .{ .map = try self.map.clone() };
-        return instance;
-    }
-};
+        pub fn size(self: *const @This()) u32 {
+            return self.map.count();
+        }
+
+        pub fn clear(self: *@This()) void {
+            self.map.clearAndFree();
+        }
+
+        pub fn clone(self: *const @This()) !*@This() {
+            const allocator = self.map.allocator;
+            const instance = try allocator.create(@This());
+            instance.* = .{ .map = try self.map.clone() };
+            return instance;
+        }
+    };
+}
 
 test "PubkeyIndexMap" {
     const allocator = std.testing.allocator;
-    const instance = try PubkeyIndexMap.init(allocator);
+    const instance = try PubkeyIndexMap(u32).init(allocator);
     defer instance.deinit();
 
     var key: [PUBKEY_INDEX_MAP_KEY_SIZE]u8 = [_]u8{5} ** PUBKEY_INDEX_MAP_KEY_SIZE;

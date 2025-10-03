@@ -7,8 +7,12 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z.git#0ce9e59d2ade40d6cf5008ab34e6f59825b14c21",
-            .hash = "ssz-0.1.0-yORmzFS_BAAKlIsLQVVuYdWCcQ4vR5Fuocndt5H-5Oky",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
+            .hash = "ssz-0.1.0-yORmzAXKBABgcjHn54mdHaCO8_AU1rdM-ZHfJcYppP1_",
+        },
+        .blst = .{
+            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
+            .hash = "blst_z-0.0.0-td3FNFusAgCb9QSUjHFnQpWzvxamthe1XjEGmLG57yTj",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },

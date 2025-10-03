@@ -1,7 +1,6 @@
 const std = @import("std");
 const testing = std.testing;
 
-pub const preset = @import("preset.zig").active_preset;
 pub const primitive = @import("primitive.zig");
 pub const phase0 = @import("phase0.zig");
 pub const altair = @import("altair.zig");

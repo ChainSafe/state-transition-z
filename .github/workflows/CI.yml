@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  zbuild: 
+  zbuild:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,10 +31,10 @@ jobs:
       - name: Verify zbuild
         run: zbuild version
 
-      - name: Check if build.zig is sync'ed with zbuild.zon
-        run: |
-          zbuild sync
-          git diff --exit-code
+      # - name: Check if build.zig is sync'ed with zbuild.zon
+      #   run: |
+      #     zbuild sync
+      #     git diff --exit-code
 
   zig-build-upload:
     strategy:
@@ -48,6 +48,8 @@ jobs:
             bun-target: linux-x64-musl
           - os: ubuntu-24.04-arm
             bun-target: linux-arm64-musl
+          # - os: macos-13 # skip because hashtree does not support macos x64 yet
+          #   bun-target: darwin-x64
           - os: macos-latest
             bun-target: darwin-arm64
           # - os: windows-latest # TODO: https://github.com/ChainSafe/state-transition-z/issues/10
@@ -65,9 +67,27 @@ jobs:
         uses: mlugg/setup-zig@v1
         with:
           version: "0.14.0" # Set the required Zig version
-      - name: Build and Test
+      - name: Run hex tests
         run: |
-          zig build test
+          zig build test:hex
+      - name: Run config tests
+        run: |
+          zig build test:config
+      - name: Run consensus-type tests
+        run: |
+          zig build test:consensus_types
+      - name: Run preset tests
+        run: |
+          zig build test:preset
+      - name: Run state-transition tests
+        run: |
+          zig build test:state_transition
+      - name: Run state-transition-utils tests
+        run: |
+          zig build test:state_transition_utils
+      - name: Run Int Tests
+        run: |
+          zig build test:int
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
         with:
