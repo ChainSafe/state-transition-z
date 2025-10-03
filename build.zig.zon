@@ -4,7 +4,7 @@
     .name = .state_transition_z,
     .version = "0.0.0",
     .fingerprint = 0xd1ddb6abe067ee04,
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .ssz = .{
             .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
