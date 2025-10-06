@@ -192,11 +192,9 @@ pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, w
     try computeSigningRoot(ssz.phase0.DepositMessage, &deposit_message, domain, &signing_root);
 
     // Pubkeys must be checked for group + inf. This must be done only once when the validator deposit is processed
-    // TODO(blst): why fromBytes does not accept another bool param?
-    // const public_key = try blst.PublicKey.fromBytes(&pubkey, true);
     const public_key = try blst.PublicKey.uncompress(&pubkey);
-    // TODO(blst): why fromBytes does not accept another bool param?
-    // const signature = try blst.Signature.fromBytes(&deposit_signature, true);
+    try public_key.validate();
     const signature = try blst.Signature.uncompress(&deposit_signature);
+    try signature.validate(true);
     return verify(&signing_root, &public_key, &signature, null, null);
 }

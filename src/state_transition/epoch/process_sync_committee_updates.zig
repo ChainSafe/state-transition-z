@@ -35,8 +35,6 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
         // Rotate syncCommittee in state
         next_sync_committee.* = .{
             .pubkeys = next_sync_committee_pubkeys,
-            // TODO(blst): may need to modify AggregatePublicKey.aggregateSerialized to accept this param
-            // TODO(blst): is this correct to convert AggregatedPubkey to PublicKey first then toBytes()? there is no toBytes in AggregatedPubkey for now
             .aggregate_pubkey = (try blst.AggregatePublicKey.aggregate(&next_sync_committee_pubkeys_slices, false)).toPublicKey().compress(),
         };
 
