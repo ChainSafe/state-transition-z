@@ -26,9 +26,9 @@ pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedB
     var signing_root_buf: [32]u8 = undefined;
     try computeBlockSigningRoot(allocator, signed_block, domain, &signing_root_buf);
 
-    // Root.deserializeFromBytes(&signing_root_buf, &signing_root);
+    // Root.uncompressFromBytes(&signing_root_buf, &signing_root);
     return .{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_block.proposerIndex()].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_block.proposerIndex()],
         .signing_root = signing_root_buf,
         .signature = signed_block.signature(),
     };

@@ -1,45 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst:blst_min_pk");
-const MemoryPool = blst.MemoryPool;
-const initializeThreadPool = blst.initializeThreadPool;
-const deinitializeThreadPool = blst.deinitializeThreadPool;
+const blst = @import("blst");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
 const SecretKey = blst.SecretKey;
 
-pub const aggregateSerializedPublicKeys = blst.AggregatePublicKey.aggregateSerialized;
-
 /// See https://github.com/ethereum/consensus-specs/blob/v1.4.0/specs/phase0/beacon-chain.md#bls-signatures
 const DST: []const u8 = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
-
-// TODO: should it be threadlocal? MemoryPool is thread safe in its implementation
-var memory_pool: ?*MemoryPool = null;
-
-pub fn initBlst(allocator: Allocator) !void {
-    try initializeThreadPool(allocator);
-    _ = try getMemoryPool(allocator);
-}
-
-pub fn deinitBlst(allocator: Allocator) void {
-    if (memory_pool) |pool| {
-        pool.deinit();
-        allocator.destroy(pool);
-        memory_pool = null;
-    }
-    deinitializeThreadPool();
-}
-
-/// this is supposed to be called from the main thread so we dont need mutex here
-fn getMemoryPool(allocator: Allocator) !*MemoryPool {
-    if (memory_pool) |pool| {
-        return pool;
-    }
-    var mem_pool = try allocator.create(MemoryPool);
-    try mem_pool.init(allocator);
-    memory_pool = mem_pool;
-    return mem_pool;
-}
 
 pub fn sign(secret_key: SecretKey, msg: []const u8) Signature {
     return secret_key.sign(msg, DST, null);
@@ -57,11 +24,11 @@ pub fn verify(msg: []const u8, pk: *const PublicKey, sig: *const Signature, in_p
     return true;
 }
 
-pub fn fastAggregateVerify(allocator: Allocator, msg: []const u8, pks: []*const PublicKey, sig: *const Signature, in_sigs_group_check: ?bool) !bool {
+threadlocal var pairing_buf: [blst.Pairing.sizeOf()]u8 = undefined;
+
+pub fn fastAggregateVerify(msg: []const u8, pks: []const PublicKey, sig: *const Signature, in_sigs_group_check: ?bool) !bool {
     const sigs_groupcheck = in_sigs_group_check orelse false;
-    const pool = try getMemoryPool(allocator);
-    sig.fastAggregateVerify(sigs_groupcheck, msg, DST, pks, pool) catch return false;
-    return true;
+    return sig.fastAggregateVerify(sigs_groupcheck, &pairing_buf, msg[0..32], DST, pks) catch return false;
 }
 
 // TODO: unit tests
@@ -75,15 +42,11 @@ test "bls - sanity" {
     const sk = try SecretKey.keyGen(ikm[0..], null);
     const msg = [_]u8{1} ** 32;
     const sig = sign(sk, &msg);
-    const pk = sk.skToPk();
+    const pk = sk.toPublicKey();
     try std.testing.expect(verify(&msg, &pk, &sig, null, null));
 
-    const allocator = std.testing.allocator;
-    try initBlst(allocator);
-    defer deinitBlst(allocator);
-
-    var pks = [_]*const PublicKey{&pk};
-    var pks_slice: []*const PublicKey = pks[0..1];
-    const result = try fastAggregateVerify(allocator, &msg, pks_slice[0..], &sig, null);
+    var pks = [_]PublicKey{pk};
+    var pks_slice: []const PublicKey = pks[0..1];
+    const result = try fastAggregateVerify(&msg, pks_slice[0..], &sig, null);
     try std.testing.expect(result);
 }

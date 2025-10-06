@@ -70,7 +70,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
         const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
 
-        try syncPubkeys(allocator, state.validators().items, pubkey_index_map, index_pubkey_cache);
+        try syncPubkeys(state.validators().items, pubkey_index_map, index_pubkey_cache);
 
         const immutable_data = state_transition.EpochCacheImmutableData{
             .config = config,
@@ -93,9 +93,6 @@ pub const TestCachedBeaconStateAllForks = struct {
 
     pub fn deinit(self: *TestCachedBeaconStateAllForks) void {
         self.config.deinit();
-        for (self.index_pubkey_cache.items) |item| {
-            self.allocator.destroy(item);
-        }
         self.pubkey_index_map.deinit();
         self.index_pubkey_cache.deinit();
         self.allocator.destroy(self.index_pubkey_cache);

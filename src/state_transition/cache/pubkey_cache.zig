@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst:blst_min_pk");
+const blst = @import("blst");
 const ssz = @import("consensus_types");
 const PublicKey = blst.PublicKey;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
@@ -9,14 +9,10 @@ const Validator = ssz.phase0.Validator.Type;
 // ArrayListUnmanaged is used in ssz VariableListType
 const ValidatorList = std.ArrayListUnmanaged(Validator);
 
-// TODO: blst requires *const PublicKey while ssz uses PublicKey inside Validator
-// need to revisit after migrating to the new blst-z https://github.com/ChainSafe/state-transition-z/issues/54
-// so need to convert PublicKey to *const PublicKey
-pub const Index2PubkeyCache = std.ArrayList(*const PublicKey);
+pub const Index2PubkeyCache = std.ArrayList(PublicKey);
 
 /// consumers should deinit each item inside Index2PubkeyCache
 pub fn syncPubkeys(
-    allocator: Allocator,
     validators: []Validator,
     pubkey_to_index: *PubkeyIndexMap,
     index_to_pubkey: *Index2PubkeyCache,
@@ -34,11 +30,7 @@ pub fn syncPubkeys(
     for (old_len..new_count) |i| {
         const pubkey = validators[i].pubkey;
         try pubkey_to_index.set(&pubkey, @intCast(i));
-        const pk = try PublicKey.fromBytes(&pubkey);
-        // index_to_pubkey deinit() consumer should also deinit this
-        const pk_ptr = try allocator.create(PublicKey);
-        pk_ptr.* = pk;
-        index_to_pubkey.items[i] = pk_ptr;
+        index_to_pubkey.items[i] = try PublicKey.uncompress(&pubkey);
     }
 }
 

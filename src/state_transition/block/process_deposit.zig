@@ -14,7 +14,7 @@ const DOMAIN_DEPOSIT = c.DOMAIN_DEPOSIT;
 const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 const computeDomain = @import("../utils/domain.zig").computeDomain;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
-const blst = @import("blst:blst_min_pk");
+const blst = @import("blst");
 const verify = @import("../utils/bls.zig").verify;
 const ForkSeq = ssz.primitive.ForkSeq.Type;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
@@ -158,7 +158,7 @@ pub fn addValidatorToRegistry(
     try epoch_cache.effectiveBalanceIncrementsSet(allocator, validator_index, effective_balance);
 
     // now that there is a new validator, update the epoch context with the new pubkey
-    try epoch_cache.addPubkey(allocator, validator_index, pubkey);
+    try epoch_cache.addPubkey(validator_index, pubkey);
 
     // Only after altair:
     if (state.isPostAltair()) {
@@ -194,9 +194,9 @@ pub fn isValidDepositSignature(config: *const BeaconConfig, pubkey: BLSPubkey, w
     // Pubkeys must be checked for group + inf. This must be done only once when the validator deposit is processed
     // TODO(blst): why fromBytes does not accept another bool param?
     // const public_key = try blst.PublicKey.fromBytes(&pubkey, true);
-    const public_key = try blst.PublicKey.fromBytes(&pubkey);
+    const public_key = try blst.PublicKey.uncompress(&pubkey);
     // TODO(blst): why fromBytes does not accept another bool param?
     // const signature = try blst.Signature.fromBytes(&deposit_signature, true);
-    const signature = try blst.Signature.fromBytes(&deposit_signature);
+    const signature = try blst.Signature.uncompress(&deposit_signature);
     return verify(&signing_root, &public_key, &signature, null, null);
 }

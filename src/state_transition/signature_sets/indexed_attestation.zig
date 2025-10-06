@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst:blst_min_pk");
+const blst = @import("blst");
 const PublicKey = blst.PublicKey;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
@@ -37,7 +37,7 @@ pub fn getAttestationWithIndicesSignatureSet(
 ) !AggregatedSignatureSet {
     const epoch_cache = cached_state.getEpochCache();
 
-    const pubkeys = try allocator.alloc(*const PublicKey, attesting_indices.len);
+    const pubkeys = try allocator.alloc(PublicKey, attesting_indices.len);
     for (0..attesting_indices.len) |i| {
         pubkeys[i] = epoch_cache.index_to_pubkey.items[@intCast(attesting_indices[i])];
     }
