@@ -6,9 +6,9 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const dep_ssz = b.dependency("ssz", .{});
-
     const dep_blst = b.dependency("blst", .{});
+
+    const dep_ssz = b.dependency("ssz", .{});
 
     const options_build_options = b.addOptions();
     const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
@@ -88,26 +88,6 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| run_exe_download_spec_tests.addArgs(args);
     const tls_run_exe_download_spec_tests = b.step("run:download_spec_tests", "Run the download_spec_tests executable");
     tls_run_exe_download_spec_tests.dependOn(&run_exe_download_spec_tests.step);
-
-    const module_state_transition_utils = b.createModule(.{
-        .root_source_file = b.path("src/lib_state_transition_utils.zig"),
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-    });
-    b.modules.put(b.dupe("state_transition_utils"), module_state_transition_utils) catch @panic("OOM");
-
-    const lib_state_transition_utils = b.addLibrary(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
-        .linkage = .dynamic,
-    });
-
-    const install_lib_state_transition_utils = b.addInstallArtifact(lib_state_transition_utils, .{});
-
-    const tls_install_lib_state_transition_utils = b.step("build-lib:state_transition_utils", "Install the state_transition_utils library");
-    tls_install_lib_state_transition_utils.dependOn(&install_lib_state_transition_utils.step);
-    b.getInstallStep().dependOn(&install_lib_state_transition_utils.step);
 
     const tls_run_test = b.step("test", "Run all tests");
 
@@ -209,20 +189,6 @@ pub fn build(b: *std.Build) void {
     tls_run_test_download_spec_tests.dependOn(&run_test_download_spec_tests.step);
     tls_run_test.dependOn(&run_test_download_spec_tests.step);
 
-    const test_state_transition_utils = b.addTest(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_state_transition_utils = b.addInstallArtifact(test_state_transition_utils, .{});
-    const tls_install_test_state_transition_utils = b.step("build-test:state_transition_utils", "Install the state_transition_utils test");
-    tls_install_test_state_transition_utils.dependOn(&install_test_state_transition_utils.step);
-
-    const run_test_state_transition_utils = b.addRunArtifact(test_state_transition_utils);
-    const tls_run_test_state_transition_utils = b.step("test:state_transition_utils", "Run the state_transition_utils test");
-    tls_run_test_state_transition_utils.dependOn(&run_test_state_transition_utils.step);
-    tls_run_test.dependOn(&run_test_state_transition_utils.step);
-
     const module_int = b.createModule(.{
         .root_source_file = b.path("test/int/root.zig"),
         .target = target,
@@ -262,7 +228,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("ssz", dep_ssz.module("ssz"));
     module_state_transition.addImport("config", module_config);
     module_state_transition.addImport("consensus_types", module_consensus_types);
-    module_state_transition.addImport("blst", dep_blst.module("blst_min_pk"));
+    module_state_transition.addImport("blst", dep_blst.module("blst"));
     module_state_transition.addImport("preset", module_preset);
     module_state_transition.addImport("constants", module_constants);
 
