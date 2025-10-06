@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst = @import("blst");
+const blst = @import("blst:blst_min_pk");
 const ssz = @import("consensus_types");
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const Secretkey = blst.SecretKey;
