@@ -1,7 +1,7 @@
 .zig-cache/
 zig-out/
-
+test/bun/node_modules/
+test/bun/benchmark_data/
 bun/node_modules/
 bun/benchmark_data/
-
 test/spec/spec_tests/

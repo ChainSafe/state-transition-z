@@ -1,8 +1,8 @@
 const std = @import("std");
 const ssz = @import("ssz");
 const p = @import("primitive.zig");
-const c = @import("constants.zig");
-const preset = @import("preset.zig").active_preset;
+const c = @import("constants");
+const preset = @import("preset").preset;
 
 pub const Fork = ssz.FixedContainerType(struct {
     previous_version: p.Version,

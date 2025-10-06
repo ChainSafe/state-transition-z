@@ -1,11 +1,12 @@
 ///! This file provides C-ABI functions for the PubkeyIndexMap and shuffle list utilities suitable for use in Bun.
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
-pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
-const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
-const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
-const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
-const committee_indices = @import("utils/committee_indices.zig");
+pub const PubkeyIndexMap = @import("state_transition/utils/pubkey_index_map.zig").PubkeyIndexMap(u32);
+const PUBKEY_INDEX_MAP_KEY_SIZE = @import("state_transition/utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
+const innerShuffleList = @import("state_transition/utils/shuffle.zig").innerShuffleList;
+const SEED_SIZE = @import("state_transition/utils/shuffle.zig").SEED_SIZE;
+const committee_indices = @import("state_transition/utils/committee_indices.zig");
+const ComputeIndexUtils = committee_indices.ComputeIndexUtils(u32);
 
 pub const ErrorCode = struct {
     pub const Success: c_uint = 0;
@@ -191,6 +192,7 @@ fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, s
     const thread = std.Thread.spawn(.{}, struct {
         pub fn run(_active_indices: [*c]u32, _len: usize, _seed: [*c]const u8, _seed_len: usize, _rounds: u8, _forwards: bool, _result: *AsyncResult) void {
             innerShuffleList(
+                u32,
                 _active_indices[0.._len],
                 _seed[0.._seed_len],
                 _rounds,
@@ -266,6 +268,7 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
     }
 
     innerShuffleList(
+        u32,
         active_indices[0..len],
         seed[0..seed_len],
         rounds,
@@ -277,26 +280,26 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
 export fn computeProposerIndexElectra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
-    const proposer_index = committee_indices.computeProposerIndexElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds) catch return ERROR_INDEX;
+    const proposer_index = ComputeIndexUtils.computeProposerIndexElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds) catch return ERROR_INDEX;
     return proposer_index;
 }
 
 export fn computeProposerIndex(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32) u32 {
     const allocator = gpa.allocator();
     // TODO: is it better to define a Result struct with code and value
-    const proposer_index = committee_indices.computeProposerIndex(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return ERROR_INDEX;
+    const proposer_index = ComputeIndexUtils.computeProposerIndex(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds) catch return ERROR_INDEX;
     return proposer_index;
 }
 
 export fn computeSyncCommitteeIndicesElectra(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, max_effective_balance_electra: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
-    committee_indices.computeSyncCommitteeIndicesElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
+    ComputeIndexUtils.computeSyncCommitteeIndicesElectra(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], max_effective_balance_electra, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
 
 export fn computeSyncCommitteeIndices(seed: [*c]u8, seed_len: usize, active_indices: [*c]u32, active_indices_len: usize, effective_balance_increments: [*c]u16, effective_balance_increments_len: usize, rand_byte_count: committee_indices.ByteCount, max_effective_balance: u64, effective_balance_increment: u32, rounds: u32, out: [*c]u32, out_len: usize) c_uint {
     const allocator = gpa.allocator();
-    committee_indices.computeSyncCommitteeIndices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
+    ComputeIndexUtils.computeSyncCommitteeIndices(allocator, seed[0..seed_len], active_indices[0..active_indices_len], effective_balance_increments[0..effective_balance_increments_len], rand_byte_count, max_effective_balance, effective_balance_increment, rounds, out[0..out_len]) catch return ErrorCode.Error;
     return ErrorCode.Success;
 }
 
