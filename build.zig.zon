@@ -7,8 +7,8 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .blst = .{
-            .url = "git+https://github.com/chainsafe/blst-z#34045c3699c496688cd2c70e7df60208b620e69c",
-            .hash = "blst_z-0.0.0-td3FNByLAAAqWcZ2mOmcltR1F8F1y8R77Xbf9cHbsbA0",
+            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
+            .hash = "blst_z-0.0.0-td3FNFusAgCb9QSUjHFnQpWzvxamthe1XjEGmLG57yTj",
         },
         .ssz = .{
             .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
