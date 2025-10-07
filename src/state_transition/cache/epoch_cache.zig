@@ -4,7 +4,7 @@ const preset = @import("preset").preset;
 const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const ssz = @import("consensus_types");
 const c = @import("constants");
-const blst = @import("blst:blst_min_pk");
+const blst = @import("blst");
 const Epoch = ssz.primitive.Epoch.Type;
 const Slot = ssz.primitive.Slot.Type;
 const BLSSignature = ssz.primitive.BLSSignature.Type;
@@ -156,7 +156,7 @@ pub const EpochCache = struct {
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
         const skip_sync_pubkeys = if (option) |opt| opt.skip_sync_pubkeys else false;
         if (!skip_sync_pubkeys) {
-            try syncPubkeys(allocator, validators, pubkey_to_index, index_to_pubkey);
+            try syncPubkeys(validators, pubkey_to_index, index_to_pubkey);
         }
 
         const effective_balance_increment = try getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
@@ -586,17 +586,16 @@ pub const EpochCache = struct {
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
+    pub fn addPubkey(self: *EpochCache, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
         std.debug.assert(index <= self.index_to_pubkey.items.len);
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
-        const pk_ptr = try allocator.create(blst.PublicKey);
-        pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
+        const pk = try blst.PublicKey.uncompress(&pubkey);
         if (index == self.index_to_pubkey.items.len) {
-            try self.index_to_pubkey.append(pk_ptr);
+            try self.index_to_pubkey.append(pk);
             return;
         }
-        self.index_to_pubkey.items[index] = pk_ptr;
+        self.index_to_pubkey.items[index] = pk;
     }
 
     // TODO: getBeaconCommittee

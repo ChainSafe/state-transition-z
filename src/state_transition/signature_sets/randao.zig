@@ -36,7 +36,7 @@ pub fn randaoRevealSignatureSet(
     var signing_root: Root = undefined;
     try computeSigningRoot(ssz.primitive.Epoch, &epoch, domain, &signing_root);
     return .{
-        .pubkey = epoch_cache.index_to_pubkey.items[proposer_idx].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[proposer_idx],
         .signing_root = signing_root,
         .signature = body.randaoReveal(),
     };

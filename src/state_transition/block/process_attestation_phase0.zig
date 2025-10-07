@@ -43,7 +43,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         .phase0 = attestation.*,
     });
 
-    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, allocator, cached_state, indexed_attestation.phase0, verify_signature);
+    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, indexed_attestation.phase0, verify_signature);
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation

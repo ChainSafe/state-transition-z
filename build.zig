@@ -228,7 +228,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("ssz", dep_ssz.module("ssz"));
     module_state_transition.addImport("config", module_config);
     module_state_transition.addImport("consensus_types", module_consensus_types);
-    module_state_transition.addImport("blst:blst_min_pk", dep_blst.module("blst_min_pk"));
+    module_state_transition.addImport("blst", dep_blst.module("blst"));
     module_state_transition.addImport("preset", module_preset);
     module_state_transition.addImport("constants", module_constants);
 

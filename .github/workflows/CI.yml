@@ -38,10 +38,10 @@ jobs:
       - name: Verify zbuild
         run: zbuild version
 
-      # - name: Check if build.zig is sync'ed with zbuild.zon
-      #   run: |
-      #     zbuild sync
-      #     git diff --exit-code
+      - name: Check if build.zig is sync'ed with zbuild.zon
+        run: |
+          zbuild sync
+          git diff --exit-code
 
   build-test:
     name: build & test (${{ matrix.os }})

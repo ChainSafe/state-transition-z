@@ -38,12 +38,12 @@ pub fn processOperations(
     switch (attester_slashings) {
         .phase0 => |attester_slashings_phase0| {
             for (attester_slashings_phase0) |*attester_slashing| {
-                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
+                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, cached_state, attester_slashing, opts.verify_signature);
             }
         },
         .electra => |attester_slashings_electra| {
             for (attester_slashings_electra) |*attester_slashing| {
-                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
+                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, cached_state, attester_slashing, opts.verify_signature);
             }
         },
     }

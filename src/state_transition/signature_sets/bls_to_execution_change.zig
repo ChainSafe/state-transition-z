@@ -6,7 +6,7 @@ const BeaconConfig = @import("config").BeaconConfig;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
 const ForkSeq = @import("config").ForkSeq;
 const c = @import("constants");
-const blst = @import("blst:blst_min_pk");
+const blst = @import("blst");
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const Root = ssz.primitive.Root.Type;
 const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock;
@@ -25,7 +25,7 @@ pub fn getBlsToExecutionChangeSignatureSet(config: *const BeaconConfig, signed_b
     try computeSigningRoot(ssz.capella.BLSToExecutionChange, &signed_bls_to_execution_change.message, domain, &signing_root);
 
     return SingleSignatureSet{
-        .pubkey = try blst.PublicKey.fromBytes(&signed_bls_to_execution_change.message.from_bls_pubkey),
+        .pubkey = try blst.PublicKey.uncompress(&signed_bls_to_execution_change.message.from_bls_pubkey),
         .signing_root = signing_root,
         .signature = signed_bls_to_execution_change.signature,
     };

@@ -8,7 +8,7 @@ const preset = @import("preset").preset;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const getNextSyncCommitteeIndices = @import("../utils/sync_committee.zig").getNextSyncCommitteeIndices;
-const aggregateSerializedPublicKeys = @import("../utils/bls.zig").aggregateSerializedPublicKeys;
+const blst = @import("blst");
 
 pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !void {
     const state = cached_state.state;
@@ -23,10 +23,10 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
 
         // Using the index2pubkey cache is slower because it needs the serialized pubkey.
         var next_sync_committee_pubkeys: [preset.SYNC_COMMITTEE_SIZE]BLSPubkey = undefined;
-        var next_sync_committee_pubkeys_slices: [preset.SYNC_COMMITTEE_SIZE][]const u8 = undefined;
+        var next_sync_committee_pubkeys_slices: [preset.SYNC_COMMITTEE_SIZE]blst.PublicKey = undefined;
         for (next_sync_committee_indices, 0..next_sync_committee_indices.len) |index, i| {
             next_sync_committee_pubkeys[i] = validators.items[index].pubkey;
-            next_sync_committee_pubkeys_slices[i] = &next_sync_committee_pubkeys[i];
+            next_sync_committee_pubkeys_slices[i] = try blst.PublicKey.uncompress(&next_sync_committee_pubkeys[i]);
         }
 
         const current_sync_committee = state.currentSyncCommittee();
@@ -35,9 +35,7 @@ pub fn processSyncCommitteeUpdates(allocator: Allocator, cached_state: *CachedBe
         // Rotate syncCommittee in state
         next_sync_committee.* = .{
             .pubkeys = next_sync_committee_pubkeys,
-            // TODO(blst): may need to modify AggregatePublicKey.aggregateSerialized to accept this param
-            // TODO(blst): is this correct to convert AggregatedPubkey to PublicKey first then toBytes()? there is no toBytes in AggregatedPubkey for now
-            .aggregate_pubkey = (try aggregateSerializedPublicKeys(&next_sync_committee_pubkeys_slices, false)).toPublicKey().toBytes(),
+            .aggregate_pubkey = (try blst.AggregatePublicKey.aggregate(&next_sync_committee_pubkeys_slices, false)).toPublicKey().compress(),
         };
 
         // Rotate syncCommittee cache

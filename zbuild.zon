@@ -10,7 +10,7 @@
     },
     .dependencies = .{
         .blst = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
+            .url = "git+https://github.com/chainsafe/blst-z#4e64cb54bf7e0c4a7ff8af67cebe9a31bcccaecb",
         },
         .ssz = .{
             .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
@@ -64,7 +64,7 @@
                 .ssz,
                 .config,
                 .consensus_types,
-                "blst:blst_min_pk",
+                .blst,
                 .preset,
                 .constants,
             },

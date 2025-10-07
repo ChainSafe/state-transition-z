@@ -28,13 +28,13 @@ pub fn getProposerSlashingSignatureSets(cached_state: *const CachedBeaconStateAl
     try computeSigningRoot(ssz.phase0.SignedBeaconBlockHeader, &signed_header_2, domain_2, &signing_root_2);
 
     result[0] = SingleSignatureSet{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_header_1.message.proposer_index].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_header_1.message.proposer_index],
         .signing_root = signing_root_1,
         .signature = signed_header_1.signature,
     };
 
     result[1] = SingleSignatureSet{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_header_2.message.proposer_index].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_header_2.message.proposer_index],
         .signing_root = signing_root_2,
         .signature = signed_header_2.signature,
     };
