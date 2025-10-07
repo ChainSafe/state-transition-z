@@ -22,16 +22,14 @@ pub const ExecutionPayload = union(enum) {
     pub fn toPayloadHeader(self: *const ExecutionPayload, allocator: Allocator) !ExecutionPayloadHeader {
         return switch (self.*) {
             .bellatrix => |payload| {
-                var header = try toExecutionPayloadHeader(ssz.bellatrix.ExecutionPayloadHeader.Type, allocator, payload);
-                errdefer header.extra_data.deinit(allocator);
+                var header = toExecutionPayloadHeader(ssz.bellatrix.ExecutionPayloadHeader.Type, payload);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 return .{
                     .bellatrix = header,
                 };
             },
             .capella => |payload| {
-                var header = try toExecutionPayloadHeader(ssz.capella.ExecutionPayloadHeader.Type, allocator, payload);
-                errdefer header.extra_data.deinit(allocator);
+                var header = toExecutionPayloadHeader(ssz.capella.ExecutionPayloadHeader.Type, payload);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 return .{
@@ -39,8 +37,7 @@ pub const ExecutionPayload = union(enum) {
                 };
             },
             .deneb => |payload| {
-                var header = try toExecutionPayloadHeader(ssz.deneb.ExecutionPayloadHeader.Type, allocator, payload);
-                errdefer header.extra_data.deinit(allocator);
+                var header = toExecutionPayloadHeader(ssz.deneb.ExecutionPayloadHeader.Type, payload);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 header.blob_gas_used = payload.blob_gas_used;
@@ -51,8 +48,7 @@ pub const ExecutionPayload = union(enum) {
             },
             .electra => |payload| {
                 // TODO: dedup to deneb?
-                var header = try toExecutionPayloadHeader(ssz.electra.ExecutionPayloadHeader.Type, allocator, payload);
-                errdefer header.extra_data.deinit(allocator);
+                var header = toExecutionPayloadHeader(ssz.electra.ExecutionPayloadHeader.Type, payload);
                 try ssz.bellatrix.Transactions.hashTreeRoot(allocator, &payload.transactions, &header.transactions_root);
                 try ssz.capella.Withdrawals.hashTreeRoot(allocator, &payload.withdrawals, &header.withdrawals_root);
                 header.blob_gas_used = payload.blob_gas_used;

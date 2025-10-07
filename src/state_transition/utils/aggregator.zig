@@ -7,7 +7,6 @@ const BLSSignature = ssz.primitive.BLSSignature.Type;
 const ZERO_BIGINT = 0;
 
 pub fn isSyncCommitteeAggregator(selection_proof: BLSSignature) bool {
-    const module = @max(1, @divFloor(@divFloor(preset.SYNC_COMMITTEE_SIZE, params.SYNC_COMMITTEE_SUBNET_COUNT), params.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
     const module = @max(1, @divFloor(@divFloor(preset.SYNC_COMMITTEE_SIZE, c.SYNC_COMMITTEE_SUBNET_COUNT), c.TARGET_AGGREGATORS_PER_SYNC_SUBCOMMITTEE));
     return isSelectionProofValid(selection_proof, module);
 }

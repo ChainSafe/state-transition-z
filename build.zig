@@ -10,8 +10,6 @@ pub fn build(b: *std.Build) void {
 
     const dep_ssz = b.dependency("ssz", .{});
 
-    const dep_blst_z = b.dependency("blst_z", .{});
-
     const options_build_options = b.addOptions();
     const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
     options_build_options.addOption([]const u8, "preset", option_preset);
@@ -217,74 +215,6 @@ pub fn build(b: *std.Build) void {
     module_config.addImport("consensus_types", module_consensus_types);
     module_config.addImport("hex", module_hex);
     module_config.addImport("constants", module_constants);
-
-    const module_unit = b.createModule(.{
-        .root_source_file = b.path("src/state_transition/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("unit"), module_unit) catch @panic("OOM");
-
-    const test_unit = b.addTest(.{
-        .name = "unit",
-        .root_module = module_unit,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_unit = b.addInstallArtifact(test_unit, .{});
-    const tls_install_test_unit = b.step("build-test:unit", "Install the unit test");
-    tls_install_test_unit.dependOn(&install_test_unit.step);
-
-    const run_test_unit = b.addRunArtifact(test_unit);
-    const tls_run_test_unit = b.step("test:unit", "Run the unit test");
-    tls_run_test_unit.dependOn(&run_test_unit.step);
-    tls_run_test.dependOn(&run_test_unit.step);
-
-    const module_int = b.createModule(.{
-        .root_source_file = b.path("test/int/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("int"), module_int) catch @panic("OOM");
-
-    const test_int = b.addTest(.{
-        .name = "int",
-        .root_module = module_int,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_int = b.addInstallArtifact(test_int, .{});
-    const tls_install_test_int = b.step("build-test:int", "Install the int test");
-    tls_install_test_int.dependOn(&install_test_int.step);
-
-    const run_test_int = b.addRunArtifact(test_int);
-    const tls_run_test_int = b.step("test:int", "Run the int test");
-    tls_run_test_int.dependOn(&run_test_int.step);
-    tls_run_test.dependOn(&run_test_int.step);
-
-    const module_spec_tests = b.createModule(.{
-        .root_source_file = b.path("test/spec/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("spec_tests"), module_spec_tests) catch @panic("OOM");
-
-    const test_spec_tests = b.addTest(.{
-        .name = "spec_tests",
-        .root_module = module_spec_tests,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_spec_tests = b.addInstallArtifact(test_spec_tests, .{});
-    const tls_install_test_spec_tests = b.step("build-test:spec_tests", "Install the spec_tests test");
-    tls_install_test_spec_tests.dependOn(&install_test_spec_tests.step);
-
-    const run_test_spec_tests = b.addRunArtifact(test_spec_tests);
-    const tls_run_test_spec_tests = b.step("test:spec_tests", "Run the spec_tests test");
-    tls_run_test_spec_tests.dependOn(&run_test_spec_tests.step);
-    tls_run_test.dependOn(&run_test_spec_tests.step);
-
-    module_config.addImport("build_options", options_module_build_options);
-    module_config.addImport("params", module_params);
-    module_config.addImport("consensus_types", module_consensus_types);
-    module_config.addImport("hex", module_hex);
 
     module_consensus_types.addImport("build_options", options_module_build_options);
     module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
