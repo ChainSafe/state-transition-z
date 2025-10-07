@@ -55,6 +55,8 @@ pub const processWithdrawalRequest = @import("./block/process_withdrawal_request
 pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
 pub const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 
+pub const WithdrawalsResult = @import("./block/process_withdrawals.zig").WithdrawalsResult;
+
 pub const test_utils = @import("test_utils/root.zig");
 
 pub const bls = @import("utils/bls.zig");

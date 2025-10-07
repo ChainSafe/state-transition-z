@@ -2,9 +2,9 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
-const params = @import("params");
-const ForkSeq = params.ForkSeq;
+const preset = @import("preset").preset;
+const c = @import("constants");
+const ForkSeq = @import("config").ForkSeq;
 const Withdrawal = ssz.capella.Withdrawal.Type;
 const Withdrawals = ssz.capella.Withdrawals.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
@@ -16,22 +16,10 @@ const hasEth1WithdrawalCredential = @import("../utils/capella.zig").hasEth1Withd
 const getMaxEffectiveBalance = @import("../utils/validator.zig").getMaxEffectiveBalance;
 const decreaseBalance = @import("../utils/balance.zig").decreaseBalance;
 
-const WithdrawalsResult = struct {
+pub const WithdrawalsResult = struct {
     withdrawals: Withdrawals,
-    sampled_validators: usize,
-    processed_partial_withdrawals_count: usize,
-
-    pub fn init(allocator: Allocator) !WithdrawalsResult {
-        return WithdrawalsResult{
-            .withdrawals = try Withdrawals.initCapacity(allocator, preset.MAX_WITHDRAWALS_PER_PAYLOAD),
-            .sampled_validators = 0,
-            .processed_partial_withdrawals_count = 0,
-        };
-    }
-
-    pub fn deinit(self: *WithdrawalsResult, allocator: Allocator) void {
-        self.withdrawals.deinit(allocator);
-    }
+    sampled_validators: usize = 0,
+    processed_partial_withdrawals_count: usize = 0,
 };
 
 pub fn processWithdrawals(
@@ -77,7 +65,12 @@ pub fn processWithdrawals(
 }
 
 // Consumer should deinit WithdrawalsResult with .deinit() after use
-pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks) !WithdrawalsResult {
+pub fn getExpectedWithdrawals(
+    allocator: Allocator,
+    withdrawals_result: *WithdrawalsResult,
+    withdrawal_balances: *std.AutoHashMap(ValidatorIndex, usize),
+    cached_state: *const CachedBeaconStateAllForks,
+) !void {
     const state = cached_state.state;
     if (state.isPreCapella()) {
         return error.InvalidForkSequence;
@@ -91,9 +84,6 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
     const balances = state.balances();
     const next_withdrawal_validator_index = state.nextWithdrawalValidatorIndex();
 
-    var withdrawals_result = try WithdrawalsResult.init(allocator);
-    var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
-    defer withdrawal_balances.deinit();
     // partial_withdrawals_count is withdrawals coming from EL since electra (EIP-7002)
     var processed_partial_withdrawals_count: u64 = 0;
 
@@ -115,7 +105,7 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
             const total_withdrawn: u64 = if (total_withdrawn_gop.found_existing) total_withdrawn_gop.value_ptr.* else 0;
             const balance = balances.items[withdrawal.validator_index] - total_withdrawn;
 
-            if (validator.exit_epoch == params.FAR_FUTURE_EPOCH and
+            if (validator.exit_epoch == c.FAR_FUTURE_EPOCH and
                 validator.effective_balance >= preset.MIN_ACTIVATION_BALANCE and
                 balance > preset.MIN_ACTIVATION_BALANCE)
             {
@@ -199,5 +189,4 @@ pub fn getExpectedWithdrawals(allocator: Allocator, cached_state: *const CachedB
 
     withdrawals_result.sampled_validators = n;
     withdrawals_result.processed_partial_withdrawals_count = processed_partial_withdrawals_count;
-    return withdrawals_result;
 }

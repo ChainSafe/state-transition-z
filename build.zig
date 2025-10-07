@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const dep_snappy = b.dependency("snappy", .{});
+    const dep_blst = b.dependency("blst", .{});
 
     const dep_ssz = b.dependency("ssz", .{});
 
@@ -33,6 +33,13 @@ pub fn build(b: *std.Build) void {
     });
     b.modules.put(b.dupe("hex"), module_hex) catch @panic("OOM");
 
+    const module_constants = b.createModule(.{
+        .root_source_file = b.path("src/constants/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("constants"), module_constants) catch @panic("OOM");
+
     const module_config = b.createModule(.{
         .root_source_file = b.path("src/config/root.zig"),
         .target = target,
@@ -47,12 +54,12 @@ pub fn build(b: *std.Build) void {
     });
     b.modules.put(b.dupe("consensus_types"), module_consensus_types) catch @panic("OOM");
 
-    const module_params = b.createModule(.{
-        .root_source_file = b.path("src/params/root.zig"),
+    const module_preset = b.createModule(.{
+        .root_source_file = b.path("src/preset/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    b.modules.put(b.dupe("params"), module_params) catch @panic("OOM");
+    b.modules.put(b.dupe("preset"), module_preset) catch @panic("OOM");
 
     const module_state_transition = b.createModule(.{
         .root_source_file = b.path("src/state_transition/root.zig"),
@@ -84,49 +91,6 @@ pub fn build(b: *std.Build) void {
     const tls_run_exe_download_spec_tests = b.step("run:download_spec_tests", "Run the download_spec_tests executable");
     tls_run_exe_download_spec_tests.dependOn(&run_exe_download_spec_tests.step);
 
-    const module_write_spec_tests = b.createModule(.{
-        .root_source_file = b.path("test/spec/write_spec_tests.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("write_spec_tests"), module_write_spec_tests) catch @panic("OOM");
-
-    const exe_write_spec_tests = b.addExecutable(.{
-        .name = "write_spec_tests",
-        .root_module = module_write_spec_tests,
-    });
-
-    const install_exe_write_spec_tests = b.addInstallArtifact(exe_write_spec_tests, .{});
-
-    const tls_install_exe_write_spec_tests = b.step("build-exe:write_spec_tests", "Install the write_spec_tests executable");
-    tls_install_exe_write_spec_tests.dependOn(&install_exe_write_spec_tests.step);
-    b.getInstallStep().dependOn(&install_exe_write_spec_tests.step);
-
-    const run_exe_write_spec_tests = b.addRunArtifact(exe_write_spec_tests);
-    if (b.args) |args| run_exe_write_spec_tests.addArgs(args);
-    const tls_run_exe_write_spec_tests = b.step("run:write_spec_tests", "Run the write_spec_tests executable");
-    tls_run_exe_write_spec_tests.dependOn(&run_exe_write_spec_tests.step);
-
-    const module_state_transition_utils = b.createModule(.{
-        .root_source_file = b.path("src/lib_state_transition_utils.zig"),
-        .target = target,
-        .optimize = optimize,
-        .link_libc = true,
-    });
-    b.modules.put(b.dupe("state_transition_utils"), module_state_transition_utils) catch @panic("OOM");
-
-    const lib_state_transition_utils = b.addLibrary(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
-        .linkage = .dynamic,
-    });
-
-    const install_lib_state_transition_utils = b.addInstallArtifact(lib_state_transition_utils, .{});
-
-    const tls_install_lib_state_transition_utils = b.step("build-lib:state_transition_utils", "Install the state_transition_utils library");
-    tls_install_lib_state_transition_utils.dependOn(&install_lib_state_transition_utils.step);
-    b.getInstallStep().dependOn(&install_lib_state_transition_utils.step);
-
     const tls_run_test = b.step("test", "Run all tests");
 
     const test_hex = b.addTest(.{
@@ -142,6 +106,20 @@ pub fn build(b: *std.Build) void {
     const tls_run_test_hex = b.step("test:hex", "Run the hex test");
     tls_run_test_hex.dependOn(&run_test_hex.step);
     tls_run_test.dependOn(&run_test_hex.step);
+
+    const test_constants = b.addTest(.{
+        .name = "constants",
+        .root_module = module_constants,
+        .filters = &[_][]const u8{},
+    });
+    const install_test_constants = b.addInstallArtifact(test_constants, .{});
+    const tls_install_test_constants = b.step("build-test:constants", "Install the constants test");
+    tls_install_test_constants.dependOn(&install_test_constants.step);
+
+    const run_test_constants = b.addRunArtifact(test_constants);
+    const tls_run_test_constants = b.step("test:constants", "Run the constants test");
+    tls_run_test_constants.dependOn(&run_test_constants.step);
+    tls_run_test.dependOn(&run_test_constants.step);
 
     const test_config = b.addTest(.{
         .name = "config",
@@ -171,19 +149,19 @@ pub fn build(b: *std.Build) void {
     tls_run_test_consensus_types.dependOn(&run_test_consensus_types.step);
     tls_run_test.dependOn(&run_test_consensus_types.step);
 
-    const test_params = b.addTest(.{
-        .name = "params",
-        .root_module = module_params,
+    const test_preset = b.addTest(.{
+        .name = "preset",
+        .root_module = module_preset,
         .filters = &[_][]const u8{},
     });
-    const install_test_params = b.addInstallArtifact(test_params, .{});
-    const tls_install_test_params = b.step("build-test:params", "Install the params test");
-    tls_install_test_params.dependOn(&install_test_params.step);
+    const install_test_preset = b.addInstallArtifact(test_preset, .{});
+    const tls_install_test_preset = b.step("build-test:preset", "Install the preset test");
+    tls_install_test_preset.dependOn(&install_test_preset.step);
 
-    const run_test_params = b.addRunArtifact(test_params);
-    const tls_run_test_params = b.step("test:params", "Run the params test");
-    tls_run_test_params.dependOn(&run_test_params.step);
-    tls_run_test.dependOn(&run_test_params.step);
+    const run_test_preset = b.addRunArtifact(test_preset);
+    const tls_run_test_preset = b.step("test:preset", "Run the preset test");
+    tls_run_test_preset.dependOn(&run_test_preset.step);
+    tls_run_test.dependOn(&run_test_preset.step);
 
     const test_state_transition = b.addTest(.{
         .name = "state_transition",
@@ -213,33 +191,32 @@ pub fn build(b: *std.Build) void {
     tls_run_test_download_spec_tests.dependOn(&run_test_download_spec_tests.step);
     tls_run_test.dependOn(&run_test_download_spec_tests.step);
 
-    const test_write_spec_tests = b.addTest(.{
-        .name = "write_spec_tests",
-        .root_module = module_write_spec_tests,
+    const module_int = b.createModule(.{
+        .root_source_file = b.path("test/int/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("int"), module_int) catch @panic("OOM");
+
+    const test_int = b.addTest(.{
+        .name = "int",
+        .root_module = module_int,
         .filters = &[_][]const u8{},
     });
-    const install_test_write_spec_tests = b.addInstallArtifact(test_write_spec_tests, .{});
-    const tls_install_test_write_spec_tests = b.step("build-test:write_spec_tests", "Install the write_spec_tests test");
-    tls_install_test_write_spec_tests.dependOn(&install_test_write_spec_tests.step);
+    const install_test_int = b.addInstallArtifact(test_int, .{});
+    const tls_install_test_int = b.step("build-test:int", "Install the int test");
+    tls_install_test_int.dependOn(&install_test_int.step);
 
-    const run_test_write_spec_tests = b.addRunArtifact(test_write_spec_tests);
-    const tls_run_test_write_spec_tests = b.step("test:write_spec_tests", "Run the write_spec_tests test");
-    tls_run_test_write_spec_tests.dependOn(&run_test_write_spec_tests.step);
-    tls_run_test.dependOn(&run_test_write_spec_tests.step);
+    const run_test_int = b.addRunArtifact(test_int);
+    const tls_run_test_int = b.step("test:int", "Run the int test");
+    tls_run_test_int.dependOn(&run_test_int.step);
+    tls_run_test.dependOn(&run_test_int.step);
 
-    const test_state_transition_utils = b.addTest(.{
-        .name = "state_transition_utils",
-        .root_module = module_state_transition_utils,
-        .filters = &[_][]const u8{},
-    });
-    const install_test_state_transition_utils = b.addInstallArtifact(test_state_transition_utils, .{});
-    const tls_install_test_state_transition_utils = b.step("build-test:state_transition_utils", "Install the state_transition_utils test");
-    tls_install_test_state_transition_utils.dependOn(&install_test_state_transition_utils.step);
-
-    const run_test_state_transition_utils = b.addRunArtifact(test_state_transition_utils);
-    const tls_run_test_state_transition_utils = b.step("test:state_transition_utils", "Run the state_transition_utils test");
-    tls_run_test_state_transition_utils.dependOn(&run_test_state_transition_utils.step);
-    tls_run_test.dependOn(&run_test_state_transition_utils.step);
+    module_config.addImport("build_options", options_module_build_options);
+    module_config.addImport("preset", module_preset);
+    module_config.addImport("consensus_types", module_consensus_types);
+    module_config.addImport("hex", module_hex);
+    module_config.addImport("constants", module_constants);
 
     const module_unit = b.createModule(.{
         .root_source_file = b.path("src/state_transition/root.zig"),
@@ -311,42 +288,27 @@ pub fn build(b: *std.Build) void {
 
     module_consensus_types.addImport("build_options", options_module_build_options);
     module_consensus_types.addImport("ssz", dep_ssz.module("ssz"));
+    module_consensus_types.addImport("constants", module_constants);
+    module_consensus_types.addImport("preset", module_preset);
 
-    module_params.addImport("build_options", options_module_build_options);
-    module_params.addImport("consensus_types", module_consensus_types);
+    module_preset.addImport("build_options", options_module_build_options);
+    module_preset.addImport("constants", module_constants);
 
     module_state_transition.addImport("build_options", options_module_build_options);
     module_state_transition.addImport("ssz", dep_ssz.module("ssz"));
     module_state_transition.addImport("config", module_config);
     module_state_transition.addImport("consensus_types", module_consensus_types);
-    module_state_transition.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
-    module_state_transition.addImport("params", module_params);
+    module_state_transition.addImport("blst", dep_blst.module("blst"));
+    module_state_transition.addImport("preset", module_preset);
+    module_state_transition.addImport("constants", module_constants);
 
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
-
-    module_write_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
-    module_write_spec_tests.addImport("params", module_params);
-    module_write_spec_tests.addImport("consensus_types", module_consensus_types);
-    module_write_spec_tests.addImport("state_transition", module_state_transition);
-
-    module_unit.addImport("build_options", options_module_build_options);
-    module_unit.addImport("ssz", dep_ssz.module("ssz"));
-    module_unit.addImport("state_transition", module_state_transition);
-    module_unit.addImport("config", module_config);
-    module_unit.addImport("params", module_params);
-    module_unit.addImport("consensus_types", module_consensus_types);
-    module_unit.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
 
     module_int.addImport("build_options", options_module_build_options);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
     module_int.addImport("state_transition", module_state_transition);
     module_int.addImport("config", module_config);
     module_int.addImport("consensus_types", module_consensus_types);
-
-    module_spec_tests.addImport("consensus_types", module_consensus_types);
-    module_spec_tests.addImport("params", module_params);
-    module_spec_tests.addImport("snappy", dep_snappy.module("snappy"));
-    module_spec_tests.addImport("state_transition", module_state_transition);
-    module_spec_tests.addImport("ssz", dep_ssz.module("ssz"));
-    module_spec_tests.addImport("blst_min_pk", dep_blst_z.module("blst_min_pk"));
+    module_int.addImport("preset", module_preset);
+    module_int.addImport("constants", module_constants);
 }

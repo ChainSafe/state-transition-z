@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const preset = @import("consensus_types").preset;
+const preset = @import("preset").preset;
 const ssz = @import("consensus_types");
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const SyncCommittee = ssz.altair.SyncCommittee.Type;

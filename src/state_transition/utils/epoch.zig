@@ -1,7 +1,7 @@
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
-const params = @import("params");
+const preset = @import("preset").preset;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const Slot = ssz.primitive.Slot.Type;
 const Epoch = ssz.primitive.Epoch.Type;
 const SyncPeriod = ssz.primitive.SyncPeriod.Type;
@@ -97,7 +97,7 @@ pub fn getCurrentEpoch(state: BeaconStateAllForks) Epoch {
 
 pub fn getPreviousEpoch(state: BeaconStateAllForks) Epoch {
     const current_epoch = getCurrentEpoch(state);
-    return if (current_epoch == params.GENESIS_EPOCH) params.GENESIS_EPOCH else current_epoch - 1;
+    return if (current_epoch == GENESIS_EPOCH) GENESIS_EPOCH else current_epoch - 1;
 }
 
 pub fn computeSyncPeriodAtSlot(slot: Slot) SyncPeriod {

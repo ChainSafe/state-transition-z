@@ -1,8 +1,8 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const params = @import("params");
+const c = @import("constants");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const Validator = ssz.phase0.Validator.Type;
 const WithdrawalRequest = ssz.electra.WithdrawalRequest.Type;
 const PendingPartialWithdrawal = ssz.electra.PendingPartialWithdrawal.Type;
@@ -24,10 +24,10 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
 
     // no need to use unfinalized pubkey cache from 6110 as validator won't be active anyway
     const pubkey_to_index = epoch_cache.pubkey_to_index;
-    const is_full_exit_request = amount == params.FULL_EXIT_REQUEST_AMOUNT;
+    const is_full_exit_request = amount == c.FULL_EXIT_REQUEST_AMOUNT;
 
     // If partial withdrawal queue is full, only full exits are processed
-    if (pending_partial_withdrawals.items.len >= params.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
+    if (pending_partial_withdrawals.items.len >= c.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
         !is_full_exit_request)
     {
         return;
@@ -86,6 +86,6 @@ fn isValidatorEligibleForWithdrawOrExit(validator: Validator, source_address: []
     return (hasExecutionWithdrawalCredential(withdrawal_credentials) and
         std.mem.eql(u8, address, source_address) and
         isActiveValidator(&validator, current_epoch) and
-        validator.exit_epoch == params.FAR_FUTURE_EPOCH and
+        validator.exit_epoch == c.FAR_FUTURE_EPOCH and
         current_epoch >= validator.activation_epoch + config.chain.SHARD_COMMITTEE_PERIOD);
 }

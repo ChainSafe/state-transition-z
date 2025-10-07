@@ -3,8 +3,8 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
-const ForkSeq = @import("params").ForkSeq;
+const preset = @import("preset").preset;
+const ForkSeq = @import("config").ForkSeq;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
 const isValidIndexedAttestation = @import("./is_valid_indexed_attestation.zig").isValidIndexedAttestation;
 const Slot = ssz.primitive.Slot.Type;
@@ -13,7 +13,7 @@ const Phase0Attestation = ssz.phase0.Attestation.Type;
 const ElectraAttestation = ssz.electra.Attestation.Type;
 const PendingAttestation = ssz.phase0.PendingAttestation.Type;
 
-pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: ?bool) !void {
+pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestation: *const Phase0Attestation, verify_signature: bool) !void {
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
     const slot = state.slot();
@@ -43,7 +43,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         .phase0 = attestation.*,
     });
 
-    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, allocator, cached_state, indexed_attestation.phase0, verify_signature);
+    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, indexed_attestation.phase0, verify_signature);
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation

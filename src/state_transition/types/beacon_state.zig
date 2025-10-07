@@ -3,7 +3,7 @@ const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const BeaconStatePhase0 = ssz.phase0.BeaconState.Type;
 const BeaconStateAltair = ssz.altair.BeaconState.Type;
 const BeaconStateBellatrix = ssz.bellatrix.BeaconState.Type;
@@ -29,7 +29,7 @@ const PendingConsolidation = ssz.electra.PendingConsolidation.Type;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const Gwei = ssz.primitive.Gwei.Type;
 const Epoch = ssz.primitive.Epoch.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 
 /// wrapper for all BeaconState types across forks so that we don't have to do switch/case for all methods
 /// right now this works with regular types
@@ -41,45 +41,6 @@ pub const BeaconStateAllForks = union(enum) {
     capella: *BeaconStateCapella,
     deneb: *BeaconStateDeneb,
     electra: *BeaconStateElectra,
-
-    pub fn init(f: ForkSeq, state_any: anytype) !@This() {
-        var state: @This() = undefined;
-
-        switch (f) {
-            .phase0 => {
-                const T = ssz.phase0.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .phase0 = src };
-            },
-            .altair => {
-                const T = ssz.altair.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .altair = src };
-            },
-            .bellatrix => {
-                const T = ssz.bellatrix.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .bellatrix = src };
-            },
-            .capella => {
-                const T = ssz.capella.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .capella = src };
-            },
-            .deneb => {
-                const T = ssz.deneb.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .deneb = src };
-            },
-            .electra => {
-                const T = ssz.electra.BeaconState;
-                const src: *T.Type = @ptrCast(@alignCast(state_any));
-                state = .{ .electra = src };
-            },
-        }
-
-        return state;
-    }
 
     pub fn format(
         self: BeaconStateAllForks,

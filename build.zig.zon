@@ -6,21 +6,13 @@
     .fingerprint = 0xd1ddb6abe067ee04,
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
+        .blst = .{
+            .url = "git+https://github.com/chainsafe/blst-z#4e64cb54bf7e0c4a7ff8af67cebe9a31bcccaecb",
+            .hash = "blst_z-0.0.0-td3FNDOMAACf6Apg5icx1KkzpVeIR-9oOSK0WSILFHx8",
+        },
         .ssz = .{
-            .url = "git+https://github.com/ChainSafe/ssz-z.git#7a68f5437d18e17ba8b04e98fca6992e7405e946",
-            .hash = "ssz-0.1.0-yORmzAbKBACHNKSwMqTBUUIgBGYMkakWlt1pIfE6o-IQ",
-        },
-        .blst_z = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git#5f9a7b06e58dbf913329c2f0f8f7f8547eb87671",
-            .hash = "blst_z-0.0.0-td3FNFusAgCb9QSUjHFnQpWzvxamthe1XjEGmLG57yTj",
-        },
-        .blst_min_pk = .{
-            .url = "git+https://github.com/ChainSafe/blst-z.git#ece895f9ca8cb64f2217955d292c692c28157090",
-            .hash = "blst_z-0.0.0-td3FNCmjAgBFbOvNv7GhKnPDUfJ0ApbwCOwN-9PajThg",
-        },
-        .snappy = .{
-            .url = "git+https://github.com/chainsafe/snappy#7f30207aadbf9509b51ce9e0d4cdb7ae83a2a86e",
-            .hash = "snappy-0.1.0-n4Aaqnm2AgAAPFpcJoE2b7uCXteQ4LvhceYrwDrn02LM",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
+            .hash = "ssz-0.1.0-yORmzAXKBABgcjHn54mdHaCO8_AU1rdM-ZHfJcYppP1_",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },

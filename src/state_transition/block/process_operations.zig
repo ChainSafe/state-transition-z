@@ -1,8 +1,7 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const params = @import("params");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const Body = @import("../types/signed_block.zig").SignedBlock.Body;
 
 const getEth1DepositCount = @import("../utils/deposit.zig").getEth1DepositCount;
@@ -39,12 +38,12 @@ pub fn processOperations(
     switch (attester_slashings) {
         .phase0 => |attester_slashings_phase0| {
             for (attester_slashings_phase0) |*attester_slashing| {
-                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
+                try processAttesterSlashing(ssz.phase0.AttesterSlashing.Type, cached_state, attester_slashing, opts.verify_signature);
             }
         },
         .electra => |attester_slashings_electra| {
             for (attester_slashings_electra) |*attester_slashing| {
-                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, allocator, cached_state, attester_slashing, opts.verify_signature);
+                try processAttesterSlashing(ssz.electra.AttesterSlashing.Type, cached_state, attester_slashing, opts.verify_signature);
             }
         },
     }

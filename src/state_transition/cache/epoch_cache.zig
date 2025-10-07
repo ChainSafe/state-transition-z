@@ -1,16 +1,17 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const preset = @import("consensus_types").preset;
+const preset = @import("preset").preset;
+const GENESIS_EPOCH = @import("preset").GENESIS_EPOCH;
 const ssz = @import("consensus_types");
-const params = @import("params");
-const blst = @import("blst_min_pk");
+const c = @import("constants");
+const blst = @import("blst");
 const Epoch = ssz.primitive.Epoch.Type;
 const Slot = ssz.primitive.Slot.Type;
 const BLSSignature = ssz.primitive.BLSSignature.Type;
 const SyncPeriod = ssz.primitive.SyncPeriod.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const CommitteeIndex = ssz.primitive.CommitteeIndex.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const BeaconConfig = @import("config").BeaconConfig;
 const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const Index2PubkeyCache = @import("./pubkey_cache.zig").Index2PubkeyCache;
@@ -59,7 +60,7 @@ pub const EpochCacheOpts = struct {
     skip_sync_pubkeys: bool,
 };
 
-pub const PROPOSER_WEIGHT_FACTOR = params.PROPOSER_WEIGHT / (params.WEIGHT_DENOMINATOR - params.PROPOSER_WEIGHT);
+pub const PROPOSER_WEIGHT_FACTOR = c.PROPOSER_WEIGHT / (c.WEIGHT_DENOMINATOR - c.PROPOSER_WEIGHT);
 
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
@@ -140,8 +141,8 @@ pub const EpochCache = struct {
         const index_to_pubkey = immutable_data.index_to_pubkey;
 
         const current_epoch = computeEpochAtSlot(state.slot());
-        const is_genesis = current_epoch == params.GENESIS_EPOCH;
-        const previous_epoch = if (is_genesis) params.GENESIS_EPOCH else current_epoch - 1;
+        const is_genesis = current_epoch == GENESIS_EPOCH;
+        const previous_epoch = if (is_genesis) GENESIS_EPOCH else current_epoch - 1;
         const next_epoch = current_epoch + 1;
 
         var total_active_balance_increments: u64 = 0;
@@ -155,7 +156,7 @@ pub const EpochCache = struct {
         // - computeSyncCommitteeCache() needs a fully populated pubkey2index cache
         const skip_sync_pubkeys = if (option) |opt| opt.skip_sync_pubkeys else false;
         if (!skip_sync_pubkeys) {
-            try syncPubkeys(allocator, validators, pubkey_to_index, index_to_pubkey);
+            try syncPubkeys(validators, pubkey_to_index, index_to_pubkey);
         }
 
         const effective_balance_increment = try getEffectiveBalanceIncrementsWithLen(allocator, validator_count);
@@ -190,7 +191,7 @@ pub const EpochCache = struct {
             }
 
             const exit_epoch = validator.exit_epoch;
-            if (exit_epoch != params.FAR_FUTURE_EPOCH) {
+            if (exit_epoch != c.FAR_FUTURE_EPOCH) {
                 if (exit_epoch > exit_queue_epoch) {
                     exit_queue_epoch = exit_epoch;
                     exit_queue_churn = 1;
@@ -224,7 +225,7 @@ pub const EpochCache = struct {
         // TODO: implement proposerLookahead in fulu
         const fork_seq = config.forkSeqAtEpoch(current_epoch);
         var current_proposer_seed: [32]u8 = undefined;
-        try getSeed(state, current_epoch, params.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
+        try getSeed(state, current_epoch, c.DOMAIN_BEACON_PROPOSER, &current_proposer_seed);
         var proposers = [_]ValidatorIndex{0} ** preset.SLOTS_PER_EPOCH;
         if (current_shuffling.active_indices.len > 0) {
             try computeProposers(allocator, fork_seq, current_proposer_seed, current_epoch, current_shuffling.active_indices, effective_balance_increment, &proposers);
@@ -415,7 +416,7 @@ pub const EpochCache = struct {
         self.next_shuffling = EpochShufflingRc.init(next_shuffling);
 
         var upcoming_proposer_seed: [32]u8 = undefined;
-        try getSeed(state, upcoming_epoch, params.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
+        try getSeed(state, upcoming_epoch, c.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
         try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
 
         self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
@@ -468,7 +469,7 @@ pub const EpochCache = struct {
         const slots_since_epoch_start = slot % preset.SLOTS_PER_EPOCH;
         const committees_per_slot = try self.getCommitteeCountPerSlot(computeEpochAtSlot(slot));
         const committees_since_epoch_start = committees_per_slot * slots_since_epoch_start;
-        return @intCast((committees_since_epoch_start + committee_index) % params.ATTESTATION_SUBNET_COUNT);
+        return @intCast((committees_since_epoch_start + committee_index) % c.ATTESTATION_SUBNET_COUNT);
     }
 
     pub fn getBeaconProposer(self: *const EpochCache, slot: Slot) !ValidatorIndex {
@@ -586,16 +587,16 @@ pub const EpochCache = struct {
     }
 
     /// Sets `index` at `PublicKey` within the index to pubkey map and allocates and puts a new `PublicKey` at `index` within the set of validators.
-    pub fn addPubkey(self: *EpochCache, allocator: Allocator, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
+    pub fn addPubkey(self: *EpochCache, index: ValidatorIndex, pubkey: ssz.primitive.BLSPubkey.Type) !void {
+        std.debug.assert(index <= self.index_to_pubkey.items.len);
         try self.pubkey_to_index.set(pubkey[0..], index);
         // this is deinit() by application
-        const pk_ptr = try allocator.create(blst.PublicKey);
-        pk_ptr.* = try blst.PublicKey.fromBytes(&pubkey);
+        const pk = try blst.PublicKey.uncompress(&pubkey);
         if (index == self.index_to_pubkey.items.len) {
-            try self.index_to_pubkey.append(pk_ptr);
+            try self.index_to_pubkey.append(pk);
             return;
         }
-        self.index_to_pubkey.items[index] = pk_ptr;
+        self.index_to_pubkey.items[index] = pk;
     }
 
     // TODO: getBeaconCommittee
@@ -605,12 +606,8 @@ pub const EpochCache = struct {
     }
 
     pub fn getShufflingAtEpochOrNull(self: *const EpochCache, epoch: Epoch) ?*const EpochShuffling {
-        if (self.epoch == 0) {
-            if (epoch == -1) return self.getPreviousShuffling();
-            if (epoch == 0) return self.getCurrentShuffling();
-            return null;
-        }
-        const shuffling = if (epoch == self.epoch - 1)
+        const previous_epoch = if (self.epoch == GENESIS_EPOCH) GENESIS_EPOCH else self.epoch - 1;
+        const shuffling = if (epoch == previous_epoch)
             self.getPreviousShuffling()
         else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
             self.getNextEpochShuffling()

@@ -1,7 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-pub const blst = @import("blst_min_pk");
+pub const blst = @import("blst");
 const PublicKey = blst.PublicKey;
 const Signature = blst.Signature;
 const Root = ssz.primitive.Root.Type;
@@ -20,21 +20,21 @@ pub const SingleSignatureSet = struct {
 
 pub const AggregatedSignatureSet = struct {
     // fastAggregateVerify also requires []*const PublicKey
-    pubkeys: []*const PublicKey,
+    pubkeys: []const PublicKey,
     signing_root: Root,
     signature: BLSSignature,
 };
 
 pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = try Signature.fromBytes(&set.signature);
+    const signature = try Signature.uncompress(&set.signature);
     return verify(&set.signing_root, &set.pubkey, &signature, null, null);
 }
 
-pub fn verifyAggregatedSignatureSet(allocator: Allocator, set: *const AggregatedSignatureSet) !bool {
+pub fn verifyAggregatedSignatureSet(set: *const AggregatedSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
-    const signature = try Signature.fromBytes(&set.signature);
-    return fastAggregateVerify(allocator, &set.signing_root, set.pubkeys, &signature, null);
+    const signature = try Signature.uncompress(&set.signature);
+    return fastAggregateVerify(&set.signing_root, set.pubkeys, &signature, null);
 }
 
 pub fn createSingleSignatureSetFromComponents(pubkey: *const PublicKey, signing_root: Root, signature: BLSSignature) SingleSignatureSet {
@@ -45,7 +45,7 @@ pub fn createSingleSignatureSetFromComponents(pubkey: *const PublicKey, signing_
     };
 }
 
-pub fn createAggregateSignatureSetFromComponents(pubkeys: []*const PublicKey, signing_root: Root, signature: BLSSignature) AggregatedSignatureSet {
+pub fn createAggregateSignatureSetFromComponents(pubkeys: []const PublicKey, signing_root: Root, signature: BLSSignature) AggregatedSignatureSet {
     return .{
         .pubkeys = pubkeys,
         .signing_root = signing_root,

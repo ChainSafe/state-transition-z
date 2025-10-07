@@ -290,14 +290,8 @@ pub const ExecutionPayloadHeader = union(enum) {
 };
 
 /// Converts some basic fields of ExecutionPayload to ExecutionPayloadHeader.
-pub fn toExecutionPayloadHeader(
-    comptime execution_payload_header_type: type,
-    allocator: Allocator,
-    payload: anytype,
-) !execution_payload_header_type {
+pub fn toExecutionPayloadHeader(comptime execution_payload_header_type: type, payload: anytype) execution_payload_header_type {
     var result: execution_payload_header_type = undefined;
-    result.extra_data = @TypeOf(payload.extra_data).empty;
-    errdefer result.extra_data.deinit(allocator);
 
     result.parent_hash = payload.parent_hash;
     result.fee_recipient = payload.fee_recipient;
@@ -309,12 +303,9 @@ pub fn toExecutionPayloadHeader(
     result.gas_limit = payload.gas_limit;
     result.gas_used = payload.gas_used;
     result.timestamp = payload.timestamp;
+    result.extra_data = payload.extra_data;
     result.base_fee_per_gas = payload.base_fee_per_gas;
     result.block_hash = payload.block_hash;
-    // Need to clone extra_data because it's a variable-length byte array
-    // This is to avoid double-free when caller deinit both the payload and beacon state
-    // that contains the header
-    result.extra_data = try payload.extra_data.clone(allocator);
     // remaining fields are left unset
 
     return result;

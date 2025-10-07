@@ -4,16 +4,17 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const getActivationExitChurnLimit = @import("../utils/validator.zig").getActivationExitChurnLimit;
-const preset = @import("consensus_types").preset;
+const preset = @import("preset").preset;
 const isValidatorKnown = @import("../utils/electra.zig").isValidatorKnown;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const isValidDepositSignature = @import("../block/process_deposit.zig").isValidDepositSignature;
 const addValidatorToRegistry = @import("../block/process_deposit.zig").addValidatorToRegistry;
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
 const increaseBalance = @import("../utils/balance.zig").increaseBalance;
 const computeStartSlotAtEpoch = @import("../utils/epoch.zig").computeStartSlotAtEpoch;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
-const params = @import("params");
+const GENESIS_SLOT = @import("preset").GENESIS_SLOT;
+const c = @import("constants");
 
 /// we append EpochTransitionCache.is_compounding_validator_arr in this flow
 pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, cache: *EpochTransitionCache) !void {
@@ -40,7 +41,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
             // Do not process deposit requests if Eth1 bridge deposits are not yet applied.
             if (
             // Is deposit request
-            deposit.slot > params.GENESIS_SLOT and
+            deposit.slot > GENESIS_SLOT and
                 // There are pending Eth1 bridge deposits
                 state.eth1DepositIndex() < state.depositRequestsStartIndex().*)
             {
@@ -65,7 +66,7 @@ pub fn processPendingDeposits(allocator: Allocator, cached_state: *CachedBeaconS
 
             if (isValidatorKnown(state, validator_index)) {
                 const validator = state.validators().items[validator_index.?];
-                is_validator_exited = validator.exit_epoch < params.FAR_FUTURE_EPOCH;
+                is_validator_exited = validator.exit_epoch < c.FAR_FUTURE_EPOCH;
                 is_validator_withdrawn = validator.withdrawable_epoch < next_epoch;
             }
 

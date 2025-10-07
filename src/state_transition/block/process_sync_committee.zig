@@ -6,11 +6,11 @@ const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const AggregatedSignatureSet = @import("../utils/signature_sets.zig").AggregatedSignatureSet;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const Root = ssz.primitive.Root.Type;
 const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
-const params = @import("params");
-const blst = @import("blst_min_pk");
+const c = @import("constants");
+const blst = @import("blst");
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
@@ -39,7 +39,7 @@ pub fn processSyncAggregate(
         const signature_set = try getSyncCommitteeSignatureSet(allocator, cached_state, block, participant_indices.items);
         // When there's no participation we consider the signature valid and just ignore it
         if (signature_set) |set| {
-            if (!try verifyAggregatedSignatureSet(allocator, &set)) {
+            if (!try verifyAggregatedSignatureSet(&set)) {
                 return error.SyncCommitteeSignatureInvalid;
             }
         }
@@ -120,9 +120,9 @@ pub fn getSyncCommitteeSignatureSet(allocator: Allocator, cached_state: *const C
     // So getSyncCommitteeSignatureSet() can be called with a state in any slot (with the correct shuffling)
     const root_signed = block.parentRoot();
 
-    const domain = try cached_state.config.getDomain(state.slot(), params.DOMAIN_SYNC_COMMITTEE, previous_slot);
+    const domain = try cached_state.config.getDomain(state.slot(), c.DOMAIN_SYNC_COMMITTEE, previous_slot);
 
-    const pubkeys = try allocator.alloc(*const blst.PublicKey, participant_indices_.len);
+    const pubkeys = try allocator.alloc(blst.PublicKey, participant_indices_.len);
     for (0..participant_indices_.len) |i| {
         pubkeys[i] = epoch_cache.index_to_pubkey.items[participant_indices_[i]];
     }

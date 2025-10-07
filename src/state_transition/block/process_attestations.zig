@@ -6,14 +6,13 @@ const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllF
 const EpochCacheImmutableData = @import("../cache/epoch_cache.zig").EpochCacheImmutableData;
 const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
-const preset = ssz.preset;
-const params = @import("params");
-const ForkSeq = @import("params").ForkSeq;
+const preset = @import("preset").preset;
+const ForkSeq = @import("config").ForkSeq;
 const Attestations = @import("../types/attestation.zig").Attestations;
 const processAttestationPhase0 = @import("./process_attestation_phase0.zig").processAttestationPhase0;
 const processAttestationsAltair = @import("./process_attestation_altair.zig").processAttestationsAltair;
 
-pub fn processAttestations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestations: Attestations, verify_signatures: ?bool) !void {
+pub fn processAttestations(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, attestations: Attestations, verify_signatures: bool) !void {
     const state = cached_state.state;
     switch (attestations) {
         .phase0 => |attestations_phase0| {

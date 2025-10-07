@@ -1,9 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const blst_min_pk = @import("blst_min_pk");
+const blst = @import("blst");
 const ssz = @import("consensus_types");
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
-const Secretkey = blst_min_pk.SecretKey;
+const Secretkey = blst.SecretKey;
 
 /// Generates a list of BLS public keys for interop testing.
 // TODO: store this to a file and cache there
@@ -18,7 +18,7 @@ pub fn interopPubkeysCached(validator_count: usize, out: []BLSPubkey) !void {
         const u64_slice = std.mem.bytesAsSlice(u64, ikm[0..8]);
         u64_slice[0] = @intCast(i);
         const sk = try Secretkey.keyGen(&ikm, null);
-        const pk = sk.skToPk();
-        out[i] = (pk.toBytes());
+        const pk = sk.toPublicKey();
+        out[i] = (pk.compress());
     }
 }

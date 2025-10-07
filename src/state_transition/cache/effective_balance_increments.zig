@@ -1,15 +1,13 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ReferenceCount = @import("../utils/reference_count.zig").ReferenceCount;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 
 pub const EffectiveBalanceIncrements = std.ArrayList(u16);
 pub const EffectiveBalanceIncrementsRc = ReferenceCount(EffectiveBalanceIncrements);
-
-// TODO: implement reference counting strategy
 
 pub fn getEffectiveBalanceIncrementsZeroed(allocator: Allocator, len: usize) !EffectiveBalanceIncrements {
     var increments = try EffectiveBalanceIncrements.initCapacity(allocator, len);

@@ -3,9 +3,9 @@ const ssz = @import("consensus_types");
 
 const Allocator = std.mem.Allocator;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const Epoch = ssz.primitive.Epoch.Type;
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const CachedBeaconStateAllForks = @import("./state_cache.zig").CachedBeaconStateAllForks;
 
 const attester_status = @import("../utils/attester_status.zig");
@@ -19,8 +19,8 @@ const FLAG_PREV_TARGET_ATTESTER = attester_status.FLAG_PREV_TARGET_ATTESTER;
 const FLAG_UNSLASHED = attester_status.FLAG_UNSLASHED;
 const hasMarkers = attester_status.hasMarkers;
 
-const params = @import("params");
-const FAR_FUTURE_EPOCH = params.FAR_FUTURE_EPOCH;
+const c = @import("constants");
+const FAR_FUTURE_EPOCH = c.FAR_FUTURE_EPOCH;
 const MIN_ACTIVATION_BALANCE = preset.MIN_ACTIVATION_BALANCE;
 
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;

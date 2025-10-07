@@ -1,6 +1,6 @@
 const ssz = @import("consensus_types");
 const Epoch = ssz.primitive.Epoch.Type;
-const Preset = @import("params").Preset;
+const Preset = @import("preset").Preset;
 
 /// Run-time chain configuration
 /// This starts with ChainConfig, similar to typescript version

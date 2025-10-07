@@ -1,5 +1,15 @@
 const std = @import("std");
 
+pub const Preset = enum(u8) {
+    mainnet = 0,
+    minimal = 1,
+    gnosis = 2,
+
+    pub fn name(self: Preset) []const u8 {
+        @tagName(self);
+    }
+};
+
 const PresetMainnet = struct {
     pub const MAX_COMMITTEES_PER_SLOT = 64;
     pub const TARGET_COMMITTEE_SIZE = 128;

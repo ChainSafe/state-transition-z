@@ -4,12 +4,12 @@ const ssz = @import("consensus_types");
 const DepositRequest = ssz.electra.DepositRequest.Type;
 const PendingDeposit = ssz.electra.PendingDeposit.Type;
 const Root = ssz.primitive.Root.Type;
-const params = @import("params");
+const c = @import("constants");
 
 pub fn processDepositRequest(allocator: std.mem.Allocator, cached_state: *CachedBeaconStateAllForks, deposit_request: *const DepositRequest) !void {
     const state = cached_state.state;
     const deposit_requests_start_index = state.depositRequestsStartIndex();
-    if (deposit_requests_start_index.* == params.UNSET_DEPOSIT_REQUESTS_START_INDEX) {
+    if (deposit_requests_start_index.* == c.UNSET_DEPOSIT_REQUESTS_START_INDEX) {
         deposit_requests_start_index.* = deposit_request.index;
     }
 

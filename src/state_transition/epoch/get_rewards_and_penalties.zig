@@ -3,19 +3,18 @@ const Allocator = std.mem.Allocator;
 const attester_status = @import("../utils/attester_status.zig");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const preset = @import("consensus_types").preset;
-const params = @import("params");
-const constants = @import("../constants.zig");
+const preset = @import("preset").preset;
+const c = @import("constants");
 
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const INACTIVITY_PENALTY_QUOTIENT_ALTAIR = preset.INACTIVITY_PENALTY_QUOTIENT_ALTAIR;
 const INACTIVITY_PENALTY_QUOTIENT_BELLATRIX = preset.INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
-const PARTICIPATION_FLAG_WEIGHTS = params.PARTICIPATION_FLAG_WEIGHTS;
-const TIMELY_HEAD_FLAG_INDEX = params.TIMELY_HEAD_FLAG_INDEX;
-const TIMELY_SOURCE_FLAG_INDEX = params.TIMELY_SOURCE_FLAG_INDEX;
-const TIMELY_TARGET_FLAG_INDEX = params.TIMELY_TARGET_FLAG_INDEX;
-const WEIGHT_DENOMINATOR = params.WEIGHT_DENOMINATOR;
+const PARTICIPATION_FLAG_WEIGHTS = c.PARTICIPATION_FLAG_WEIGHTS;
+const TIMELY_HEAD_FLAG_INDEX = c.TIMELY_HEAD_FLAG_INDEX;
+const TIMELY_SOURCE_FLAG_INDEX = c.TIMELY_SOURCE_FLAG_INDEX;
+const TIMELY_TARGET_FLAG_INDEX = c.TIMELY_TARGET_FLAG_INDEX;
+const WEIGHT_DENOMINATOR = c.WEIGHT_DENOMINATOR;
 
 const FLAG_ELIGIBLE_ATTESTER = attester_status.FLAG_ELIGIBLE_ATTESTER;
 const FLAG_PREV_HEAD_ATTESTER_UNSLASHED = attester_status.FLAG_PREV_HEAD_ATTESTER_UNSLASHED;
@@ -56,7 +55,7 @@ pub fn getRewardsAndPenaltiesAltair(allocator: Allocator, cached_state: *const C
     const fork = config.forkSeq(state.slot());
 
     const inactivity_penality_multiplier: u64 =
-        if (fork.isAltair()) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
+        if (fork == ForkSeq.altair) INACTIVITY_PENALTY_QUOTIENT_ALTAIR else INACTIVITY_PENALTY_QUOTIENT_BELLATRIX;
     const penalty_denominator = config.chain.INACTIVITY_SCORE_BIAS * inactivity_penality_multiplier;
 
     const flags = cache.flags;

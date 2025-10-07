@@ -3,10 +3,9 @@ const Allocator = std.mem.Allocator;
 const attester_status = @import("../utils/attester_status.zig");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
-const preset = @import("consensus_types").preset;
-const params = @import("params");
-const constants = @import("../constants.zig");
-const BASE_REWARDS_PER_EPOCH_CONST = params.BASE_REWARDS_PER_EPOCH;
+const preset = @import("preset").preset;
+const c = @import("../constants.zig");
+const BASE_REWARDS_PER_EPOCH_CONST = c.BASE_REWARDS_PER_EPOCH;
 const PROPOSER_REWARD_QUOTIENT = preset.PROPOSER_REWARD_QUOTIENT;
 const MIN_EPOCHS_TO_INACTIVITY_PENALTY = preset.MIN_EPOCHS_TO_INACTIVITY_PENALTY;
 const BASE_REWARD_FACTOR = preset.BASE_REWARD_FACTOR;
@@ -74,6 +73,7 @@ pub fn getAttestationDeltas(allocator: Allocator, cached_state: *const CachedBea
     // so there are limited values of them like 32, 31, 30
     // TODO(bing): do not deinit and only clear for future use
     var reward_penalty_item_cache = std.AutoHashMap(u64, RewardPenaltyItem).init(allocator);
+    reward_penalty_item_cache.clearAndFree();
     defer reward_penalty_item_cache.deinit();
 
     const effective_balance_increments = epoch_cache.getEffectiveBalanceIncrements();

@@ -1,8 +1,9 @@
 const std = @import("std");
-const params = @import("params");
-const COMPOUNDING_WITHDRAWAL_PREFIX = params.COMPOUNDING_WITHDRAWAL_PREFIX;
+const c = @import("constants");
+const COMPOUNDING_WITHDRAWAL_PREFIX = c.COMPOUNDING_WITHDRAWAL_PREFIX;
 const ssz = @import("consensus_types");
-const MIN_ACTIVATION_BALANCE = ssz.preset.MIN_ACTIVATION_BALANCE;
+const MIN_ACTIVATION_BALANCE = @import("preset").preset.MIN_ACTIVATION_BALANCE;
+const GENESIS_SLOT = @import("preset").GENESIS_SLOT;
 
 pub const WithdrawalCredentials = ssz.primitive.Root.Type;
 pub const WithdrawalCredentialsLength = ssz.primitive.Root.length;
@@ -51,7 +52,7 @@ pub fn queueExcessActiveBalance(allocator: Allocator, cached_state: *CachedBeaco
             // Use bls.G2_POINT_AT_INFINITY as a signature field placeholder
             .signature = G2_POINT_AT_INFINITY,
             //  Use GENESIS_SLOT to distinguish from a pending deposit request
-            .slot = params.GENESIS_SLOT,
+            .slot = GENESIS_SLOT,
         };
 
         try state.pendingDeposits().append(allocator, pending_deposit);

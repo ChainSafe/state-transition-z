@@ -1,25 +1,21 @@
 const std = @import("std");
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const verifySingleSignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
 const getIndexedAttestationSignatureSet = @import("../signature_sets/indexed_attestation.zig").getIndexedAttestationSignatureSet;
 
-pub fn isValidIndexedAttestation(comptime IA: type, allocator: std.mem.Allocator, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IA, verify_signature: ?bool) !bool {
+pub fn isValidIndexedAttestation(comptime IA: type, cached_state: *const CachedBeaconStateAllForks, indexed_attestation: *const IA, verify_signature: bool) !bool {
     if (!isValidIndexedAttestationIndices(cached_state, indexed_attestation.attesting_indices.items)) {
         return false;
     }
 
-    if (verify_signature) |vs| {
-        if (vs) {
-            const signature_set = try getIndexedAttestationSignatureSet(IA, cached_state.allocator, cached_state, indexed_attestation);
-            return verifyAggregatedSignatureSet(allocator, &signature_set);
-        } else {
-            return true;
-        }
+    if (verify_signature) {
+        const signature_set = try getIndexedAttestationSignatureSet(IA, cached_state.allocator, cached_state, indexed_attestation);
+        return try verifyAggregatedSignatureSet(&signature_set);
     } else {
         return true;
     }

@@ -3,7 +3,6 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const SignedBeaconBlock = @import("../types/beacon_block.zig").SignedBeaconBlock;
 const SingleSignatureSet = @import("../utils/signature_sets.zig").SingleSignatureSet;
-const params = @import("params");
 const ssz = @import("consensus_types");
 const Root = ssz.primitive.Root;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
@@ -27,7 +26,7 @@ pub fn getVoluntaryExitSignatureSet(cached_state: *const CachedBeaconStateAllFor
     try computeSigningRoot(ssz.phase0.VoluntaryExit, &signed_voluntary_exit.message, domain, &signing_root);
 
     return .{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_voluntary_exit.message.validator_index].*,
+        .pubkey = epoch_cache.index_to_pubkey.items[signed_voluntary_exit.message.validator_index],
         .signing_root = signing_root,
         .signature = signed_voluntary_exit.signature,
     };

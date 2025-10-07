@@ -1,10 +1,10 @@
 const std = @import("std");
 const ssz = @import("consensus_types");
-const preset = ssz.preset;
+const preset = @import("preset").preset;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const EpochTransitionCache = @import("../cache/epoch_transition_cache.zig").EpochTransitionCache;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const decreaseBalance = @import("../utils//balance.zig").decreaseBalance;
 const EFFECTIVE_BALANCE_INCREMENT = preset.EFFECTIVE_BALANCE_INCREMENT;
 const PROPORTIONAL_SLASHING_MULTIPLIER = preset.PROPORTIONAL_SLASHING_MULTIPLIER;
@@ -28,7 +28,7 @@ pub fn processSlashings(
     const total_balance_by_increment = cache.total_active_stake_by_increment;
     const fork = config.forkSeq(state.slot());
     const proportional_slashing_multiplier: u64 =
-        if (fork.isPhase0()) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork.isAltair())
+        if (fork == ForkSeq.phase0) PROPORTIONAL_SLASHING_MULTIPLIER else if (fork == ForkSeq.altair)
             PROPORTIONAL_SLASHING_MULTIPLIER_ALTAIR
         else
             PROPORTIONAL_SLASHING_MULTIPLIER_BELLATRIX;
