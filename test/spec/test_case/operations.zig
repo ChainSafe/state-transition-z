@@ -23,99 +23,33 @@ const isFixedType = @import("ssz").isFixedType;
 pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
     switch (fork) {
         .phase0 => {
-            const tc = try loadTestCase(Schema.Phase0Operations, Schema.Phase0OperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.Phase0Operations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.Phase0OperationsOut = undefined;
+            try loadTestCase(Schema.Phase0Operations, Schema.Phase0OperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .altair => {
-            const tc = try loadTestCase(Schema.AltairOperations, Schema.AltairOperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.AltairOperations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.AltairOperationsOut = undefined;
+            try loadTestCase(Schema.AltairOperations, Schema.AltairOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .bellatrix => {
-            const tc = try loadTestCase(Schema.BellatrixOperations, Schema.BellatrixOperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.BellatrixOperations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.BellatrixOperationsOut = undefined;
+            try loadTestCase(Schema.BellatrixOperations, Schema.BellatrixOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .capella => {
-            const tc = try loadTestCase(Schema.CapellaOperations, Schema.CapellaOperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.CapellaOperations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.CapellaOperationsOut = undefined;
+            try loadTestCase(Schema.CapellaOperations, Schema.CapellaOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .deneb => {
-            const tc = try loadTestCase(Schema.DenebOperations, Schema.DenebOperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.DenebOperations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.DenebOperationsOut = undefined;
+            try loadTestCase(Schema.DenebOperations, Schema.DenebOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .electra => {
-            const tc = try loadTestCase(Schema.ElectraOperations, Schema.ElectraOperationsOut, dir, allocator);
-
-            defer {
-                inline for (@typeInfo(Schema.ElectraOperations).@"struct".fields) |fld| {
-                    const ST = fld.type;
-                    if (@field(tc, fld.name)) |val_ptr| {
-                        if (@hasDecl(ST, "deinit")) {
-                            ST.deinit(allocator, val_ptr);
-                        }
-                        allocator.destroy(val_ptr);
-                    }
-                }
-            }
+            var tc: Schema.ElectraOperationsOut = undefined;
+            try loadTestCase(Schema.ElectraOperations, Schema.ElectraOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
     }

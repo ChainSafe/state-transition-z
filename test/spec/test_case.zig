@@ -17,8 +17,7 @@ const electra = consensus_types.electra;
 // There is an exception which is `transition`. One needs to read meta.yaml to figure out
 // whether a block_x.ssz_snappy belong to old fork or new fork. Current design of loadTestCase
 // does not handle this.
-pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs.Dir, allocator: std.mem.Allocator) !SchemaOut {
-    var out: SchemaOut = .{};
+pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs.Dir, allocator: std.mem.Allocator, out: *SchemaOut) !void {
     var it = dir.iterate();
 
     while (try it.next()) |entry| {
@@ -76,8 +75,6 @@ pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs
             return error.SchemaLookupError;
         }
     }
-
-    return out;
 }
 
 pub fn expectEqualBeaconStates(expected: BeaconStateAllForks, actual: BeaconStateAllForks) !void {

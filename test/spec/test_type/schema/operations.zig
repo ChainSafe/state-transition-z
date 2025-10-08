@@ -1,3 +1,4 @@
+const std = @import("std");
 const ssz = @import("consensus_types");
 
 pub const Phase0Operations = struct {
@@ -84,86 +85,51 @@ pub const ElectraOperations = struct {
     consolidation_request: ssz.electra.ConsolidationRequest,
 };
 
-pub const Phase0OperationsOut = struct {
-    pre: ?*ssz.phase0.BeaconState.Type = null,
-    post: ?*ssz.phase0.BeaconState.Type = null,
-    attestation: ?*ssz.phase0.Attestation.Type = null,
-    attester_slashing: ?*ssz.phase0.AttesterSlashing.Type = null,
-    block: ?*ssz.phase0.BeaconBlock.Type = null,
-    deposit: ?*ssz.phase0.Deposit.Type = null,
-    proposer_slashing: ?*ssz.phase0.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.phase0.SignedVoluntaryExit.Type = null,
-};
+// Generate Out schema given an operation type.
+// For each field, generate an out_field that has type of optional pointer of original field and has null as default value.
+// eg. pre: ssz.phase0.BeaconState => pre: ?*ssz.phase0.BeaconState.Type = null
+pub fn outType(comptime T: type) type {
+    const fields = switch (@typeInfo(T)) {
+        .@"struct" => |s| s.fields,
+        else => @compileError("Expected a struct type."),
+    };
 
-pub const AltairOperationsOut = struct {
-    pre: ?*ssz.altair.BeaconState.Type = null,
-    post: ?*ssz.altair.BeaconState.Type = null,
-    attestation: ?*ssz.altair.Attestation.Type = null,
-    attester_slashing: ?*ssz.altair.AttesterSlashing.Type = null,
-    block: ?*ssz.altair.BeaconBlock.Type = null,
-    deposit: ?*ssz.altair.Deposit.Type = null,
-    proposer_slashing: ?*ssz.altair.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.altair.SignedVoluntaryExit.Type = null,
-    sync_aggregate: ?*ssz.altair.SyncAggregate.Type = null,
-};
+    var out_fields: [fields.len]std.builtin.Type.StructField = undefined;
 
-pub const BellatrixOperationsOut = struct {
-    pre: ?*ssz.bellatrix.BeaconState.Type = null,
-    post: ?*ssz.bellatrix.BeaconState.Type = null,
-    attestation: ?*ssz.bellatrix.Attestation.Type = null,
-    attester_slashing: ?*ssz.bellatrix.AttesterSlashing.Type = null,
-    block: ?*ssz.bellatrix.BeaconBlock.Type = null,
-    deposit: ?*ssz.bellatrix.Deposit.Type = null,
-    proposer_slashing: ?*ssz.bellatrix.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.bellatrix.SignedVoluntaryExit.Type = null,
-    sync_aggregate: ?*ssz.bellatrix.SyncAggregate.Type = null,
-    body: ?*ssz.bellatrix.BeaconBlockBody.Type = null,
-};
+    inline for (fields, 0..) |fld, i| {
+        comptime {
+            if (!@hasDecl(fld.type, "Type"))
+                @compileError("Field '" ++ fld.name ++ "' is not an SSZ schema meta. Missing .Type)");
+        }
 
-pub const CapellaOperationsOut = struct {
-    pre: ?*ssz.capella.BeaconState.Type = null,
-    post: ?*ssz.capella.BeaconState.Type = null,
-    attestation: ?*ssz.capella.Attestation.Type = null,
-    attester_slashing: ?*ssz.capella.AttesterSlashing.Type = null,
-    block: ?*ssz.capella.BeaconBlock.Type = null,
-    deposit: ?*ssz.capella.Deposit.Type = null,
-    proposer_slashing: ?*ssz.capella.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.capella.SignedVoluntaryExit.Type = null,
-    sync_aggregate: ?*ssz.capella.SyncAggregate.Type = null,
-    body: ?*ssz.capella.BeaconBlockBody.Type = null,
-    execution_payload: ?*ssz.capella.ExecutionPayload.Type = null,
-    address_change: ?*ssz.capella.SignedBLSToExecutionChange.Type = null,
-};
+        // eg. fld.type is ssz.phase0.BeaconState, then OutFieldType = *?ssz.phase0.BeaconState.Type
+        const OutFieldType = ?*fld.type.Type;
 
-pub const DenebOperationsOut = struct {
-    pre: ?*ssz.deneb.BeaconState.Type = null,
-    post: ?*ssz.deneb.BeaconState.Type = null,
-    attestation: ?*ssz.deneb.Attestation.Type = null,
-    attester_slashing: ?*ssz.deneb.AttesterSlashing.Type = null,
-    block: ?*ssz.deneb.BeaconBlock.Type = null,
-    deposit: ?*ssz.deneb.Deposit.Type = null,
-    proposer_slashing: ?*ssz.deneb.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.deneb.SignedVoluntaryExit.Type = null,
-    sync_aggregate: ?*ssz.deneb.SyncAggregate.Type = null,
-    body: ?*ssz.deneb.BeaconBlockBody.Type = null,
-    execution_payload: ?*ssz.deneb.ExecutionPayload.Type = null,
-    address_change: ?*ssz.deneb.SignedBLSToExecutionChange.Type = null,
-};
+        comptime var default_null: OutFieldType = null;
 
-pub const ElectraOperationsOut = struct {
-    pre: ?*ssz.electra.BeaconState.Type = null,
-    post: ?*ssz.electra.BeaconState.Type = null,
-    attestation: ?*ssz.electra.Attestation.Type = null,
-    attester_slashing: ?*ssz.electra.AttesterSlashing.Type = null,
-    block: ?*ssz.electra.BeaconBlock.Type = null,
-    deposit: ?*ssz.electra.Deposit.Type = null,
-    proposer_slashing: ?*ssz.electra.ProposerSlashing.Type = null,
-    voluntary_exit: ?*ssz.electra.SignedVoluntaryExit.Type = null,
-    sync_aggregate: ?*ssz.electra.SyncAggregate.Type = null,
-    body: ?*ssz.electra.BeaconBlockBody.Type = null,
-    execution_payload: ?*ssz.electra.ExecutionPayload.Type = null,
-    address_change: ?*ssz.electra.SignedBLSToExecutionChange.Type = null,
-    deposit_request: ?*ssz.electra.DepositRequest.Type = null,
-    withdrawal_request: ?*ssz.electra.WithdrawalRequest.Type = null,
-    consolidation_request: ?*ssz.electra.ConsolidationRequest.Type = null,
-};
+        out_fields[i] = .{
+            .name = fld.name,
+            .type = OutFieldType,
+            .default_value_ptr = @ptrCast(&default_null),
+            .is_comptime = false,
+            .alignment = 0,
+        };
+    }
+
+    return @Type(.{
+        .@"struct" = .{
+            .layout = .auto,
+            .backing_integer = null,
+            .fields = out_fields[0..],
+            .decls = &[_]std.builtin.Type.Declaration{},
+            .is_tuple = false,
+        },
+    });
+}
+
+pub const Phase0OperationsOut = outType(Phase0Operations);
+pub const AltairOperationsOut = outType(AltairOperations);
+pub const BellatrixOperationsOut = outType(BellatrixOperations);
+pub const CapellaOperationsOut = outType(CapellaOperations);
+pub const DenebOperationsOut = outType(DenebOperations);
+pub const ElectraOperationsOut = outType(ElectraOperations);
