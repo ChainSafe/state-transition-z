@@ -23,32 +23,32 @@ const isFixedType = @import("ssz").isFixedType;
 pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
     switch (fork) {
         .phase0 => {
-            var tc: Schema.Phase0OperationsOut = undefined;
+            var tc: Schema.Phase0OperationsOut = .{};
             try loadTestCase(Schema.Phase0Operations, Schema.Phase0OperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .altair => {
-            var tc: Schema.AltairOperationsOut = undefined;
+            var tc: Schema.AltairOperationsOut = .{};
             try loadTestCase(Schema.AltairOperations, Schema.AltairOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .bellatrix => {
-            var tc: Schema.BellatrixOperationsOut = undefined;
+            var tc: Schema.BellatrixOperationsOut = .{};
             try loadTestCase(Schema.BellatrixOperations, Schema.BellatrixOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .capella => {
-            var tc: Schema.CapellaOperationsOut = undefined;
+            var tc: Schema.CapellaOperationsOut = .{};
             try loadTestCase(Schema.CapellaOperations, Schema.CapellaOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .deneb => {
-            var tc: Schema.DenebOperationsOut = undefined;
+            var tc: Schema.DenebOperationsOut = .{};
             try loadTestCase(Schema.DenebOperations, Schema.DenebOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
         .electra => {
-            var tc: Schema.ElectraOperationsOut = undefined;
+            var tc: Schema.ElectraOperationsOut = .{};
             try loadTestCase(Schema.ElectraOperations, Schema.ElectraOperationsOut, dir, allocator, &tc);
             try processTestCase(fork, handler, allocator, tc);
         },
