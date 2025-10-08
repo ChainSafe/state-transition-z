@@ -37,6 +37,10 @@ pub fn assertValidProposerSlashing(
         return error.InvalidProposerSlashingProposerIndexMismatch;
     }
 
+    if (header_1.proposer_index >= state.validators().items.len) {
+        return error.InvalidProposerSlashingProposerIndexOutOfRange;
+    }
+
     // verify headers are different
     if (ssz.phase0.BeaconBlockHeader.equals(&header_1, &header_2)) {
         return error.InvalidProposerSlashingHeadersEqual;
