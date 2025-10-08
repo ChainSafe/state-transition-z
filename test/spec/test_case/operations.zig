@@ -1,4 +1,5 @@
 const std = @import("std");
+const preset = @import("preset").preset;
 const ssz = @import("consensus_types");
 
 const state_transition = @import("state_transition");
@@ -7,16 +8,17 @@ const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const Attestations = state_transition.Attestations;
 const BeaconBlock = state_transition.BeaconBlock;
 const SignedBlock = state_transition.SignedBlock;
-const BlockExternalData = state_transition.BlockExternalData;
+const BlockExternalData = state_transition.state_transition.BlockExternalData;
+const WithdrawalsResult = state_transition.WithdrawalsResult;
 
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
 const Schema = @import("../test_type/schema/operations.zig");
 const expectEqualBeaconStates = @import("../test_case.zig").expectEqualBeaconStates;
 const loadTestCase = @import("../test_case.zig").loadTestCase;
+const Withdrawals = ssz.capella.Withdrawals.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const isFixedType = @import("ssz").isFixedType;
-
-const blst = @import("blst_min_pk");
 
 pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
     switch (fork) {
@@ -58,7 +60,6 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
             defer {
                 inline for (@typeInfo(Schema.BellatrixOperations).@"struct".fields) |fld| {
                     const ST = fld.type;
-                    // std.debug.print("Deinitializing field: {s}\n", .{fld.name});
                     if (@field(tc, fld.name)) |val_ptr| {
                         if (@hasDecl(ST, "deinit")) {
                             ST.deinit(allocator, val_ptr);
@@ -121,9 +122,6 @@ pub fn runTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 }
 
 fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std.mem.Allocator, test_case: anytype) !void {
-    try blst.initializeThreadPool(allocator);
-    defer blst.deinitializeThreadPool();
-
     const pre_state_any = test_case.pre.?;
     const expected_post_state_any = test_case.post;
 
@@ -166,7 +164,7 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
 
             try runOperationCase(
                 state_transition.processAttesterSlashing,
-                .{ ST, allocator, cached_pre_state.cached_state, attester_slashing, false },
+                .{ ST, cached_pre_state.cached_state, attester_slashing, false },
                 cached_pre_state,
                 maybe_expected_post_state,
             );
@@ -273,11 +271,20 @@ fn processTestCase(fork: ForkSeq, handler: OperationsTestHandler, allocator: std
         },
         .withdrawals => {
             if (comptime @hasField(@TypeOf(test_case), "execution_payload")) {
-                var withdrawals = try state_transition.getExpectedWithdrawals(allocator, cached_pre_state.cached_state);
-                defer withdrawals.deinit(allocator);
+                var withdrawals_result = WithdrawalsResult{ .withdrawals = try Withdrawals.initCapacity(
+                    allocator,
+                    preset.MAX_WITHDRAWALS_PER_PAYLOAD,
+                ) };
+
+                var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
+                defer withdrawal_balances.deinit();
+
+                try state_transition.getExpectedWithdrawals(allocator, &withdrawals_result, &withdrawal_balances, cached_pre_state.cached_state);
+                defer withdrawals_result.withdrawals.deinit(allocator);
+
                 try runOperationCase(
                     state_transition.processWithdrawals,
-                    .{ cached_pre_state.cached_state, withdrawals },
+                    .{ cached_pre_state.cached_state, withdrawals_result },
                     cached_pre_state,
                     maybe_expected_post_state,
                 );

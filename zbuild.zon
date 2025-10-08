@@ -13,7 +13,11 @@
             .url = "git+https://github.com/chainsafe/blst-z#4e64cb54bf7e0c4a7ff8af67cebe9a31bcccaecb",
         },
         .ssz = .{
-            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#76cde3c7ea23b33d2789e8e372003272abe0e335",
+        },
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy.zig#ede2ad602ac9ffa506e3724a2bf5fc14c806187f",
+            .hash = "snappy-0.1.0-n4AaqtMYAACgB1kHWQ2_CFI-gbtYEUCbXyYlQZ2ENyfd",
         },
     },
     .options_modules = .{
@@ -80,7 +84,7 @@
         .write_spec_tests = .{
             .root_module = .{
                 .root_source_file = "test/spec/write_spec_tests.zig",
-                .imports = .{ .spec_test_options, .params, .consensus_types, .state_transition },
+                .imports = .{ .spec_test_options, .config, .preset, .consensus_types, .state_transition },
             },
         },
     },
@@ -105,7 +109,8 @@
                 .root_source_file = "test/spec/root.zig",
                 .imports = .{
                     .consensus_types,
-                    .params,
+                    .config,
+                    .preset,
                     .snappy,
                     .state_transition,
                     .ssz,

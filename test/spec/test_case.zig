@@ -1,6 +1,6 @@
 const std = @import("std");
 const snappy = @import("snappy");
-const ForkSeq = @import("params").ForkSeq;
+const ForkSeq = @import("config").ForkSeq;
 const isFixedType = @import("ssz").isFixedType;
 const BeaconStateAllForks = @import("state_transition").BeaconStateAllForks;
 

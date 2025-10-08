@@ -7,7 +7,7 @@ pub const OPERATIONS_HEADER =
     \\
     \\const std = @import("std");
     \\const types = @import("consensus_types");
-    \\const ForkSeq = @import("params").ForkSeq;
+    \\const ForkSeq = @import("config").ForkSeq;
     \\const OperationsTestHandler = @import("../test_type/handler.zig").OperationsTestHandler;
     \\const test_case = @import("./operations.zig");
     \\var TL = @import("../utils/test_logger.zig").TestLogger{};

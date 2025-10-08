@@ -53,7 +53,6 @@ pub const processBlsToExecutionChange = @import("./block/process_bls_to_executio
 pub const processDepositRequest = @import("./block/process_deposit_request.zig").processDepositRequest;
 pub const processWithdrawalRequest = @import("./block/process_withdrawal_request.zig").processWithdrawalRequest;
 pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
-pub const BlockExternalData = @import("./block/external_data.zig").BlockExternalData;
 
 pub const WithdrawalsResult = @import("./block/process_withdrawals.zig").WithdrawalsResult;
 

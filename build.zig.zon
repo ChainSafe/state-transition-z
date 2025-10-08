@@ -11,8 +11,12 @@
             .hash = "blst_z-0.0.0-td3FNDOMAACf6Apg5icx1KkzpVeIR-9oOSK0WSILFHx8",
         },
         .ssz = .{
-            .url = "git+https://github.com/ChainSafe/ssz-z.git#19e243fcd3556b763cd2dc3355ac54de64ca0d9c",
-            .hash = "ssz-0.1.0-yORmzAXKBABgcjHn54mdHaCO8_AU1rdM-ZHfJcYppP1_",
+            .url = "git+https://github.com/ChainSafe/ssz-z.git#76cde3c7ea23b33d2789e8e372003272abe0e335",
+            .hash = "ssz-0.1.0-yORmzN0NBQDTFE4aEPt3iwqZCa66VEPtpWTZ9_eS3cYO",
+        },
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy.zig#ede2ad602ac9ffa506e3724a2bf5fc14c806187f",
+            .hash = "snappy-0.1.0-n4AaqtMYAACgB1kHWQ2_CFI-gbtYEUCbXyYlQZ2ENyfd",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },
