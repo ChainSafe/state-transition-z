@@ -69,20 +69,23 @@ pub const TestCachedBeaconStateAllForks = struct {
     }
 
     pub fn initFromState(allocator: Allocator, state: *BeaconStateAllForks) !TestCachedBeaconStateAllForks {
+        const owned_state = try allocator.create(BeaconStateAllForks);
+        owned_state.* = state.*;
+
         const pubkey_index_map = try PubkeyIndexMap.init(allocator);
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
-        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, mainnet_chain_config, owned_state.genesisValidatorsRoot());
 
-        try syncPubkeys(state.validators().items, pubkey_index_map, index_pubkey_cache);
+        try syncPubkeys(owned_state.validators().items, pubkey_index_map, index_pubkey_cache);
 
         const immutable_data = state_transition.EpochCacheImmutableData{
             .config = config,
             .index_to_pubkey = index_pubkey_cache,
             .pubkey_to_index = pubkey_index_map,
         };
-        const cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
-            .skip_sync_committee_cache = state.isPhase0(),
+        const cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, owned_state, immutable_data, .{
+            .skip_sync_committee_cache = owned_state.isPhase0(),
             .skip_sync_pubkeys = false,
         });
 
@@ -100,7 +103,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         self.pubkey_index_map.deinit();
         self.index_pubkey_cache.deinit();
         self.allocator.destroy(self.index_pubkey_cache);
-        // self.cached_state.deinit(self.allocator);
+        self.cached_state.deinit(self.allocator);
         self.allocator.destroy(self.cached_state);
     }
 };
