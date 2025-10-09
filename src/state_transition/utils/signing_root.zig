@@ -22,8 +22,9 @@ pub fn computeSigningRoot(comptime T: type, ssz_object: *const T.Type, domain: D
     try ssz.phase0.SigningData.hashTreeRoot(&domain_wrapped_object, out);
 }
 
-pub fn computeBlockSigningRoot(allocator: Allocator, block: *const SignedBlock, domain: Domain, out: *[32]u8) !void {
+pub fn computeBlockSigningRoot(allocator: Allocator, signed_block: *const SignedBlock, domain: Domain, out: *[32]u8) !void {
     var object_root: Root = undefined;
+    const block = signed_block.message();
     try block.hashTreeRoot(allocator, &object_root);
     const domain_wrapped_object: SigningData = .{
         .object_root = object_root,
@@ -54,6 +55,6 @@ test "computeBlockSigningRoot - sanity" {
     var out: [32]u8 = undefined;
 
     const signed_beacon_block = SignedBeaconBlock{ .electra = &signed_electra_block };
-    const signed_block = SignedBlock{ .regular = &signed_beacon_block };
+    const signed_block = SignedBlock{ .regular = signed_beacon_block };
     try computeBlockSigningRoot(allocator, &signed_block, domain, &out);
 }

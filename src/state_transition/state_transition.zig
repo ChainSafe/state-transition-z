@@ -134,7 +134,7 @@ pub fn stateTransition(
     try processBlock(
         allocator,
         post_state,
-        &signed_block,
+        block,
         BlockExternalData{
             .execution_payload_status = .valid,
             .data_availability_status = .available,
