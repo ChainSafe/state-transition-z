@@ -124,7 +124,7 @@ pub fn stateTransition(
     try processSlotsWithTransientCache(allocator, post_state, block_slot, .{});
 
     // Verify proposer signature only
-    if (opts.verify_proposer and !try verifyProposerSignature(post_state, &signed_block)) {
+    if (opts.verify_proposer and !try verifyProposerSignature(post_state, signed_block)) {
         return error.InvalidBlockSignature;
     }
 
