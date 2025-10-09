@@ -9,50 +9,6 @@ const POSITION_WINDOW_SIZE = 4;
 const PIVOT_VIEW_SIZE = SEED_SIZE + ROUND_SIZE;
 const TOTAL_SIZE = SEED_SIZE + ROUND_SIZE + POSITION_WINDOW_SIZE;
 
-/// refer to https://github.com/ChainSafe/swap-or-not-shuffle/blob/64278ba174de65e70aa8d77a17f2c453d8e2d464/src/lib.rs#L51
-const ShufflingManager = struct {
-    buf: [TOTAL_SIZE]u8,
-
-    pub fn init(seed: []const u8) !ShufflingManager {
-        if (seed.len != SEED_SIZE) {
-            return error.InvalidSeedLen;
-        }
-        var buf = [_]u8{0} ** TOTAL_SIZE;
-        @memcpy(buf[0..SEED_SIZE], seed);
-        return ShufflingManager{ .buf = buf };
-    }
-
-    /// Set the shuffling round.
-    pub fn setRound(self: *@This(), round: u8) void {
-        self.buf[SEED_SIZE] = round;
-    }
-
-    /// Returns the new pivot. It is "raw" because it has not modulo the list size (this must be
-    /// done by the caller).
-    pub fn rawPivot(self: *@This()) u64 {
-        var digest = [_]u8{0} ** 32;
-        Sha256.hash(self.buf[0..PIVOT_VIEW_SIZE], digest[0..], .{});
-        const slice = std.mem.bytesAsSlice(u64, digest[0..8]);
-        const value = slice[0];
-        return if (native_endian == .big) @byteSwap(value) else value;
-    }
-
-    /// Add the current position into the buffer.
-    pub fn mixInPosition(self: *@This(), position: usize) void {
-        self.buf[PIVOT_VIEW_SIZE + 0] = @intCast((position >> 0) & 0xff);
-        self.buf[PIVOT_VIEW_SIZE + 1] = @intCast((position >> 8) & 0xff);
-        self.buf[PIVOT_VIEW_SIZE + 2] = @intCast((position >> 16) & 0xff);
-        self.buf[PIVOT_VIEW_SIZE + 3] = @intCast((position >> 24) & 0xff);
-    }
-
-    /// Hash the entire buffer.
-    pub fn hash(self: *const @This()) [32]u8 {
-        var digest = [_]u8{0} ** 32;
-        Sha256.hash(self.buf[0..TOTAL_SIZE], digest[0..], .{});
-        return digest;
-    }
-};
-
 /// Shuffles an entire list in-place.
 ///
 /// Note: this is equivalent to the `compute_shuffled_index` function, except it shuffles an entire
@@ -81,10 +37,13 @@ const ShufflingManager = struct {
 ///  - `list_size > 2**24`
 ///  - `list_size > usize::MAX / 2`
 /// T should be u32 for Bun binding and ValidatorIndex/u64 for zig application
-pub fn innerShuffleList(comptime T: type, out: []T, seed: []const u8, rounds: u8, forwards: bool) !void {
+pub fn InnerShuffleList(comptime T: type, out: []T, seed: []const u8, rounds: u8, forwards: bool) !void {
     if (rounds == 0) {
         // no shuffling rounds
         return;
+    }
+    if (seed.len != SEED_SIZE) {
+        return error.InvalidSeedLen;
     }
 
     const list_size = out.len;
@@ -98,6 +57,47 @@ pub fn innerShuffleList(comptime T: type, out: []T, seed: []const u8, rounds: u8
     if (list_size > 0xffff_ffff) {
         return error.InvalidListSize;
     }
+
+    // refer to https://github.com/ChainSafe/swap-or-not-shuffle/blob/64278ba174de65e70aa8d77a17f2c453d8e2d464/src/lib.rs#L51
+    const ShufflingManager = struct {
+        buf: [TOTAL_SIZE]u8,
+
+        pub fn init(seed_: []const u8) !@This() {
+            var buf = [_]u8{0} ** TOTAL_SIZE;
+            @memcpy(buf[0..SEED_SIZE], seed_);
+            return @This(){ .buf = buf };
+        }
+
+        /// Set the shuffling round.
+        pub fn setRound(self: *@This(), round: u8) void {
+            self.buf[SEED_SIZE] = round;
+        }
+
+        /// Returns the new pivot. It is "raw" because it has not modulo the list size (this must be
+        /// done by the caller).
+        pub fn rawPivot(self: *@This()) u64 {
+            var digest = [_]u8{0} ** 32;
+            Sha256.hash(self.buf[0..PIVOT_VIEW_SIZE], digest[0..], .{});
+            const slice = std.mem.bytesAsSlice(u64, digest[0..8]);
+            const value = slice[0];
+            return if (native_endian == .big) @byteSwap(value) else value;
+        }
+
+        /// Add the current position into the buffer.
+        pub fn mixInPosition(self: *@This(), position: usize) void {
+            self.buf[PIVOT_VIEW_SIZE + 0] = @intCast((position >> 0) & 0xff);
+            self.buf[PIVOT_VIEW_SIZE + 1] = @intCast((position >> 8) & 0xff);
+            self.buf[PIVOT_VIEW_SIZE + 2] = @intCast((position >> 16) & 0xff);
+            self.buf[PIVOT_VIEW_SIZE + 3] = @intCast((position >> 24) & 0xff);
+        }
+
+        /// Hash the entire buffer.
+        pub fn hash(self: *const @This()) [32]u8 {
+            var digest = [_]u8{0} ** 32;
+            Sha256.hash(self.buf[0..TOTAL_SIZE], digest[0..], .{});
+            return digest;
+        }
+    };
 
     var manager = try ShufflingManager.init(seed);
     var current_round = if (forwards) 0 else rounds - 1;
@@ -184,7 +184,7 @@ pub fn innerShuffleList(comptime T: type, out: []T, seed: []const u8, rounds: u8
     }
 }
 
-test "innerShuffleList" {
+test InnerShuffleList {
     var input = [_]u32{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
     const seed = [_]u8{0} ** SEED_SIZE;
     const rounds = 32;
@@ -192,7 +192,7 @@ test "innerShuffleList" {
     const forwards = false;
 
     const shuffled_input = input[0..];
-    try innerShuffleList(u32, shuffled_input, seed[0..], rounds, forwards);
+    try InnerShuffleList(u32, shuffled_input, seed[0..], rounds, forwards);
 
     // Check that the input is shuffled
     try std.testing.expect(shuffled_input.len == input.len);
@@ -202,7 +202,7 @@ test "innerShuffleList" {
 
     // shuffle back
     const backwards = true;
-    try innerShuffleList(u32, shuffled_input, seed[0..], rounds, backwards);
+    try InnerShuffleList(u32, shuffled_input, seed[0..], rounds, backwards);
 
     // Check that the input is back to original
     const expected_input = [_]u32{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };

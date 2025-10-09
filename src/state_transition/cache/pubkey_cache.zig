@@ -4,7 +4,7 @@ const blst = @import("blst");
 const ssz = @import("consensus_types");
 const PublicKey = blst.PublicKey;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
-const PubkeyIndexMap = @import("../utils/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
+const PubkeyIndexMap = @import("../stdx/pubkey_index_map.zig").PubkeyIndexMap(ValidatorIndex);
 const Validator = ssz.phase0.Validator.Type;
 // ArrayListUnmanaged is used in ssz VariableListType
 const ValidatorList = std.ArrayListUnmanaged(Validator);

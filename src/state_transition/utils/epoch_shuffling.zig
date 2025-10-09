@@ -6,7 +6,7 @@ const preset = @import("preset").preset;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const getSeed = @import("./seed.zig").getSeed;
 const c = @import("constants");
-const innerShuffleList = @import("./shuffle.zig").innerShuffleList;
+const InnerShuffleList = @import("../stdx/inner_shuffle_list.zig").InnerShuffleList;
 const Epoch = ssz.primitive.Epoch.Type;
 const ReferenceCount = @import("./reference_count.zig").ReferenceCount;
 
@@ -110,7 +110,7 @@ pub fn computeEpochShuffling(allocator: Allocator, state: *const BeaconStateAllF
 /// unshuffle the `active_indices` array in place synchronously
 fn unshuffleList(active_indices_to_shuffle: []ValidatorIndex, seed: []const u8, rounds: u8) !void {
     const forwards = false;
-    return innerShuffleList(ValidatorIndex, active_indices_to_shuffle, seed, rounds, forwards);
+    return InnerShuffleList(ValidatorIndex, active_indices_to_shuffle, seed, rounds, forwards);
 }
 
 test unshuffleList {

@@ -1,11 +1,11 @@
 const std = @import("std");
 const Mutex = std.Thread.Mutex;
-pub const PubkeyIndexMap = @import("utils/pubkey_index_map.zig").PubkeyIndexMap;
-const PUBKEY_INDEX_MAP_KEY_SIZE = @import("utils/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
-const innerShuffleList = @import("utils/shuffle.zig").innerShuffleList;
-const SEED_SIZE = @import("utils/shuffle.zig").SEED_SIZE;
-const committee_indices = @import("utils/committee_indices.zig").ComputeIndexUtils(u32);
-const ByteCount = @import("utils/committee_indices.zig").ByteCount;
+pub const PubkeyIndexMap = @import("stdx/pubkey_index_map.zig").PubkeyIndexMap;
+const PUBKEY_INDEX_MAP_KEY_SIZE = @import("stdx/pubkey_index_map.zig").PUBKEY_INDEX_MAP_KEY_SIZE;
+const InnerShuffleList = @import("stdx/inner_shuffle_list.zig").InnerShuffleList;
+const SEED_SIZE = @import("stdx/inner_shuffle_list.zig").SEED_SIZE;
+const committee_indices = @import("stdx/committee_indices.zig").ComputeIndexUtils(u32);
+const ByteCount = @import("stdx/committee_indices.zig").ByteCount;
 
 pub const ErrorCode = struct {
     pub const Success: c_uint = 0;
@@ -191,7 +191,7 @@ fn doAsyncShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]const u8, s
     // this is called really sparsely, so we can just spawn new thread instead of using a thread pool like in blst-z
     const thread = std.Thread.spawn(.{}, struct {
         pub fn run(_active_indices: [*c]u32, _len: usize, _seed: [*c]const u8, _seed_len: usize, _rounds: u8, _forwards: bool, _result: *AsyncResult) void {
-            innerShuffleList(
+            InnerShuffleList(
                 u32,
                 _active_indices[0.._len],
                 _seed[0.._seed_len],
@@ -267,7 +267,7 @@ export fn doShuffleList(active_indices: [*c]u32, len: usize, seed: [*c]u8, seed_
         return ErrorCode.InvalidInput;
     }
 
-    innerShuffleList(
+    InnerShuffleList(
         u32,
         active_indices[0..len],
         seed[0..seed_len],

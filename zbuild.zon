@@ -57,6 +57,10 @@
             .root_source_file = "src/preset/root.zig",
             .imports = .{ .build_options, .constants },
         },
+        .stdx = .{
+            .root_source_file = "src/state_transition/stdx/root.zig",
+            .imports = .{},
+        },
         .state_transition = .{
             .root_source_file = "src/state_transition/root.zig",
             .imports = .{
