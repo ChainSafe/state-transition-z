@@ -11,13 +11,13 @@ const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRo
 const verifySignatureSet = @import("../utils/signature_sets.zig").verifySingleSignatureSet;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
 
-pub fn verifyProposerSignature(cached_state: *CachedBeaconStateAllForks, signed_block: *const SignedBlock) !bool {
+pub fn verifyProposerSignature(cached_state: *CachedBeaconStateAllForks, signed_block: SignedBlock) !bool {
     const signature_set = try getBlockProposerSignatureSet(cached_state.allocator, cached_state, signed_block);
     return try verifySignatureSet(&signature_set);
 }
 
 // TODO: support SignedBlindedBeaconBlock
-pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, signed_block: *const SignedBlock) !SingleSignatureSet {
+pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedBeaconStateAllForks, signed_block: SignedBlock) !SingleSignatureSet {
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
