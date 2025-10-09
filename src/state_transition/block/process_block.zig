@@ -6,7 +6,7 @@ const ssz = @import("consensus_types");
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = @import("preset").preset;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
-const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
+const Block = @import("../types/signed_block.zig").Block;
 const BlockExternalData = @import("../state_transition.zig").BlockExternalData;
 const Withdrawals = ssz.capella.Withdrawals.Type;
 const WithdrawalsResult = @import("./process_withdrawals.zig").WithdrawalsResult;
@@ -27,15 +27,17 @@ pub const ProcessBlockOpts = struct {
     verify_signature: bool = true,
 };
 
+/// Process a block and update the state following Ethereum Consensus specifications.
 pub fn processBlock(
     allocator: Allocator,
     cached_state: *CachedBeaconStateAllForks,
-    block: *const SignedBlock,
+    block: Block,
     external_data: BlockExternalData,
     opts: ProcessBlockOpts,
     // TODO: metrics
 ) !void {
     const state = cached_state.state;
+    const body = block.beaconBlockBody();
 
     try processBlockHeader(allocator, cached_state, block);
 
@@ -55,7 +57,6 @@ pub fn processBlock(
             try getExpectedWithdrawals(allocator, &withdrawals_result, &withdrawal_balances, cached_state);
             defer withdrawals_result.withdrawals.clearRetainingCapacity();
 
-            const body = block.beaconBlockBody();
             switch (body) {
                 .regular => |b| {
                     const actual_withdrawals = b.executionPayload().getWithdrawals();
@@ -78,14 +79,14 @@ pub fn processBlock(
         try processExecutionPayload(
             allocator,
             cached_state,
-            block.beaconBlockBody(),
+            body,
             external_data,
         );
     }
 
-    try processRandao(cached_state, &block.beaconBlockBody(), block.proposerIndex(), opts.verify_signature);
-    try processEth1Data(allocator, cached_state, block.beaconBlockBody().eth1Data());
-    try processOperations(allocator, cached_state, &block.beaconBlockBody(), opts);
+    try processRandao(cached_state, body, block.proposerIndex(), opts.verify_signature);
+    try processEth1Data(allocator, cached_state, body.eth1Data());
+    try processOperations(allocator, cached_state, body, opts);
     if (state.isPostAltair()) {
         try processSyncAggregate(allocator, cached_state, block, opts.verify_signature);
     }

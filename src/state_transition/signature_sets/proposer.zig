@@ -21,14 +21,15 @@ pub fn getBlockProposerSignatureSet(allocator: Allocator, cached_state: *CachedB
     const config = cached_state.config;
     const state = cached_state.state;
     const epoch_cache = cached_state.getEpochCache();
-    const domain = try config.getDomain(state.slot(), c.DOMAIN_BEACON_PROPOSER, signed_block.slot());
+    const block = signed_block.message();
+    const domain = try config.getDomain(state.slot(), c.DOMAIN_BEACON_PROPOSER, block.slot());
     // var signing_root: Root = undefined;
     var signing_root_buf: [32]u8 = undefined;
     try computeBlockSigningRoot(allocator, signed_block, domain, &signing_root_buf);
 
     // Root.uncompressFromBytes(&signing_root_buf, &signing_root);
     return .{
-        .pubkey = epoch_cache.index_to_pubkey.items[signed_block.proposerIndex()],
+        .pubkey = epoch_cache.index_to_pubkey.items[block.proposerIndex()],
         .signing_root = signing_root_buf,
         .signature = signed_block.signature(),
     };
