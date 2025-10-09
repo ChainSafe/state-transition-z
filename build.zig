@@ -59,6 +59,13 @@ pub fn build(b: *std.Build) void {
     });
     b.modules.put(b.dupe("preset"), module_preset) catch @panic("OOM");
 
+    const module_stdx = b.createModule(.{
+        .root_source_file = b.path("src/state_transition/stdx/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("stdx"), module_stdx) catch @panic("OOM");
+
     const module_state_transition = b.createModule(.{
         .root_source_file = b.path("src/state_transition/root.zig"),
         .target = target,
@@ -160,6 +167,20 @@ pub fn build(b: *std.Build) void {
     const tls_run_test_preset = b.step("test:preset", "Run the preset test");
     tls_run_test_preset.dependOn(&run_test_preset.step);
     tls_run_test.dependOn(&run_test_preset.step);
+
+    const test_stdx = b.addTest(.{
+        .name = "stdx",
+        .root_module = module_stdx,
+        .filters = &[_][]const u8{},
+    });
+    const install_test_stdx = b.addInstallArtifact(test_stdx, .{});
+    const tls_install_test_stdx = b.step("build-test:stdx", "Install the stdx test");
+    tls_install_test_stdx.dependOn(&install_test_stdx.step);
+
+    const run_test_stdx = b.addRunArtifact(test_stdx);
+    const tls_run_test_stdx = b.step("test:stdx", "Run the stdx test");
+    tls_run_test_stdx.dependOn(&run_test_stdx.step);
+    tls_run_test.dependOn(&run_test_stdx.step);
 
     const test_state_transition = b.addTest(.{
         .name = "state_transition",
