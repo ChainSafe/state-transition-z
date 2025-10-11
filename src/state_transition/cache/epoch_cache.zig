@@ -47,7 +47,7 @@ const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestatio
 
 const syncPubkeys = @import("./pubkey_cache.zig").syncPubkeys;
 
-const ReferenceCount = @import("../utils/reference_count.zig").ReferenceCount;
+const RefCount = @import("../utils/ref_count.zig").RefCount;
 
 pub const EpochCacheImmutableData = struct {
     config: *const BeaconConfig,
@@ -65,7 +65,7 @@ pub const PROPOSER_WEIGHT_FACTOR = c.PROPOSER_WEIGHT / (c.WEIGHT_DENOMINATOR - c
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
 /// and decrease the reference count when it is deinitialized
-pub const EpochCacheRc = ReferenceCount(*EpochCache);
+pub const EpochCacheRc = RefCount(*EpochCache);
 
 pub const EpochCache = struct {
     allocator: Allocator,
