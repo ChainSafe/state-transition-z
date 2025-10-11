@@ -16,7 +16,7 @@ pub const CachedBeaconStateAllForks = struct {
     /// only a reference to the singleton BeaconConfig
     config: *const BeaconConfig,
     /// only a reference to the shared EpochCache instance
-    /// TODO: before an epoch transition, need to release() epoch_cache before using a new one
+    /// TODO: before an epoch transition, need to unref() epoch_cache before using a new one
     epoch_cache_ref: *EpochCacheRc,
     /// this takes ownership of the state, it is expected to be deinitialized by this struct
     state: *BeaconStateAllForks,
@@ -70,7 +70,7 @@ pub const CachedBeaconStateAllForks = struct {
 
     pub fn deinit(self: *CachedBeaconStateAllForks, allocator: Allocator) void {
         // should not deinit config since we don't take ownership of it, it's singleton across applications
-        self.epoch_cache_ref.release();
+        self.epoch_cache_ref.unref();
         self.state.deinit(allocator);
         self.allocator.destroy(self.state);
     }
