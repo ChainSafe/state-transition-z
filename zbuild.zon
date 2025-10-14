@@ -108,6 +108,7 @@
             .root_module = .{
                 .root_source_file = "test/spec/root.zig",
                 .imports = .{
+                    .spec_test_options,
                     .consensus_types,
                     .config,
                     .preset,
@@ -117,6 +118,7 @@
                     .blst,
                 },
             },
+            .filters = .{},
         },
     },
 }

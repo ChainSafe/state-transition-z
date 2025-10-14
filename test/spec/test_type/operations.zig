@@ -1,0 +1,240 @@
+const ssz = @import("consensus_types");
+const ForkSeq = @import("config").ForkSeq;
+const Preset = @import("preset").Preset;
+const preset = @import("preset").preset;
+const std = @import("std");
+const state_transition = @import("state_transition");
+const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
+const BeaconStateAllForks = state_transition.BeaconStateAllForks;
+const Withdrawals = ssz.capella.Withdrawals.Type;
+const WithdrawalsResult = state_transition.WithdrawalsResult;
+const test_case = @import("../test_case.zig");
+const loadSszValue = test_case.loadSszSnappyValue;
+const loadBlsSetting = test_case.loadBlsSetting;
+const expectEqualBeaconStates = test_case.expectEqualBeaconStates;
+const BlsSetting = test_case.BlsSetting;
+
+/// See https://github.com/ethereum/consensus-specs/tree/master/tests/formats/operations#operations-tests
+pub const Operation = enum {
+    attestation,
+    attester_slashing,
+    block_header,
+    bls_to_execution_change,
+    consolidation_request,
+    deposit,
+    deposit_request,
+    execution_payload,
+    proposer_slashing,
+    sync_aggregate,
+    voluntary_exit,
+    withdrawal_request,
+    withdrawals,
+
+    pub fn fromString(op_name: []const u8) ?Operation {
+        const ops = comptime std.enums.values(Operation);
+        inline for (ops) |op| {
+            if (std.mem.eql(u8, op_name, @tagName(op))) {
+                return op;
+            }
+        }
+        return null;
+    }
+
+    pub fn inputName(self: Operation) []const u8 {
+        return switch (self) {
+            .attestation => "attestation",
+            .attester_slashing => "attester_slashing",
+            .block_header => "block",
+            .bls_to_execution_change => "address_change",
+            .consolidation_request => "consolidation_request",
+            .deposit => "deposit",
+            .deposit_request => "deposit_request",
+            .execution_payload => "body",
+            .proposer_slashing => "proposer_slashing",
+            .sync_aggregate => "sync_aggregate",
+            .voluntary_exit => "voluntary_exit",
+            .withdrawal_request => "withdrawal_request",
+            .withdrawals => "execution_payload",
+        };
+    }
+
+    pub fn operationObject(self: Operation) []const u8 {
+        return switch (self) {
+            .attestation => "Attestation",
+            .attester_slashing => "AttesterSlashing",
+            .block_header => "BeaconBlock",
+            .bls_to_execution_change => "SignedBLSToExecutionChange",
+            .consolidation_request => "ConsolidationRequest",
+            .deposit => "Deposit",
+            .deposit_request => "DepositRequest",
+            .execution_payload => "BeaconBlockBody",
+            .proposer_slashing => "ProposerSlashing",
+            .sync_aggregate => "SyncAggregate",
+            .voluntary_exit => "SignedVoluntaryExit",
+            .withdrawal_request => "WithdrawalRequest",
+            .withdrawals => "ExecutionPayload",
+        };
+    }
+
+    pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime valid: bool) type {
+        const ForkTypes = @field(ssz, fork.forkName());
+        const OpType = @field(ForkTypes, operation.operationObject());
+
+        return struct {
+            pre: TestCachedBeaconStateAllForks,
+            post: if (valid) BeaconStateAllForks else void,
+            op: OpType.Type,
+            bls_setting: BlsSetting,
+
+            const Self = @This();
+
+            pub fn init(allocator: std.mem.Allocator, dir: std.fs.Dir) !Self {
+                var tc = Self{
+                    .pre = undefined,
+                    .post = undefined,
+                    .op = OpType.default_value,
+                    .bls_setting = loadBlsSetting(allocator, dir),
+                };
+                // init the op
+
+                try loadSszValue(OpType, allocator, dir, comptime operation.inputName() ++ ".ssz_snappy", &tc.op);
+                errdefer {
+                    if (comptime @hasDecl(OpType, "deinit")) {
+                        OpType.deinit(allocator, &tc.op);
+                    }
+                }
+
+                // init the pre state
+
+                const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
+                errdefer {
+                    ForkTypes.BeaconState.deinit(allocator, pre_state);
+                    allocator.destroy(pre_state);
+                }
+                pre_state.* = ForkTypes.BeaconState.default_value;
+                try loadSszValue(ForkTypes.BeaconState, allocator, dir, "pre.ssz_snappy", pre_state);
+
+                var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
+
+                tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks);
+
+                // init the post state if this is a "valid" test case
+
+                if (valid) {
+                    const post_state = try allocator.create(ForkTypes.BeaconState.Type);
+                    errdefer {
+                        ForkTypes.BeaconState.deinit(allocator, post_state);
+                        allocator.destroy(post_state);
+                    }
+                    post_state.* = ForkTypes.BeaconState.default_value;
+                    try loadSszValue(ForkTypes.BeaconState, allocator, dir, "post.ssz_snappy", post_state);
+                    tc.post = try BeaconStateAllForks.init(fork, post_state);
+                }
+                return tc;
+            }
+
+            pub fn deinit(self: *Self) void {
+                if (comptime @hasDecl(OpType, "deinit")) {
+                    OpType.deinit(self.pre.allocator, &self.op);
+                }
+                self.pre.deinit();
+                if (valid) {
+                    self.post.deinit(self.pre.allocator);
+                }
+            }
+
+            pub fn process(self: *Self) !void {
+                const verify = switch (self.bls_setting) {
+                    .default => true,
+                    .required => true,
+                    .ignored => false,
+                };
+
+                switch (operation) {
+                    .attestation => {
+                        const f: ForkSeq = if (fork == .phase0) .phase0 else .electra;
+                        var attestations = @field(ssz, f.forkName()).Attestations.default_value;
+                        defer attestations.deinit(self.pre.allocator);
+                        const op_opaque: [*]u8 = std.mem.asBytes(&self.op);
+                        const att_f: *@field(ssz, f.forkName()).Attestation.Type = @ptrCast(@alignCast(op_opaque));
+                        try attestations.append(self.pre.allocator, att_f.*);
+                        const atts = attestations;
+                        const attestations_wrapper: state_transition.Attestations = switch (fork) {
+                            .phase0 => .{ .phase0 = &atts },
+                            .altair, .bellatrix, .capella, .deneb, .electra => .{ .electra = &atts },
+                        };
+
+                        try state_transition.processAttestations(self.pre.allocator, self.pre.cached_state, attestations_wrapper, verify);
+                    },
+                    .attester_slashing => {
+                        try state_transition.processAttesterSlashing(OpType.Type, self.pre.cached_state, &self.op, verify);
+                    },
+                    .block_header => {
+                        return error.NotImplemented;
+                        // TODO: processBlockHeader currently takes signed block which is incorrect. Wait for it to accept unsigned block.
+                        // try state_transition.processBlockHeader(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .bls_to_execution_change => {
+                        try state_transition.processBlsToExecutionChange(self.pre.cached_state, &self.op);
+                    },
+                    .consolidation_request => {
+                        try state_transition.processConsolidationRequest(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .deposit => {
+                        try state_transition.processDeposit(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .deposit_request => {
+                        try state_transition.processDepositRequest(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .execution_payload => {
+                        return error.NotImplemented;
+                        // try state_transition.processExecutionPayload(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .proposer_slashing => {
+                        try state_transition.processProposerSlashing(self.pre.cached_state, &self.op, verify);
+                    },
+                    .sync_aggregate => {
+                        return error.NotImplemented;
+                    },
+                    .voluntary_exit => {
+                        try state_transition.processVoluntaryExit(self.pre.cached_state, &self.op, verify);
+                    },
+                    .withdrawal_request => {
+                        try state_transition.processWithdrawalRequest(self.pre.allocator, self.pre.cached_state, &self.op);
+                    },
+                    .withdrawals => {
+                        var withdrawals_result = WithdrawalsResult{
+                            .withdrawals = try Withdrawals.initCapacity(
+                                self.pre.allocator,
+                                preset.MAX_WITHDRAWALS_PER_PAYLOAD,
+                            ),
+                        };
+
+                        var withdrawal_balances = std.AutoHashMap(u64, usize).init(self.pre.allocator);
+                        defer withdrawal_balances.deinit();
+
+                        try state_transition.getExpectedWithdrawals(self.pre.allocator, &withdrawals_result, &withdrawal_balances, self.pre.cached_state);
+                        defer withdrawals_result.withdrawals.deinit(self.pre.allocator);
+
+                        try state_transition.processWithdrawals(self.pre.cached_state, withdrawals_result);
+                    },
+                }
+            }
+
+            pub fn runTest(self: *Self) !void {
+                if (valid) {
+                    try self.process();
+                    try expectEqualBeaconStates(self.post, self.pre.cached_state.state.*);
+                } else {
+                    self.process() catch |err| {
+                        if (err == error.NotImplemented) {
+                            return err;
+                        }
+                        return;
+                    };
+                    return error.ExpectedError;
+                }
+            }
+        };
+    }
+};

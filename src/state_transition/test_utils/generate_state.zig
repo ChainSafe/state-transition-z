@@ -1,11 +1,13 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const mainnet_chain_config = @import("config").mainnet_chain_config;
+const minimal_chain_config = @import("config").minimal_chain_config;
 const ssz = @import("consensus_types");
 const ElectraBeaconState = ssz.electra.BeaconState.Type;
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = @import("preset").preset;
+const Preset = @import("preset").Preset;
 const BeaconConfig = @import("config").BeaconConfig;
 const ChainConfig = @import("config").ChainConfig;
 const state_transition = @import("../root.zig");
@@ -64,7 +66,7 @@ pub const TestCachedBeaconStateAllForks = struct {
     cached_state: *CachedBeaconStateAllForks,
 
     pub fn init(allocator: Allocator, validator_count: usize) !TestCachedBeaconStateAllForks {
-        const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
+        const state = try generateElectraState(allocator, if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config, validator_count);
         return initFromState(allocator, state);
     }
 
@@ -75,7 +77,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         const pubkey_index_map = try PubkeyIndexMap.init(allocator);
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
-        const config = try BeaconConfig.init(allocator, mainnet_chain_config, owned_state.genesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config, owned_state.genesisValidatorsRoot());
 
         try syncPubkeys(owned_state.validators().items, pubkey_index_map, index_pubkey_cache);
 

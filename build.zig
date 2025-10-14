@@ -308,6 +308,7 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("preset", module_preset);
     module_int.addImport("constants", module_constants);
 
+    module_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
     module_spec_tests.addImport("consensus_types", module_consensus_types);
     module_spec_tests.addImport("config", module_config);
     module_spec_tests.addImport("preset", module_preset);
