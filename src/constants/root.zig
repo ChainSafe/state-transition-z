@@ -114,10 +114,4 @@ pub const CURRENT_SYNC_COMMITTEE_GINDEX = 54;
 pub const EXECUTION_PAYLOAD_GINDEX = 25;
 pub const CURRENT_SYNC_COMMITTEE_GINDEX_ELECTRA = 86;
 
-pub const G2_POINT_AT_INFINITY = blk: {
-    const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
-    const byte_array_len = hex_string.len / 2;
-    var bytes: [byte_array_len]u8 = undefined;
-    _ = std.fmt.hexToBytes(&bytes, hex_string) catch unreachable;
-    break :blk bytes;
-};
+pub const G2_POINT_AT_INFINITY: [96]u8 = [_]u8{0xc0} ++ [_]u8{0} ** 95;
