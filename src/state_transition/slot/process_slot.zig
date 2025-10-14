@@ -4,7 +4,7 @@ const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeac
 const ssz = @import("consensus_types");
 const preset = @import("preset").preset;
 const Root = ssz.primitive.Root.Type;
-const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+const ZERO_HASH = @import("constants").ZERO_HASH;
 
 pub fn processSlot(allocator: Allocator, cached_state: *CachedBeaconStateAllForks) !void {
     const state = cached_state.state;

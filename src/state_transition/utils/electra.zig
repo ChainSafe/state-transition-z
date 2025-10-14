@@ -13,7 +13,7 @@ const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const hasEth1WithdrawalCredential = @import("./capella.zig").hasEth1WithdrawalCredential;
-const G2_POINT_AT_INFINITY = @import("../constants.zig").G2_POINT_AT_INFINITY;
+const G2_POINT_AT_INFINITY = @import("constants").G2_POINT_AT_INFINITY;
 const Allocator = std.mem.Allocator;
 
 pub fn hasCompoundingWithdrawalCredential(withdrawal_credentials: WithdrawalCredentials) bool {
