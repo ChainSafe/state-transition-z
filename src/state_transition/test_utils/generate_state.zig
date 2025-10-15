@@ -8,6 +8,7 @@ const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = @import("preset").preset;
 const Preset = @import("preset").Preset;
+const active_preset = @import("preset").active_preset;
 const BeaconConfig = @import("config").BeaconConfig;
 const ChainConfig = @import("config").ChainConfig;
 const state_transition = @import("../root.zig");
@@ -17,7 +18,7 @@ const PubkeyIndexMap = state_transition.PubkeyIndexMap(ValidatorIndex);
 const Index2PubkeyCache = state_transition.Index2PubkeyCache;
 const syncPubkeys = state_transition.syncPubkeys;
 const interopPubkeysCached = @import("./interop_pubkeys.zig").interopPubkeysCached;
-const active_chain_config = if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config;
+const active_chain_config = if (active_preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config;
 
 /// generate, allocate BeaconStateAllForks
 /// consumer has responsibility to deinit it

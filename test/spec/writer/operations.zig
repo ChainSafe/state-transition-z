@@ -10,7 +10,7 @@ pub const header =
     \\
     \\const std = @import("std");
     \\const ForkSeq = @import("config").ForkSeq;
-    \\const preset = @import("preset").preset.preset;
+    \\const active_preset = @import("preset").active_preset;
     \\const spec_test_options = @import("spec_test_options");
     \\const Operation = @import("../test_type/operations.zig").Operation;
     \\
@@ -24,7 +24,7 @@ const test_template =
     \\    const test_dir_name = try std.fs.path.join(allocator, &[_][]const u8{{
     \\        spec_test_options.spec_test_out_dir,
     \\        spec_test_options.spec_test_version,
-    \\        @tagName(preset) ++ "/tests/" ++ @tagName(preset) ++ "/{s}/operations/{s}/pyspec_tests/{s}",
+    \\        @tagName(active_preset) ++ "/tests/" ++ @tagName(active_preset) ++ "/{s}/operations/{s}/pyspec_tests/{s}",
     \\    }});
     \\    defer allocator.free(test_dir_name);
     \\    const test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;

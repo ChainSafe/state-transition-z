@@ -11,7 +11,6 @@ pub const Preset = enum(u8) {
 };
 
 const PresetMainnet = struct {
-    pub const preset = Preset.mainnet;
     pub const MAX_COMMITTEES_PER_SLOT = 64;
     pub const TARGET_COMMITTEE_SIZE = 128;
     pub const MAX_VALIDATORS_PER_COMMITTEE = 2048;
@@ -88,7 +87,6 @@ const PresetMainnet = struct {
 };
 
 const PresetMinimal = struct {
-    pub const preset = Preset.minimal;
     pub const MAX_COMMITTEES_PER_SLOT = 4;
     pub const TARGET_COMMITTEE_SIZE = 4;
     pub const MAX_VALIDATORS_PER_COMMITTEE = 2048;
@@ -162,4 +160,5 @@ const PresetMinimal = struct {
 
 const preset_str = @import("build_options").preset;
 
-pub const active_preset = if (std.mem.eql(u8, preset_str, "minimal")) PresetMinimal else PresetMainnet;
+pub const preset = if (std.mem.eql(u8, preset_str, "minimal")) PresetMinimal else PresetMainnet;
+pub const active_preset = if (std.mem.eql(u8, preset_str, "minimal")) Preset.minimal else Preset.mainnet;
