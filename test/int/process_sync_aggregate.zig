@@ -31,10 +31,4 @@ const state_transition = @import("state_transition");
 const processSyncAggregate = state_transition.processSyncAggregate;
 const SignedBlock = state_transition.SignedBlock;
 const SignedBeaconBlock = state_transition.SignedBeaconBlock;
-const G2_POINT_AT_INFINITY = blk: {
-    const hex_string = "c000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000" ++ "0000000000000000000000000000000000000000000000000000000000000000";
-    const byte_array_len = hex_string.len / 2;
-    var bytes: [byte_array_len]u8 = undefined;
-    _ = std.fmt.hexToBytes(&bytes, hex_string) catch unreachable;
-    break :blk bytes;
-};
+const G2_POINT_AT_INFINITY = @import("constants").G2_POINT_AT_INFINITY;

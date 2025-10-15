@@ -7,7 +7,7 @@ const BeaconConfig = @import("config").BeaconConfig;
 const BeaconBlockHeader = ssz.phase0.BeaconBlockHeader.Type;
 const Root = ssz.primitive.Root;
 const SignedBlock = @import("../types/signed_block.zig").SignedBlock;
-const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+const ZERO_HASH = @import("constants").ZERO_HASH;
 
 pub fn processBlockHeader(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, block: *const SignedBlock) !void {
     const state = cached_state.state;
