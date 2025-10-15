@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ZIG_VERSION: "0.14.0"
+  ZIG_VERSION: "0.14.1"
 
 jobs:
   zbuild:
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Zig
         uses: mlugg/setup-zig@v1
         with:
-          version: "0.14.0"
+          version: "0.14.1"
 
       - name: Install zbuild
         run: |

@@ -2,7 +2,7 @@
     .name = .state_transition_z,
     .version = "0.0.0",
     .fingerprint = 0xd1ddb6abe067ee04,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.14.1",
     .paths = .{
         "build.zig",
         "build.zig.zon",
