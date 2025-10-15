@@ -3,7 +3,7 @@
 .{
     .name = .state_transition_z,
     .version = "0.0.0",
-    .fingerprint = 0xd1ddb6abe067ee04,
+    .fingerprint = 0xd1ddb6abba911e42,
     .minimum_zig_version = "0.14.1",
     .dependencies = .{
         .blst = .{
