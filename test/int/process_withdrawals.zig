@@ -13,7 +13,7 @@ test "process withdrawals - sanity" {
     var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
     defer withdrawal_balances.deinit();
 
-    try getExpectedWithdrawalsResult(allocator, &withdrawals_result, &withdrawal_balances, test_state.cached_state);
+    try getExpectedWithdrawals(allocator, &withdrawals_result, &withdrawal_balances, test_state.cached_state);
     try processWithdrawals(test_state.cached_state, withdrawals_result);
 }
 
