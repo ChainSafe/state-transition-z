@@ -5,6 +5,7 @@ pub const computeSigningRoot = @import("./utils/signing_root.zig").computeSignin
 pub const BeaconBlock = @import("./types/beacon_block.zig").BeaconBlock;
 pub const BeaconStateAllForks = @import("./types/beacon_state.zig").BeaconStateAllForks;
 pub const CachedBeaconStateAllForks = @import("./cache/state_cache.zig").CachedBeaconStateAllForks;
+pub const EffectiveBalanceIncrements = @import("./cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 
 pub const EpochCacheImmutableData = @import("./cache/epoch_cache.zig").EpochCacheImmutableData;
 pub const EpochCacheRc = @import("./cache/epoch_cache.zig").EpochCacheRc;
@@ -35,6 +36,7 @@ pub const processHistoricalRootsUpdate = @import("./epoch/process_historical_roo
 pub const processParticipationRecordUpdates = @import("./epoch/process_participation_record_updates.zig").processParticipationRecordUpdates;
 pub const processParticipationFlagUpdates = @import("./epoch/process_participation_flag_updates.zig").processParticipationFlagUpdates;
 pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_updates.zig").processSyncCommitteeUpdates;
+pub const getNextSyncCommitteeIndices = @import("./utils/sync_committee.zig").getNextSyncCommitteeIndices;
 
 // Block
 pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
