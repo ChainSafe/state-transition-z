@@ -60,8 +60,6 @@ pub fn weighJustificationAndFinalization(cached_state: *CachedBeaconStateAllFork
 
     justification_bits.* = try JustificationBits.fromBoolArray(bits);
 
-    // TODO: Consider rendering bits as array of boolean for faster repeated access here
-
     const finalized_checkpoint = state.finalizedCheckpoint();
     // Process finalizations
     // The 2nd/3rd/4th most recent epochs are all justified, the 2nd using the 4th as source

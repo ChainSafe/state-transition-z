@@ -23,7 +23,3 @@ pub fn getBlockRootAtSlot(state: *const BeaconStateAllForks, slot: Slot) !Root {
 pub fn getBlockRoot(state: *const BeaconStateAllForks, epoch: Epoch) !Root {
     return getBlockRootAtSlot(state, computeStartSlotAtEpoch(epoch));
 }
-
-// TODO: getTemporaryBlockHeader
-
-// TODO: signedBlockToSignedHeader

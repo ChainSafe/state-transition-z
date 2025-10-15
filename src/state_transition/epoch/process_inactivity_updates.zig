@@ -24,8 +24,6 @@ pub fn processInactivityUpdates(cached_state: *CachedBeaconStateAllForks, cache:
     const FLAG_ELIGIBLE_ATTESTER = attester_status_utils.FLAG_ELIGIBLE_ATTESTER;
 
     // for TreeView, we may need a reused inactivityScoresArr
-    // TODO: assert this once https://github.com/ChainSafe/state-transition-z/issues/33
-
     const inactivity_scores = state.inactivityScores();
     for (0..flags.len) |i| {
         const flag = flags[i];

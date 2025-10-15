@@ -166,18 +166,13 @@ pub const BeaconConfig = struct {
         return self.forkInfo(slot).version;
     }
 
-    // TODO: is forkTypes() necessary?
-    // TODO: getPostBellatrixForkTypes
-    // TODO: getPostAltairForkTypes
-    // TODO: getPostDenebForkTypes
     pub fn getMaxBlobsPerBlock(self: *const BeaconConfig, epoch: Epoch) u64 {
         const fork = self.forkInfoAtEpoch(epoch).fork_seq;
         return switch (fork) {
             .deneb => self.chain.MAX_BLOBS_PER_BLOCK,
             .electra => self.chain.MAX_BLOBS_PER_BLOCK_ELECTRA,
-            else =>
             // For forks before Deneb, we assume no blobs
-            0,
+            else => 0,
         };
     }
 
@@ -192,12 +187,6 @@ pub const BeaconConfig = struct {
         const fork_seq = if (epoch < state_fork_info.epoch) state_fork_info.prev_fork_seq else state_fork_info.fork_seq;
 
         return self.getDomainByForkSeq(fork_seq, domain_type);
-    }
-
-    // TODO: may not need this method
-    pub fn getDomainByForkName(self: *const BeaconConfig, fork_name: []const u8, domain_type: DomainType) ![32]u8 {
-        const fork_seq = forkSeqByForkName(fork_name);
-        return try self.getDomainByForkSeq(fork_seq, domain_type);
     }
 
     pub fn getDomainByForkSeq(self: *const BeaconConfig, fork_seq: ForkSeq, domain_type: DomainType) ![32]u8 {
@@ -221,9 +210,6 @@ pub const BeaconConfig = struct {
 
         return domain;
     }
-
-    // TODO: forkDigest2ForkName, forkDigest2ForkNameOption, forkName2ForkDigest, forkName2ForkDigestHex
-    // may not need it for state-transition
 };
 
 fn computeDomain(domain_type: DomainType, fork_version: Version, genesis_validators_root: Root, out: *[32]u8) !void {

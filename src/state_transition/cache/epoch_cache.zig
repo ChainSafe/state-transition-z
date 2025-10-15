@@ -479,12 +479,6 @@ pub const EpochCache = struct {
         return self.proposers[slot % preset.SLOTS_PER_EPOCH];
     }
 
-    // TODO: getBeaconProposers - can access directly?
-
-    // TODO: getBeaconProposersNextEpoch - may not needed post-fulu
-
-    // TODO: do we need getBeaconCommittees? in validateAttestationElectra we do a for loop over committee_indices and call getBeaconProposer() instead
-
     /// consumer takes ownership of the returned indexed attestation
     /// hence it needs to deinit attesting_indices inside
     /// TODO: unit test
@@ -568,10 +562,6 @@ pub const EpochCache = struct {
         return try aggregation_bits.intersectValues(ValidatorIndex, self.allocator, committee_validators);
     }
 
-    // TODO: getCommitteeAssignments
-
-    // TODO: getCommitteeAssignment
-
     pub fn isAggregator(self: *const EpochCache, slot: Slot, index: CommitteeIndex, slot_signature: BLSSignature) !bool {
         const committee = try self.getBeaconCommittee(slot, index);
         return isAggregatorFromCommitteeLength(committee.length, slot_signature);
@@ -598,7 +588,6 @@ pub const EpochCache = struct {
         self.index_to_pubkey.items[index] = pk;
     }
 
-    // TODO: getBeaconCommittee
     pub fn getShufflingAtSlotOrNull(self: *const EpochCache, slot: Slot) ?*const EpochShuffling {
         const epoch = computeEpochAtSlot(slot);
         return self.getShufflingAtEpochOrNull(epoch);
