@@ -44,27 +44,13 @@ pub const CachedBeaconStateAllForks = struct {
     }
 
     pub fn clone(self: *CachedBeaconStateAllForks, allocator: Allocator) !*CachedBeaconStateAllForks {
-        const cloned = try self.state.clone(allocator);
-
-        const ecr = self.epoch_cache_ref.get();
-        const pubkey_index_map = try ecr.pubkey_to_index.clone();
-        var index_pubkey_cache = try ecr.index_to_pubkey.clone();
-
-        const immutable_data = EpochCacheImmutableData{
+        const cached_state = try allocator.create(CachedBeaconStateAllForks);
+        cached_state.* = .{
+            .allocator = allocator,
             .config = self.config,
-            .index_to_pubkey = &index_pubkey_cache,
-            .pubkey_to_index = pubkey_index_map,
+            .epoch_cache_ref = self.epoch_cache_ref.acquire(),
+            .state = try self.state.clone(allocator),
         };
-
-        const cached_state = CachedBeaconStateAllForks.createCachedBeaconState(
-            self.allocator,
-            cloned,
-            immutable_data,
-            .{
-                .skip_sync_committee_cache = false,
-                .skip_sync_pubkeys = false,
-            },
-        );
         return cached_state;
     }
 

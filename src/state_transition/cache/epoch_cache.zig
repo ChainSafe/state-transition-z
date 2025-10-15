@@ -329,7 +329,6 @@ pub const EpochCache = struct {
         self.allocator.destroy(self);
     }
 
-    /// TODO: state_transition when calling this function needs to decrease EpochCache rc before using a new one
     pub fn clone(self: *const EpochCache, allocator: Allocator) !*EpochCache {
         const epoch_cache = .EpochCache{
             .allocator = self.allocator,
