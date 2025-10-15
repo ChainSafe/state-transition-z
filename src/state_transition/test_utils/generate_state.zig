@@ -17,6 +17,7 @@ const PubkeyIndexMap = state_transition.PubkeyIndexMap(ValidatorIndex);
 const Index2PubkeyCache = state_transition.Index2PubkeyCache;
 const syncPubkeys = state_transition.syncPubkeys;
 const interopPubkeysCached = @import("./interop_pubkeys.zig").interopPubkeysCached;
+const active_chain_config = if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config;
 
 /// generate, allocate BeaconStateAllForks
 /// consumer has responsibility to deinit it
@@ -66,9 +67,10 @@ pub const TestCachedBeaconStateAllForks = struct {
     cached_state: *CachedBeaconStateAllForks,
 
     pub fn init(allocator: Allocator, validator_count: usize) !TestCachedBeaconStateAllForks {
-        const state = try generateElectraState(allocator, if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config, validator_count);
+        const state = try generateElectraState(allocator, active_chain_config, validator_count);
         errdefer state.deinit(allocator);
         defer allocator.destroy(state);
+
         return initFromState(allocator, state);
     }
 
@@ -79,7 +81,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         const pubkey_index_map = try PubkeyIndexMap.init(allocator);
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
-        const config = try BeaconConfig.init(allocator, if (preset.preset == Preset.mainnet) mainnet_chain_config else minimal_chain_config, owned_state.genesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, active_chain_config, owned_state.genesisValidatorsRoot());
 
         try syncPubkeys(owned_state.validators().items, pubkey_index_map, index_pubkey_cache);
 

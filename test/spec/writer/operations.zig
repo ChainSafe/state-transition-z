@@ -63,11 +63,8 @@ pub fn writeOperationsTests(comptime forks: []const ForkSeq, writer: std.io.AnyW
 
                 var test_case_iterator = operation_dir.iterate();
                 while (try test_case_iterator.next()) |test_case_entry| {
-                    switch (test_case_entry.kind) {
-                        .directory => {},
-                        else => {
-                            continue;
-                        },
+                    if (test_case_entry.kind != .directory) {
+                        continue;
                     }
                     const test_case_name = test_case_entry.name;
 

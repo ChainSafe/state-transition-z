@@ -88,6 +88,13 @@ pub const Operation = enum {
 
             const Self = @This();
 
+            pub fn execute(allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
+                var tc = try Self.init(allocator, dir);
+                defer tc.deinit();
+
+                try tc.runTest();
+            }
+
             pub fn init(allocator: std.mem.Allocator, dir: std.fs.Dir) !Self {
                 var tc = Self{
                     .pre = undefined,
@@ -152,17 +159,16 @@ pub const Operation = enum {
 
                 switch (operation) {
                     .attestation => {
-                        const f: ForkSeq = if (fork == .phase0) .phase0 else .electra;
-                        var attestations = @field(ssz, f.forkName()).Attestations.default_value;
+                        const attestations_fork: ForkSeq = if (fork.gte(.electra)) .electra else .phase0;
+                        var attestations = @field(ssz, attestations_fork.forkName()).Attestations.default_value;
                         defer attestations.deinit(self.pre.allocator);
-                        const op_opaque: [*]u8 = std.mem.asBytes(&self.op);
-                        const att_f: *@field(ssz, f.forkName()).Attestation.Type = @ptrCast(@alignCast(op_opaque));
-                        try attestations.append(self.pre.allocator, att_f.*);
+                        const attestation: *@field(ssz, attestations_fork.forkName()).Attestation.Type = @ptrCast(@alignCast(&self.op));
+                        try attestations.append(self.pre.allocator, attestation.*);
                         const atts = attestations;
-                        const attestations_wrapper: state_transition.Attestations = switch (fork) {
-                            .phase0 => .{ .phase0 = &atts },
-                            .altair, .bellatrix, .capella, .deneb, .electra => .{ .electra = &atts },
-                        };
+                        const attestations_wrapper: state_transition.Attestations = if (fork.gte(.electra))
+                            .{ .electra = &atts }
+                        else
+                            .{ .phase0 = &atts };
 
                         try state_transition.processAttestations(self.pre.allocator, self.pre.cached_state, attestations_wrapper, verify);
                     },
