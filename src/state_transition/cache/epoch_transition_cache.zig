@@ -24,7 +24,7 @@ const FAR_FUTURE_EPOCH = c.FAR_FUTURE_EPOCH;
 const MIN_ACTIVATION_BALANCE = preset.MIN_ACTIVATION_BALANCE;
 
 const hasCompoundingWithdrawalCredential = @import("../utils/electra.zig").hasCompoundingWithdrawalCredential;
-const computeBaseRewardPerIncrement = @import("../utils/altair.zig").computeBaseRewardPerIncrement;
+const computeBaseRewardPerIncrement = @import("../utils/sync_committee.zig").computeBaseRewardPerIncrement;
 const processPendingAttestations = @import("../epoch/process_pending_attestations.zig").processPendingAttestations;
 
 const BoolArray = std.ArrayList(bool);
