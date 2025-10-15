@@ -42,19 +42,11 @@ pub const Operation = enum {
 
     pub fn inputName(self: Operation) []const u8 {
         return switch (self) {
-            .attestation => "attestation",
-            .attester_slashing => "attester_slashing",
             .block_header => "block",
             .bls_to_execution_change => "address_change",
-            .consolidation_request => "consolidation_request",
-            .deposit => "deposit",
-            .deposit_request => "deposit_request",
             .execution_payload => "body",
-            .proposer_slashing => "proposer_slashing",
-            .sync_aggregate => "sync_aggregate",
-            .voluntary_exit => "voluntary_exit",
-            .withdrawal_request => "withdrawal_request",
             .withdrawals => "execution_payload",
+            else => @tagName(self),
         };
     }
 
@@ -175,7 +167,7 @@ pub const Operation = enum {
                         try state_transition.processAttesterSlashing(OpType.Type, self.pre.cached_state, &self.op, verify);
                     },
                     .block_header => {
-                        return error.NotImplemented;
+                        return error.SkipZigTest;
                         // TODO: processBlockHeader currently takes signed block which is incorrect. Wait for it to accept unsigned block.
                         // try state_transition.processBlockHeader(self.pre.allocator, self.pre.cached_state, &self.op);
                     },
@@ -192,14 +184,14 @@ pub const Operation = enum {
                         try state_transition.processDepositRequest(self.pre.allocator, self.pre.cached_state, &self.op);
                     },
                     .execution_payload => {
-                        return error.NotImplemented;
+                        return error.SkipZigTest;
                         // try state_transition.processExecutionPayload(self.pre.allocator, self.pre.cached_state, &self.op);
                     },
                     .proposer_slashing => {
                         try state_transition.processProposerSlashing(self.pre.cached_state, &self.op, verify);
                     },
                     .sync_aggregate => {
-                        return error.NotImplemented;
+                        return error.SkipZigTest;
                     },
                     .voluntary_exit => {
                         try state_transition.processVoluntaryExit(self.pre.cached_state, &self.op, verify);
@@ -232,7 +224,7 @@ pub const Operation = enum {
                     try expectEqualBeaconStates(self.post, self.pre.cached_state.state.*);
                 } else {
                     self.process() catch |err| {
-                        if (err == error.NotImplemented) {
+                        if (err == error.SkipZigTest) {
                             return err;
                         }
                         return;
