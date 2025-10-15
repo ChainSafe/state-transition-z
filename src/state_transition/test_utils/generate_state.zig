@@ -65,6 +65,8 @@ pub const TestCachedBeaconStateAllForks = struct {
 
     pub fn init(allocator: Allocator, validator_count: usize) !TestCachedBeaconStateAllForks {
         const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
+        errdefer state.deinit(allocator);
+        defer allocator.destroy(state);
         return initFromState(allocator, state);
     }
 
