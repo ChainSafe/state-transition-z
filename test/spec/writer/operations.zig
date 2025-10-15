@@ -27,12 +27,9 @@ const test_template =
     \\        @tagName(preset) ++ "/tests/" ++ @tagName(preset) ++ "/{s}/operations/{s}/pyspec_tests/{s}",
     \\    }});
     \\    defer allocator.free(test_dir_name);
-    \\
     \\    const test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
-    \\    var tc = try Operation.TestCase(.{s}, .{s}, {}).init(allocator, test_dir);
-    \\    defer tc.deinit();
     \\
-    \\    try tc.runTest();
+    \\    try Operation.TestCase(.{s}, .{s}, {}).execute(allocator, test_dir);
     \\}}
     \\
     \\
