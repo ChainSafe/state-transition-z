@@ -152,8 +152,7 @@ pub const Operation = enum {
 
             pub fn process(self: *Self) !void {
                 const verify = switch (self.bls_setting) {
-                    .default => true,
-                    .required => true,
+                    .default, .required => true,
                     .ignored => false,
                 };
 
