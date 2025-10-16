@@ -1,4 +1,6 @@
-pub const SpecTestRunner = enum(u8) {
+const std = @import("std");
+
+pub const RunnerKind = enum {
     epoch_processing,
     finality,
     operations,
