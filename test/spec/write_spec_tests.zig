@@ -39,6 +39,7 @@ pub fn main() !void {
     };
     const supported_test_runners = [_]RunnerKind{
         .operations,
+        .sanity,
     };
 
     const test_case_dir = "test/spec/test_case/";
@@ -90,11 +91,13 @@ pub fn writeTests(
 ) !void {
     const TestWriter = switch (kind) {
         .operations => @import("./writer/Operations.zig"),
+        .sanity => @import("./writer/Sanity.zig"),
         else => @compileError("Unsupported test runner"),
     };
 
     const Runner = switch (kind) {
         .operations => @import("./runner/Operations.zig"),
+        .sanity => @import("./runner/Sanity.zig"),
         else => @compileError("Unsupported test runner"),
     };
 
