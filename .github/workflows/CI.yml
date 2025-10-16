@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ZIG_VERSION: "0.14.0"
+  ZIG_VERSION: "0.14.1"
 
 jobs:
   zbuild:
@@ -24,9 +24,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Zig
-        uses: mlugg/setup-zig@v1
+        uses: mlugg/setup-zig@v2
         with:
-          version: "0.14.0"
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: ubuntu-latest-${{ env.ZIG_VERSION }}
 
       - name: Install zbuild
         run: |
