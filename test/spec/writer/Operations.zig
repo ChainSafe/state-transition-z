@@ -20,7 +20,7 @@ pub const header =
 ;
 
 const test_template =
-    \\test "{s} {s} {s}" {{
+    \\test "{s} operations {s} {s}" {{
     \\    const test_dir_name = try std.fs.path.join(allocator, &[_][]const u8{{
     \\        spec_test_options.spec_test_out_dir,
     \\        spec_test_options.spec_test_version,

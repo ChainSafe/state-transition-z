@@ -1,6 +1,6 @@
 # Ethereum Consensus Spec Test Framework
 
-This framework generates and runs Zig-based tests for Ethereum consensus specifications, based on the official test formats from [ethereum/consensus-specs](https://github.com/ethereum/consensus-specs/tree/dev/tests/formats).
+This framework generates and runs Zig-based tests for Ethereum consensus specifications, based on the official test formats from [ethereum/consensus-specs](https://github.com/ethereum/consensus-specs/tree/master/tests/formats).
 
 ## Overview
 
