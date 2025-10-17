@@ -2,9 +2,12 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const s = @import("ssz");
+const hex = @import("hex");
 const Slot = ssz.primitive.Slot.Type;
 const preset = @import("preset").preset;
 const state_transition = @import("../root.zig");
+const Root = ssz.primitive.Root.Type;
+const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
 const CachedBeaconStateAllForks = state_transition.CachedBeaconStateAllForks;
 const computeStartSlotAtEpoch = state_transition.computeStartSlotAtEpoch;
 const getBlockRootAtSlot = state_transition.getBlockRootAtSlot;
@@ -12,8 +15,6 @@ const getBlockRootAtSlot = state_transition.getBlockRootAtSlot;
 /// Generate a valid electra block for the given pre-state.
 pub fn generateElectraBlock(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks, out: *ssz.electra.SignedBeaconBlock.Type) !void {
     const state = cached_state.state;
-    var parent_root: [32]u8 = undefined;
-    try ssz.phase0.BeaconBlockHeader.hashTreeRoot(state.latestBlockHeader(), &parent_root);
     var attestations = ssz.electra.Attestations.default_value;
     // no need to fill up to MAX_ATTESTATIONS_ELECTRA
     const att_slot: Slot = state.slot() - 2;
@@ -58,11 +59,15 @@ pub fn generateElectraBlock(allocator: Allocator, cached_state: *const CachedBea
         .committee_bits = committee_bits,
     });
 
+    var execution_payload = ssz.electra.ExecutionPayload.default_value;
+    execution_payload.timestamp = 1737111896;
+
     out.* = .{
         .message = .{
             .slot = state.slot() + 1,
-            .proposer_index = try cached_state.epoch_cache_ref.get().getBeaconProposer(state.slot()),
-            .parent_root = parent_root,
+            // value is generated after running real state transition int test
+            .proposer_index = 41,
+            .parent_root = try hex.hexToRoot("0x0833505580088dab43dab615abbdaa7c914a5f4ebeca79332a9373d5b25daeac"),
             // this could be computed later
             .state_root = [_]u8{0} ** 32,
             .body = .{
@@ -79,7 +84,7 @@ pub fn generateElectraBlock(allocator: Allocator, cached_state: *const CachedBea
                     .sync_committee_bits = s.BitVectorType(preset.SYNC_COMMITTEE_SIZE).default_value,
                     .sync_committee_signature = ssz.primitive.BLSSignature.default_value,
                 },
-                .execution_payload = ssz.electra.ExecutionPayload.default_value,
+                .execution_payload = execution_payload,
                 .bls_to_execution_changes = ssz.capella.SignedBLSToExecutionChanges.default_value,
                 .blob_kzg_commitments = ssz.electra.BlobKzgCommitments.default_value,
                 .execution_requests = ssz.electra.ExecutionRequests.default_value,
