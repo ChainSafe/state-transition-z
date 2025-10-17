@@ -547,8 +547,9 @@ pub const EpochCache = struct {
         // In the spec it means a list of committee indices according to committeeBits
         // This `committeeIndices` refers to the latter
         // TODO Electra: resolve the naming conflicts
-        var committee_indices: []usize = undefined;
-        _ = try committee_bits.getTrueBitIndexes(committee_indices[0..]);
+        var full_committee_indices: [preset.MAX_COMMITTEES_PER_SLOT]usize = undefined;
+        const count = try committee_bits.getTrueBitIndexes(full_committee_indices[0..]);
+        const committee_indices = full_committee_indices[0..count];
 
         var total_len: usize = 0;
         for (committee_indices) |committee_index| {
