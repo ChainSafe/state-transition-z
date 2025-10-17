@@ -49,7 +49,7 @@ pub const BlockExternalData = struct {
     },
 };
 
-fn processSlotsWithTransientCache(
+pub fn processSlotsWithTransientCache(
     allocator: std.mem.Allocator,
     post_state: *CachedBeaconStateAllForks,
     slot: Slot,

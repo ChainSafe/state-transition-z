@@ -3,6 +3,7 @@ const testing = std.testing;
 
 pub const computeSigningRoot = @import("./utils/signing_root.zig").computeSigningRoot;
 pub const BeaconBlock = @import("./types/beacon_block.zig").BeaconBlock;
+pub const BeaconBlockBody = @import("./types/beacon_block.zig").BeaconBlockBody;
 pub const BeaconStateAllForks = @import("./types/beacon_state.zig").BeaconStateAllForks;
 pub const CachedBeaconStateAllForks = @import("./cache/state_cache.zig").CachedBeaconStateAllForks;
 
@@ -39,13 +40,22 @@ pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_
 // Block
 pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
 pub const processWithdrawals = @import("./block/process_withdrawals.zig").processWithdrawals;
-pub const getExpectedWithdrawalsResult = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
+pub const getExpectedWithdrawals = @import("./block/process_withdrawals.zig").getExpectedWithdrawals;
 pub const processExecutionPayload = @import("./block/process_execution_payload.zig").processExecutionPayload;
 pub const processRandao = @import("./block/process_randao.zig").processRandao;
 pub const processEth1Data = @import("./block/process_eth1_data.zig").processEth1Data;
 pub const processOperations = @import("./block/process_operations.zig").processOperations;
 pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
 pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
+pub const processAttestations = @import("./block/process_attestations.zig").processAttestations;
+pub const processAttesterSlashing = @import("./block/process_attester_slashing.zig").processAttesterSlashing;
+pub const processDeposit = @import("./block/process_deposit.zig").processDeposit;
+pub const processProposerSlashing = @import("./block/process_proposer_slashing.zig").processProposerSlashing;
+pub const processVoluntaryExit = @import("./block/process_voluntary_exit.zig").processVoluntaryExit;
+pub const processBlsToExecutionChange = @import("./block/process_bls_to_execution_change.zig").processBlsToExecutionChange;
+pub const processDepositRequest = @import("./block/process_deposit_request.zig").processDepositRequest;
+pub const processWithdrawalRequest = @import("./block/process_withdrawal_request.zig").processWithdrawalRequest;
+pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
 
 pub const WithdrawalsResult = @import("./block/process_withdrawals.zig").WithdrawalsResult;
 
@@ -57,6 +67,7 @@ pub const state_transition = @import("./state_transition.zig");
 const EpochShuffling = @import("./utils/epoch_shuffling.zig");
 pub const SignedBlock = @import("./types/signed_block.zig").SignedBlock;
 pub const SignedBeaconBlock = @import("./types/beacon_block.zig").SignedBeaconBlock;
+pub const Attestations = @import("./types/attestation.zig").Attestations;
 
 test {
     testing.refAllDecls(@This());

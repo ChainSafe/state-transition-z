@@ -1,11 +1,13 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const mainnet_chain_config = @import("config").mainnet_chain_config;
+const minimal_chain_config = @import("config").minimal_chain_config;
 const ssz = @import("consensus_types");
 const ElectraBeaconState = ssz.electra.BeaconState.Type;
 const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = @import("preset").preset;
+const active_preset = @import("preset").active_preset;
 const BeaconConfig = @import("config").BeaconConfig;
 const ChainConfig = @import("config").ChainConfig;
 const state_transition = @import("../root.zig");
@@ -15,6 +17,7 @@ const PubkeyIndexMap = state_transition.PubkeyIndexMap(ValidatorIndex);
 const Index2PubkeyCache = state_transition.Index2PubkeyCache;
 const syncPubkeys = state_transition.syncPubkeys;
 const interopPubkeysCached = @import("./interop_pubkeys.zig").interopPubkeysCached;
+const active_chain_config = if (active_preset == .mainnet) mainnet_chain_config else minimal_chain_config;
 
 /// generate, allocate BeaconStateAllForks
 /// consumer has responsibility to deinit it
@@ -64,21 +67,31 @@ pub const TestCachedBeaconStateAllForks = struct {
     cached_state: *CachedBeaconStateAllForks,
 
     pub fn init(allocator: Allocator, validator_count: usize) !TestCachedBeaconStateAllForks {
+        const state = try generateElectraState(allocator, active_chain_config, validator_count);
+        errdefer state.deinit(allocator);
+        defer allocator.destroy(state);
+
+        return initFromState(allocator, state);
+    }
+
+    pub fn initFromState(allocator: Allocator, state: *BeaconStateAllForks) !TestCachedBeaconStateAllForks {
+        const owned_state = try allocator.create(BeaconStateAllForks);
+        owned_state.* = state.*;
+
         const pubkey_index_map = try PubkeyIndexMap.init(allocator);
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);
-        const state = try generateElectraState(allocator, mainnet_chain_config, validator_count);
-        const config = try BeaconConfig.init(allocator, mainnet_chain_config, state.genesisValidatorsRoot());
+        const config = try BeaconConfig.init(allocator, active_chain_config, owned_state.genesisValidatorsRoot());
 
-        try syncPubkeys(state.validators().items, pubkey_index_map, index_pubkey_cache);
+        try syncPubkeys(owned_state.validators().items, pubkey_index_map, index_pubkey_cache);
 
         const immutable_data = state_transition.EpochCacheImmutableData{
             .config = config,
             .index_to_pubkey = index_pubkey_cache,
             .pubkey_to_index = pubkey_index_map,
         };
-        const cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, state, immutable_data, .{
-            .skip_sync_committee_cache = false,
+        const cached_state = try CachedBeaconStateAllForks.createCachedBeaconState(allocator, owned_state, immutable_data, .{
+            .skip_sync_committee_cache = owned_state.isPhase0(),
             .skip_sync_pubkeys = false,
         });
 

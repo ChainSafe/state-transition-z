@@ -18,6 +18,22 @@ pub const ForkSeq = enum(u8) {
         return @tagName(self);
     }
 
+    pub inline fn lt(self: ForkSeq, other: ForkSeq) bool {
+        return @intFromEnum(self) < @intFromEnum(other);
+    }
+
+    pub inline fn lte(self: ForkSeq, other: ForkSeq) bool {
+        return @intFromEnum(self) <= @intFromEnum(other);
+    }
+
+    pub inline fn gt(self: ForkSeq, other: ForkSeq) bool {
+        return @intFromEnum(self) > @intFromEnum(other);
+    }
+
+    pub inline fn gte(self: ForkSeq, other: ForkSeq) bool {
+        return @intFromEnum(self) >= @intFromEnum(other);
+    }
+
     pub fn isPostAltair(self: ForkSeq) bool {
         return switch (self) {
             inline .phase0 => false,

@@ -10,6 +10,8 @@ pub fn build(b: *std.Build) void {
 
     const dep_ssz = b.dependency("ssz", .{});
 
+    const dep_snappy = b.dependency("snappy", .{});
+
     const options_build_options = b.addOptions();
     const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
     options_build_options.addOption([]const u8, "preset", option_preset);
@@ -89,12 +91,35 @@ pub fn build(b: *std.Build) void {
     const tls_run_exe_download_spec_tests = b.step("run:download_spec_tests", "Run the download_spec_tests executable");
     tls_run_exe_download_spec_tests.dependOn(&run_exe_download_spec_tests.step);
 
+    const module_write_spec_tests = b.createModule(.{
+        .root_source_file = b.path("test/spec/write_spec_tests.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("write_spec_tests"), module_write_spec_tests) catch @panic("OOM");
+
+    const exe_write_spec_tests = b.addExecutable(.{
+        .name = "write_spec_tests",
+        .root_module = module_write_spec_tests,
+    });
+
+    const install_exe_write_spec_tests = b.addInstallArtifact(exe_write_spec_tests, .{});
+
+    const tls_install_exe_write_spec_tests = b.step("build-exe:write_spec_tests", "Install the write_spec_tests executable");
+    tls_install_exe_write_spec_tests.dependOn(&install_exe_write_spec_tests.step);
+    b.getInstallStep().dependOn(&install_exe_write_spec_tests.step);
+
+    const run_exe_write_spec_tests = b.addRunArtifact(exe_write_spec_tests);
+    if (b.args) |args| run_exe_write_spec_tests.addArgs(args);
+    const tls_run_exe_write_spec_tests = b.step("run:write_spec_tests", "Run the write_spec_tests executable");
+    tls_run_exe_write_spec_tests.dependOn(&run_exe_write_spec_tests.step);
+
     const tls_run_test = b.step("test", "Run all tests");
 
     const test_hex = b.addTest(.{
         .name = "hex",
         .root_module = module_hex,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "hex.filters", "hex test filters") orelse &[_][]const u8{},
     });
     const install_test_hex = b.addInstallArtifact(test_hex, .{});
     const tls_install_test_hex = b.step("build-test:hex", "Install the hex test");
@@ -108,7 +133,7 @@ pub fn build(b: *std.Build) void {
     const test_constants = b.addTest(.{
         .name = "constants",
         .root_module = module_constants,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "constants.filters", "constants test filters") orelse &[_][]const u8{},
     });
     const install_test_constants = b.addInstallArtifact(test_constants, .{});
     const tls_install_test_constants = b.step("build-test:constants", "Install the constants test");
@@ -122,7 +147,7 @@ pub fn build(b: *std.Build) void {
     const test_config = b.addTest(.{
         .name = "config",
         .root_module = module_config,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "config.filters", "config test filters") orelse &[_][]const u8{},
     });
     const install_test_config = b.addInstallArtifact(test_config, .{});
     const tls_install_test_config = b.step("build-test:config", "Install the config test");
@@ -136,7 +161,7 @@ pub fn build(b: *std.Build) void {
     const test_consensus_types = b.addTest(.{
         .name = "consensus_types",
         .root_module = module_consensus_types,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "consensus_types.filters", "consensus_types test filters") orelse &[_][]const u8{},
     });
     const install_test_consensus_types = b.addInstallArtifact(test_consensus_types, .{});
     const tls_install_test_consensus_types = b.step("build-test:consensus_types", "Install the consensus_types test");
@@ -150,7 +175,7 @@ pub fn build(b: *std.Build) void {
     const test_preset = b.addTest(.{
         .name = "preset",
         .root_module = module_preset,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "preset.filters", "preset test filters") orelse &[_][]const u8{},
     });
     const install_test_preset = b.addInstallArtifact(test_preset, .{});
     const tls_install_test_preset = b.step("build-test:preset", "Install the preset test");
@@ -164,7 +189,7 @@ pub fn build(b: *std.Build) void {
     const test_state_transition = b.addTest(.{
         .name = "state_transition",
         .root_module = module_state_transition,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "state_transition.filters", "state_transition test filters") orelse &[_][]const u8{},
     });
     const install_test_state_transition = b.addInstallArtifact(test_state_transition, .{});
     const tls_install_test_state_transition = b.step("build-test:state_transition", "Install the state_transition test");
@@ -178,7 +203,7 @@ pub fn build(b: *std.Build) void {
     const test_download_spec_tests = b.addTest(.{
         .name = "download_spec_tests",
         .root_module = module_download_spec_tests,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "download_spec_tests.filters", "download_spec_tests test filters") orelse &[_][]const u8{},
     });
     const install_test_download_spec_tests = b.addInstallArtifact(test_download_spec_tests, .{});
     const tls_install_test_download_spec_tests = b.step("build-test:download_spec_tests", "Install the download_spec_tests test");
@@ -188,6 +213,20 @@ pub fn build(b: *std.Build) void {
     const tls_run_test_download_spec_tests = b.step("test:download_spec_tests", "Run the download_spec_tests test");
     tls_run_test_download_spec_tests.dependOn(&run_test_download_spec_tests.step);
     tls_run_test.dependOn(&run_test_download_spec_tests.step);
+
+    const test_write_spec_tests = b.addTest(.{
+        .name = "write_spec_tests",
+        .root_module = module_write_spec_tests,
+        .filters = b.option([][]const u8, "write_spec_tests.filters", "write_spec_tests test filters") orelse &[_][]const u8{},
+    });
+    const install_test_write_spec_tests = b.addInstallArtifact(test_write_spec_tests, .{});
+    const tls_install_test_write_spec_tests = b.step("build-test:write_spec_tests", "Install the write_spec_tests test");
+    tls_install_test_write_spec_tests.dependOn(&install_test_write_spec_tests.step);
+
+    const run_test_write_spec_tests = b.addRunArtifact(test_write_spec_tests);
+    const tls_run_test_write_spec_tests = b.step("test:write_spec_tests", "Run the write_spec_tests test");
+    tls_run_test_write_spec_tests.dependOn(&run_test_write_spec_tests.step);
+    tls_run_test.dependOn(&run_test_write_spec_tests.step);
 
     const module_int = b.createModule(.{
         .root_source_file = b.path("test/int/root.zig"),
@@ -199,7 +238,7 @@ pub fn build(b: *std.Build) void {
     const test_int = b.addTest(.{
         .name = "int",
         .root_module = module_int,
-        .filters = &[_][]const u8{},
+        .filters = b.option([][]const u8, "int.filters", "int test filters") orelse &[_][]const u8{},
     });
     const install_test_int = b.addInstallArtifact(test_int, .{});
     const tls_install_test_int = b.step("build-test:int", "Install the int test");
@@ -209,6 +248,27 @@ pub fn build(b: *std.Build) void {
     const tls_run_test_int = b.step("test:int", "Run the int test");
     tls_run_test_int.dependOn(&run_test_int.step);
     tls_run_test.dependOn(&run_test_int.step);
+
+    const module_spec_tests = b.createModule(.{
+        .root_source_file = b.path("test/spec/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    b.modules.put(b.dupe("spec_tests"), module_spec_tests) catch @panic("OOM");
+
+    const test_spec_tests = b.addTest(.{
+        .name = "spec_tests",
+        .root_module = module_spec_tests,
+        .filters = b.option([][]const u8, "spec_tests.filters", "spec_tests test filters") orelse &[_][]const u8{},
+    });
+    const install_test_spec_tests = b.addInstallArtifact(test_spec_tests, .{});
+    const tls_install_test_spec_tests = b.step("build-test:spec_tests", "Install the spec_tests test");
+    tls_install_test_spec_tests.dependOn(&install_test_spec_tests.step);
+
+    const run_test_spec_tests = b.addRunArtifact(test_spec_tests);
+    const tls_run_test_spec_tests = b.step("test:spec_tests", "Run the spec_tests test");
+    tls_run_test_spec_tests.dependOn(&run_test_spec_tests.step);
+    tls_run_test.dependOn(&run_test_spec_tests.step);
 
     module_config.addImport("build_options", options_module_build_options);
     module_config.addImport("preset", module_preset);
@@ -234,6 +294,12 @@ pub fn build(b: *std.Build) void {
 
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 
+    module_write_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
+    module_write_spec_tests.addImport("config", module_config);
+    module_write_spec_tests.addImport("preset", module_preset);
+    module_write_spec_tests.addImport("consensus_types", module_consensus_types);
+    module_write_spec_tests.addImport("state_transition", module_state_transition);
+
     module_int.addImport("build_options", options_module_build_options);
     module_int.addImport("ssz", dep_ssz.module("ssz"));
     module_int.addImport("state_transition", module_state_transition);
@@ -241,4 +307,13 @@ pub fn build(b: *std.Build) void {
     module_int.addImport("consensus_types", module_consensus_types);
     module_int.addImport("preset", module_preset);
     module_int.addImport("constants", module_constants);
+
+    module_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
+    module_spec_tests.addImport("consensus_types", module_consensus_types);
+    module_spec_tests.addImport("config", module_config);
+    module_spec_tests.addImport("preset", module_preset);
+    module_spec_tests.addImport("snappy", dep_snappy.module("snappy"));
+    module_spec_tests.addImport("state_transition", module_state_transition);
+    module_spec_tests.addImport("ssz", dep_ssz.module("ssz"));
+    module_spec_tests.addImport("blst", dep_blst.module("blst"));
 }

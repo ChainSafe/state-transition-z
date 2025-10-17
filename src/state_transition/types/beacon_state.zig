@@ -42,6 +42,45 @@ pub const BeaconStateAllForks = union(enum) {
     deneb: *BeaconStateDeneb,
     electra: *BeaconStateElectra,
 
+    pub fn init(f: ForkSeq, state_any: anytype) !@This() {
+        var state: @This() = undefined;
+
+        switch (f) {
+            .phase0 => {
+                const T = ssz.phase0.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .phase0 = src };
+            },
+            .altair => {
+                const T = ssz.altair.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .altair = src };
+            },
+            .bellatrix => {
+                const T = ssz.bellatrix.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .bellatrix = src };
+            },
+            .capella => {
+                const T = ssz.capella.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .capella = src };
+            },
+            .deneb => {
+                const T = ssz.deneb.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .deneb = src };
+            },
+            .electra => {
+                const T = ssz.electra.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .electra = src };
+            },
+        }
+
+        return state;
+    }
+
     pub fn format(
         self: BeaconStateAllForks,
         comptime fmt: []const u8,

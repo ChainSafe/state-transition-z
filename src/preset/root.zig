@@ -3,7 +3,8 @@ const testing = std.testing;
 const preset_str = @import("build_options").preset;
 const c = @import("constants");
 
-pub const preset = @import("./preset.zig").active_preset;
+pub const preset = @import("./preset.zig").preset;
+pub const active_preset = @import("./preset.zig").active_preset;
 pub const Preset = @import("./preset.zig").Preset;
 
 // not in use for now, copied from lodestar ts params
