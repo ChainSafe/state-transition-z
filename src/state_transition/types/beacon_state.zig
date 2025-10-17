@@ -59,34 +59,41 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn clone(self: *const BeaconStateAllForks, allocator: std.mem.Allocator) !*BeaconStateAllForks {
         const out = try allocator.create(BeaconStateAllForks);
+        errdefer allocator.destroy(out);
         switch (self.*) {
             .phase0 => |state| {
                 const cloned_state = try allocator.create(BeaconStatePhase0);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .phase0 = cloned_state };
                 try ssz.phase0.BeaconState.clone(allocator, state, cloned_state);
             },
             .altair => |state| {
                 const cloned_state = try allocator.create(BeaconStateAltair);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .altair = cloned_state };
                 try ssz.altair.BeaconState.clone(allocator, state, cloned_state);
             },
             .bellatrix => |state| {
                 const cloned_state = try allocator.create(BeaconStateBellatrix);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .bellatrix = cloned_state };
                 try ssz.bellatrix.BeaconState.clone(allocator, state, cloned_state);
             },
             .capella => |state| {
                 const cloned_state = try allocator.create(BeaconStateCapella);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .capella = cloned_state };
                 try ssz.capella.BeaconState.clone(allocator, state, cloned_state);
             },
             .deneb => |state| {
                 const cloned_state = try allocator.create(BeaconStateDeneb);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .deneb = cloned_state };
                 try ssz.deneb.BeaconState.clone(allocator, state, cloned_state);
             },
             .electra => |state| {
                 const cloned_state = try allocator.create(BeaconStateElectra);
+                errdefer allocator.destroy(cloned_state);
                 out.* = .{ .electra = cloned_state };
                 try ssz.electra.BeaconState.clone(allocator, state, cloned_state);
             },
@@ -666,6 +673,7 @@ pub const BeaconStateAllForks = union(enum) {
 };
 
 test "electra - sanity" {
+    const allocator = std.testing.allocator;
     var electra_state = ssz.electra.BeaconState.default_value;
     electra_state.slot = 12345;
     var beacon_state = BeaconStateAllForks{
@@ -680,10 +688,27 @@ test "electra - sanity" {
     try std.testing.expect(beacon_state.slot() == 2025);
 
     var out: [32]u8 = undefined;
-    try beacon_state.hashTreeRoot(std.testing.allocator, &out);
+    try beacon_state.hashTreeRoot(allocator, &out);
     try expect(!std.mem.eql(u8, &[_]u8{0} ** 32, &out));
 
     // TODO: more tests
+}
+
+test "clone - sanity" {
+    const allocator = std.testing.allocator;
+    var electra_state = ssz.electra.BeaconState.default_value;
+    electra_state.slot = 12345;
+    var beacon_state = BeaconStateAllForks{
+        .electra = &electra_state,
+    };
+
+    // test the clone() and deinit() works fine without memory leak
+    const cloned_state = try beacon_state.clone(allocator);
+    try expect(cloned_state.slot() == 12345);
+    defer {
+        cloned_state.deinit(allocator);
+        allocator.destroy(cloned_state);
+    }
 }
 
 test "upgrade state - sanity" {

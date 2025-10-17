@@ -40,6 +40,7 @@ pub const EpochShuffling = struct {
         const committees = try buildCommitteesFromShuffling(allocator, shuffling);
 
         const epoch_shuffling_ptr = try allocator.create(EpochShuffling);
+        errdefer allocator.destroy(epoch_shuffling_ptr);
         epoch_shuffling_ptr.* = EpochShuffling{
             .allocator = allocator,
             .epoch = epoch,

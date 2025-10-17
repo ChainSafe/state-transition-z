@@ -24,7 +24,6 @@ const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
 const BlindedBeaconBlockBody = @import("types/beacon_block.zig").BlindedBeaconBlockBody;
 const BeaconBlockBody = @import("types/beacon_block.zig").BeaconBlockBody;
 const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
-const TestCachedBeaconStateAllForks = @import("../../test/int/generate_state.zig").TestCachedBeaconStateAllForks;
 const EpochTransitionCacheOpts = @import("cache/epoch_transition_cache.zig").EpochTransitionCacheOpts;
 const EpochTransitionCache = @import("cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ReusedEpochTransitionCache = @import("cache/epoch_transition_cache.zig").ReusedEpochTransitionCache;
@@ -115,6 +114,11 @@ pub fn stateTransition(
     };
 
     const post_state = try state.clone(allocator);
+
+    errdefer {
+        post_state.deinit();
+        allocator.destroy(post_state);
+    }
 
     //TODO(bing): metrics
     //if (metrics) {

@@ -12,6 +12,7 @@ pub fn ReferenceCount(comptime T: type) type {
 
         pub fn init(allocator: Allocator, instance: T) !*@This() {
             const ptr = try allocator.create(@This());
+            errdefer allocator.destroy(ptr);
             ptr.* = .{
                 .allocator = allocator,
                 ._ref_count = 1,

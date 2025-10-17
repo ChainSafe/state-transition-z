@@ -33,6 +33,7 @@ pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllFo
 
     const aggregated_pk = try AggregatePublicKey.aggregateSerialized(pubkeys[0..], false);
     const sync_committee = try allocator.create(SyncCommittee);
+    errdefer allocator.destroy(sync_committee);
     sync_committee.* = .{
         .pubkeys = pubkeys,
         .aggregate_pubkey = aggregated_pk,

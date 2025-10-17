@@ -278,6 +278,7 @@ pub const EpochCache = struct {
         }
 
         const epoch_cache_ptr = try allocator.create(EpochCache);
+        errdefer allocator.destroy(epoch_cache_ptr);
 
         epoch_cache_ptr.* = .{
             .allocator = allocator,
@@ -366,6 +367,7 @@ pub const EpochCache = struct {
         };
 
         const epoch_cache_ptr = try allocator.create(EpochCache);
+        errdefer allocator.destroy(epoch_cache_ptr);
         epoch_cache_ptr.* = epoch_cache;
         return epoch_cache_ptr;
     }

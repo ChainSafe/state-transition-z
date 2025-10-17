@@ -18,6 +18,7 @@ pub fn PubkeyIndexMap(comptime T: type) type {
 
         pub fn init(allocator: Allocator) !*@This() {
             const instance = try allocator.create(@This());
+            errdefer allocator.destroy(instance);
             instance.* = .{ .map = std.AutoHashMap(Key, Val).init(allocator) };
             return instance;
         }
