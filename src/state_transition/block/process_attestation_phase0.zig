@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
+const s = @import("ssz");
 const preset = @import("preset").preset;
 const ForkSeq = @import("config").ForkSeq;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
@@ -73,8 +74,12 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
         if (data.index != 0) {
             return error.InvalidAttestationNonZeroDataIndex;
         }
-        var committee_indices: []usize = undefined;
-        _ = try attestation.committee_bits.getTrueBitIndexes(committee_indices[0..]);
+        var full_committee_indices: [preset.MAX_COMMITTEES_PER_SLOT]usize = undefined;
+        const count = try attestation.committee_bits.getTrueBitIndexes(full_committee_indices[0..]);
+        if (count != committee_count) {
+            return error.InvalidAttestationCommitteeBitsCountMismatch;
+        }
+        const committee_indices = full_committee_indices[0..committee_count];
         if (committee_indices.len == 0) {
             return error.InvalidAttestationCommitteeBitsEmpty;
         }
@@ -85,8 +90,13 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
             return error.InvalidAttestationInvalidLstCommitteeIndex;
         }
 
-        var aggregation_bits_array: []bool = undefined;
+        var full_aggregation_bits_array: [preset.MAX_VALIDATORS_PER_COMMITTEE * preset.MAX_COMMITTEES_PER_SLOT]bool = undefined;
+        if (attestation.aggregation_bits.bit_len > full_aggregation_bits_array.len) {
+            return error.InvalidAttestationAggregationBitsLengthExceedsMax;
+        }
+        var aggregation_bits_array = full_aggregation_bits_array[0..(attestation.aggregation_bits.bit_len)];
         try attestation.aggregation_bits.toBoolSlice(&aggregation_bits_array);
+
         // instead of implementing/calling getBeaconCommittees(slot, committee_indices.items), we call getBeaconCommittee(slot, index)
         var committee_offset: usize = 0;
         for (committee_indices) |committee_index| {
