@@ -24,7 +24,8 @@ test "state transition - electra block" {
         .{ .transition_opt = .{ .verify_signatures = true }, .expect_error = true },
         .{ .transition_opt = .{ .verify_signatures = false, .verify_proposer = true }, .expect_error = true },
         .{ .transition_opt = .{ .verify_signatures = false, .verify_proposer = false, .verify_state_root = true }, .expect_error = true },
-        // .{ .transition_opt = .{ .verify_signatures = false, .verify_proposer = false, .verify_state_root = false }, .expect_error = true },
+        // this runs through epoch transition + process block without verifications
+        .{ .transition_opt = .{ .verify_signatures = false, .verify_proposer = false, .verify_state_root = false }, .expect_error = false },
     };
     inline for (test_cases) |tc| {
         const allocator = std.testing.allocator;
