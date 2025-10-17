@@ -54,21 +54,21 @@ fn processSlotsWithTransientCache(
     slot: Slot,
     _: EpochTransitionCacheOpts,
 ) !void {
-    var post_state_slot = post_state.state.slot();
-    if (post_state_slot > slot) return error.outdatedSlot;
+    var cached_state = post_state.state;
+    if (cached_state.slot() > slot) return error.outdatedSlot;
 
     const validator_count = post_state.epoch_cache_ref.get().current_shuffling.get().active_indices.len;
 
+    // TODO: do not always allocate
     var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
     defer reused_epoch_transition_cache.deinit();
     var epoch_transition_cache: EpochTransitionCache = undefined;
     defer epoch_transition_cache.deinit();
 
-    while (post_state_slot < slot) {
+    while (cached_state.slot() < slot) {
         try processSlot(allocator, post_state);
 
-        if ((post_state_slot + 1) % preset.SLOTS_PER_EPOCH == 0) {
-            _ = post_state.config.forkSeq(post_state_slot);
+        if ((cached_state.slot() + 1) % preset.SLOTS_PER_EPOCH == 0) {
             // TODO(bing): metrics
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
@@ -78,14 +78,16 @@ fn processSlotsWithTransientCache(
 
             // TODO(bing): registerValidatorStatuses
 
-            post_state_slot += 1;
+            cached_state.slotPtr().* += 1;
 
-            // afterProcessEpoch
+            try post_state.epoch_cache_ref.get().afterProcessEpoch(post_state, &epoch_transition_cache);
             // post_state.commit
+        } else {
+            cached_state.slotPtr().* += 1;
         }
 
         //epochTransitionTimer
-        const state_epoch = computeEpochAtSlot(post_state_slot);
+        const state_epoch = computeEpochAtSlot(cached_state.slot());
 
         for (post_state.config.forks_descending_epoch_order) |f| {
             if (state_epoch == f.epoch) {
