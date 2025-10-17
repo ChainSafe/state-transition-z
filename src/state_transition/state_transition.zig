@@ -147,7 +147,7 @@ pub fn stateTransition(
             .execution_payload_status = .valid,
             .data_availability_status = .available,
         },
-        .{},
+        .{ .verify_signature = opts.verify_signatures },
     );
     //
     // TODO(bing): commit
