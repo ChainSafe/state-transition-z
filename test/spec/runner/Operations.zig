@@ -178,8 +178,12 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                     try state_transition.processDepositRequest(self.pre.allocator, self.pre.cached_state, &self.op);
                 },
                 .execution_payload => {
-                    return error.SkipZigTest;
-                    // try state_transition.processExecutionPayload(self.pre.allocator, self.pre.cached_state, &self.op);
+                    try state_transition.processExecutionPayload(
+                        self.pre.allocator,
+                        self.pre.cached_state,
+                        .{ .regular = @unionInit(state_transition.BeaconBlockBody, @tagName(fork), &self.op) },
+                        .{ .data_availability_status = .available, .execution_payload_status = .valid },
+                    );
                 },
                 .proposer_slashing => {
                     try state_transition.processProposerSlashing(self.pre.cached_state, &self.op, verify);
