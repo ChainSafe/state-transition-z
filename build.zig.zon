@@ -11,7 +11,7 @@
             .hash = "blst_z-0.0.0-td3FNDOMAACf6Apg5icx1KkzpVeIR-9oOSK0WSILFHx8",
         },
         .ssz = .{
-            .url = "git+https://github.com/ChainSafe/ssz-z.git#76cde3c7ea23b33d2789e8e372003272abe0e335",
+            .url = "git+https://github.com/chainSafe/ssz-z#76cde3c7ea23b33d2789e8e372003272abe0e335",
             .hash = "ssz-0.1.0-yORmzN0NBQDTFE4aEPt3iwqZCa66VEPtpWTZ9_eS3cYO",
         },
         .snappy = .{

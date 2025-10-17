@@ -12,68 +12,53 @@ const capella = consensus_types.capella;
 const deneb = consensus_types.deneb;
 const electra = consensus_types.electra;
 
-// TODO: Most of the runners have fixed ssz types ie. Given a dir, we can already derive which
-// snappy file has what type and have this info written in test_type/schema.
-// There is an exception which is `transition`. One needs to read meta.yaml to figure out
-// whether a block_x.ssz_snappy belong to old fork or new fork. Current design of loadTestCase
-// does not handle this.
-pub fn loadTestCase(comptime Schema: type, comptime SchemaOut: type, dir: std.fs.Dir, allocator: std.mem.Allocator, out: *SchemaOut) !void {
-    var it = dir.iterate();
+pub const BlsSetting = enum {
+    default,
+    required,
+    ignored,
 
-    while (try it.next()) |entry| {
-        // Ignore all non-file
-        if (entry.kind != .file) continue;
-        const name = entry.name;
-        // Ignore all hidden files
-        if (name.len == 0) continue;
-        if (name[0] == '.') continue;
+    pub fn verify(self: BlsSetting) bool {
+        return switch (self) {
+            .default, .required => true,
+            .ignored => false,
+        };
+    }
+};
 
-        const dot_idx = std.mem.lastIndexOfScalar(u8, name, '.').?;
-        const file_name = name[0..dot_idx];
-        const extension = name[dot_idx + 1 ..];
+pub fn loadBlsSetting(allocator: std.mem.Allocator, dir: std.fs.Dir) BlsSetting {
+    var file = dir.openFile("meta.yaml", .{}) catch return .default;
+    defer file.close();
 
-        // Ignore all non-snappy files
-        if (!std.mem.eql(u8, extension, "ssz_snappy")) continue;
+    const contents = file.readToEndAlloc(allocator, 100) catch return .default;
+    defer allocator.free(contents);
 
-        var handled = false;
-        inline for (@typeInfo(Schema).@"struct".fields) |fld| {
-            if (std.mem.eql(u8, file_name, fld.name)) {
-                const ST = fld.type;
-                var object_file = try dir.openFile(name, .{});
-                defer object_file.close();
+    if (std.mem.indexOf(u8, contents, "bls_setting: 0") != null) {
+        return .default;
+    } else if (std.mem.indexOf(u8, contents, "bls_setting: 1") != null) {
+        return .required;
+    } else if (std.mem.indexOf(u8, contents, "bls_setting: 2") != null) {
+        return .ignored;
+    } else {
+        return .default;
+    }
+}
 
-                const value_bytes = try object_file.readToEndAlloc(allocator, 100_000_000);
-                defer allocator.free(value_bytes);
+pub fn loadSszSnappyValue(comptime ST: type, allocator: std.mem.Allocator, dir: std.fs.Dir, file_name: []const u8, out: *ST.Type) !void {
+    var object_file = try dir.openFile(file_name, .{});
+    defer object_file.close();
 
-                const serialized_buf = try allocator.alloc(u8, try snappy.uncompressedLength(value_bytes));
-                defer allocator.free(serialized_buf);
-                const serialized_len = try snappy.uncompress(value_bytes, serialized_buf);
-                const serialized = serialized_buf[0..serialized_len];
+    const value_bytes = try object_file.readToEndAlloc(allocator, 100_000_000);
+    defer allocator.free(value_bytes);
 
-                const value = try allocator.create(ST.Type);
-                value.* = ST.default_value;
-                errdefer {
-                    if (!comptime isFixedType(ST)) {
-                        ST.deinit(allocator, value);
-                    }
-                    allocator.destroy(value);
-                }
+    const serialized_buf = try allocator.alloc(u8, try snappy.uncompressedLength(value_bytes));
+    defer allocator.free(serialized_buf);
+    const serialized_len = try snappy.uncompress(value_bytes, serialized_buf);
+    const serialized = serialized_buf[0..serialized_len];
 
-                if (comptime isFixedType(ST)) {
-                    try ST.deserializeFromBytes(serialized, value);
-                } else {
-                    try ST.deserializeFromBytes(allocator, serialized, value);
-                }
-
-                @field(out, fld.name) = value;
-                handled = true;
-                break;
-            }
-        }
-
-        if (!handled) {
-            return error.SchemaLookupError;
-        }
+    if (comptime isFixedType(ST)) {
+        try ST.deserializeFromBytes(serialized, out);
+    } else {
+        try ST.deserializeFromBytes(allocator, serialized, out);
     }
 }
 

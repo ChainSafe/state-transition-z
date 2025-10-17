@@ -160,4 +160,5 @@ const PresetMinimal = struct {
 
 const preset_str = @import("build_options").preset;
 
-pub const active_preset = if (std.mem.eql(u8, preset_str, "minimal")) PresetMinimal else PresetMainnet;
+pub const preset = if (std.mem.eql(u8, preset_str, "minimal")) PresetMinimal else PresetMainnet;
+pub const active_preset = if (std.mem.eql(u8, preset_str, "minimal")) Preset.minimal else Preset.mainnet;

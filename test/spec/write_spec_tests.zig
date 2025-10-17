@@ -1,192 +1,106 @@
 const std = @import("std");
 const ForkSeq = @import("config").ForkSeq;
-const Preset = @import("preset").Preset;
-const SpecTestRunner = @import("./test_type/runner.zig").SpecTestRunner;
-const test_template = @import("test_templates.zig");
 const spec_test_options = @import("spec_test_options");
+const RunnerKind = @import("./runner_kind.zig").RunnerKind;
 
-// Terminology:
-//
-// File path structure:
-// ```
-// tests/
-//   <preset name>/                     [general, mainnet, minimal]
-//     <fork name>/                     [phase0, altair, bellatrix]
-//       <test runner name>/            [bls, ssz_static, fork]
-//         <test handler name>/         ...
-//           <test suite name>/
-//             <test case>/<output part>
-// ```
-//
-// Examples
-// ```
-//       / preset  / fork   / test runner      / test handler / test suite   / test case
-//
-// tests / general / phase0 / bls              / aggregate    / small        / aggregate_na_signatures/data.yaml
-// tests / general / phase0 / ssz_generic      / basic_vector / valid        / vec_bool_1_max/meta.yaml
-// tests / mainnet / altair / ssz_static       / Validator    / ssz_random   / case_0/roots.yaml
-// tests / mainnet / altair / fork             / fork         / pyspec_tests / altair_fork_random_0/meta.yaml
-// tests / minimal / phase0 / operations       / attestation  / pyspec_tests / at_max_inclusion_slot/pre.ssz_snappy
-// ```
-// Ref: https://github.com/ethereum/consensus-specs/tree/dev/tests/formats#test-structure
+const supported_forks = [_]ForkSeq{
+    .phase0,
+    .altair,
+    .bellatrix,
+    .capella,
+    .deneb,
+    .electra,
+};
+
+const supported_test_runners = [_]RunnerKind{
+    .operations,
+    .sanity,
+};
+
+fn TestWriter(comptime kind: RunnerKind) type {
+    return switch (kind) {
+        .operations => @import("./writer/Operations.zig"),
+        .sanity => @import("./writer/Sanity.zig"),
+        else => @compileError("Unsupported test runner"),
+    };
+}
 
 pub fn main() !void {
-    const allocator = std.heap.page_allocator;
-
-    // minimal preset includes many more testcases
-    // so use that for generating tests
-    const preset = Preset.mainnet;
-    const supported_forks = [_]ForkSeq{
-        .phase0,
-        .altair,
-        .bellatrix,
-        .capella,
-        .deneb,
-        .electra,
-    };
-    const supported_test_runners = [_]SpecTestRunner{
-        .operations,
-    };
-
     const test_case_dir = "test/spec/test_case/";
 
-    const preset_tests_dir_name = try std.fs.path.join(allocator, &[_][]const u8{
-        spec_test_options.spec_test_out_dir,
-        spec_test_options.spec_test_version,
-        @tagName(preset),
-        "tests",
-        @tagName(preset),
-    });
-    defer allocator.free(preset_tests_dir_name);
-
-    inline for (supported_test_runners) |test_runner| {
-        const test_case_file = test_case_dir ++ @tagName(test_runner) ++ "_tests.zig";
+    inline for (supported_test_runners) |kind| {
+        const test_case_file = test_case_dir ++ @tagName(kind) ++ "_tests.zig";
         const out = try std.fs.cwd().createFile(test_case_file, .{});
         defer out.close();
 
         const writer = out.writer().any();
-        try writeTestCaseHeader(writer, test_runner);
+        try writeTests(&supported_forks, kind, writer);
+    }
 
-        for (supported_forks) |fork| {
-            const test_runner_dir_name = try std.fs.path.join(allocator, &[_][]const u8{
-                preset_tests_dir_name,
-                @tagName(fork),
-                @tagName(test_runner),
-            });
-            defer allocator.free(test_runner_dir_name);
-
-            const test_handler_dir_names = try listSubdirectories(allocator, &[_][]const u8{test_runner_dir_name});
-            defer {
-                for (test_handler_dir_names) |el| allocator.free(el);
-                allocator.free(test_handler_dir_names);
-            }
-            const test_suite_dir_names = try listSubdirectories(allocator, test_handler_dir_names);
-            defer {
-                for (test_suite_dir_names) |el| allocator.free(el);
-                allocator.free(test_suite_dir_names);
-            }
-            const test_case_dir_names = try listSubdirectories(allocator, test_suite_dir_names);
-            defer {
-                for (test_case_dir_names) |el| allocator.free(el);
-                allocator.free(test_case_dir_names);
-            }
-
-            for (test_case_dir_names) |test_case_dir_name| {
-                var split_it = std.mem.splitBackwardsSequence(u8, test_case_dir_name, "/");
-                const test_case_name = split_it.next().?;
-                _ = split_it.next();
-                const test_handler_name = split_it.next().?;
-
-                try writeTestCase(writer, fork, test_runner, test_handler_name, test_case_name, test_case_dir_name);
-            }
-        }
-
-        try writeTestCaseFooter(writer, test_runner);
+    {
+        const test_root_file = "test/spec/root.zig";
+        const out = try std.fs.cwd().createFile(test_root_file, .{});
+        defer out.close();
+        const writer = out.writer().any();
+        try writeTestRoot(&supported_test_runners, writer);
     }
 }
 
-// List all subdirectories for each directory in `directory_names`. The result is a list
-// of subdirectory paths that join with `directory_names`
-fn listSubdirectories(allocator: std.mem.Allocator, directory_names: []const []const u8) ![][]const u8 {
-    var subdirectories = std.ArrayList([]const u8).init(allocator);
-    errdefer {
-        for (subdirectories.items) |el| allocator.free(el);
-        subdirectories.deinit();
+pub fn writeTestRoot(comptime kinds: []const RunnerKind, writer: std.io.AnyWriter) !void {
+    try writer.print(
+        \\// This file is generated by write_spec_tests.zig.
+        \\// Do not commit changes by hand.
+        \\
+        \\const testing = @import("std").testing;
+        \\
+        \\comptime {{
+        \\
+    , .{});
+    inline for (kinds) |kind| {
+        try writer.print(
+            \\     testing.refAllDecls(@import("./test_case/{s}_tests.zig"));
+            \\
+        , .{@tagName(kind)});
     }
-
-    for (directory_names) |directory_name| {
-        var directory = try std.fs.cwd().openDir(directory_name, .{ .iterate = true });
-        defer directory.close();
-        var it = directory.iterate();
-        while (try it.next()) |entry| {
-            if (entry.kind == .directory) {
-                try subdirectories.append(try std.fs.path.join(allocator, &[_][]const u8{
-                    directory_name,
-                    entry.name,
-                }));
-            }
-        }
-    }
-
-    return subdirectories.toOwnedSlice();
+    try writer.print(
+        \\}}
+        \\
+    , .{});
 }
 
-fn writeTestCaseHeader(writer: std.io.AnyWriter, test_runner: SpecTestRunner) !void {
-    var header: []const u8 = undefined;
-
-    switch (test_runner) {
-        .operations => {
-            header = test_template.OPERATIONS_HEADER;
-        },
-        else => {
-            return error.UnsupportedTestRunner;
-        },
-    }
-
-    try writer.writeAll(header);
-}
-
-fn writeTestCaseFooter(writer: std.io.AnyWriter, test_runner: SpecTestRunner) !void {
-    var header: []const u8 = undefined;
-
-    switch (test_runner) {
-        .operations => {
-            header = test_template.OPERATIONS_FOOTER;
-        },
-        else => {
-            return error.UnsupportedTestRunner;
-        },
-    }
-
-    try writer.writeAll(header);
-}
-
-fn writeTestCase(
+pub fn writeTests(
+    comptime forks: []const ForkSeq,
+    comptime kind: RunnerKind,
     writer: std.io.AnyWriter,
-    fork: ForkSeq,
-    test_runner: SpecTestRunner,
-    test_handler: []const u8,
-    test_case: []const u8,
-    test_case_dir_name: []const u8,
 ) !void {
-    switch (test_runner) {
-        .operations => {
-            try writer.print(test_template.OPERATIONS_TEST_TEMPLATE, .{
-                @tagName(fork),
-                @tagName(test_runner),
-                test_handler,
-                test_case,
-                @tagName(fork),
-                @tagName(test_runner),
-                test_handler,
-                test_case,
-                test_case_dir_name,
-                @tagName(fork),
-                test_handler,
-            });
-        },
-        else => {
-            return error.UnsupportedTestRunner;
-        },
+    try TestWriter(kind).writeHeader(writer);
+
+    var root_dir = try std.fs.cwd().openDir(spec_test_options.spec_test_out_dir ++ "/" ++ spec_test_options.spec_test_version, .{});
+    defer root_dir.close();
+
+    // minimal preset includes many more testcases and is a superset of mainnet testcases
+    var preset_dir = try root_dir.openDir("minimal/tests/minimal", .{});
+    defer preset_dir.close();
+
+    inline for (forks) |fork| {
+        var fork_dir = try preset_dir.openDir(@tagName(fork) ++ "/" ++ @tagName(kind), .{});
+        defer fork_dir.close();
+
+        inline for (TestWriter(kind).handlers) |handler| {
+            st: {
+                var suite_dir = fork_dir.openDir(comptime handler.suiteName(), .{ .iterate = true }) catch break :st;
+                defer suite_dir.close();
+
+                var test_case_iterator = suite_dir.iterate();
+                while (try test_case_iterator.next()) |test_case_entry| {
+                    if (test_case_entry.kind != .directory) {
+                        continue;
+                    }
+                    const test_case_name = test_case_entry.name;
+
+                    try TestWriter(kind).writeTest(writer, fork, handler, test_case_name);
+                }
+            }
+        }
     }
 }
