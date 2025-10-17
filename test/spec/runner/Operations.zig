@@ -142,10 +142,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
         }
 
         pub fn process(self: *Self) !void {
-            const verify = switch (self.bls_setting) {
-                .default, .required => true,
-                .ignored => false,
-            };
+            const verify = self.bls_setting.verify();
 
             switch (operation) {
                 .attestation => {

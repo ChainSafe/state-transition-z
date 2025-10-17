@@ -16,6 +16,13 @@ pub const BlsSetting = enum {
     default,
     required,
     ignored,
+
+    pub fn verify(self: BlsSetting) bool {
+        return switch (self) {
+            .default, .required => true,
+            .ignored => false,
+        };
+    }
 };
 
 pub fn loadBlsSetting(allocator: std.mem.Allocator, dir: std.fs.Dir) BlsSetting {
