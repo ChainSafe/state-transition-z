@@ -3,54 +3,46 @@ const ForkSeq = @import("config").ForkSeq;
 const spec_test_options = @import("spec_test_options");
 const RunnerKind = @import("./runner_kind.zig").RunnerKind;
 
-// Terminology:
-//
-// File path structure:
-// ```
-// tests/
-//   <preset name>/                     [general, mainnet, minimal]
-//     <fork name>/                     [phase0, altair, bellatrix]
-//       <test runner name>/            [bls, ssz_static, fork]
-//         <test handler name>/         ...
-//           <test suite name>/
-//             <test case>/<output part>
-// ```
-//
-// Examples
-// ```
-//       / preset  / fork   / test runner      / test handler / test suite   / test case
-//
-// tests / general / phase0 / bls              / aggregate    / small        / aggregate_na_signatures/data.yaml
-// tests / general / phase0 / ssz_generic      / basic_vector / valid        / vec_bool_1_max/meta.yaml
-// tests / mainnet / altair / ssz_static       / Validator    / ssz_random   / case_0/roots.yaml
-// tests / mainnet / altair / fork             / fork         / pyspec_tests / altair_fork_random_0/meta.yaml
-// tests / minimal / phase0 / operations       / attestation  / pyspec_tests / at_max_inclusion_slot/pre.ssz_snappy
-// ```
-// Ref: https://github.com/ethereum/consensus-specs/tree/dev/tests/formats#test-structure
+const supported_forks = [_]ForkSeq{
+    .phase0,
+    .altair,
+    .bellatrix,
+    .capella,
+    .deneb,
+    .electra,
+};
+
+const supported_test_runners = [_]RunnerKind{
+    .operations,
+    .sanity,
+};
+
+fn TestWriter(comptime kind: RunnerKind) type {
+    return switch (kind) {
+        .operations => @import("./writer/Operations.zig"),
+        .sanity => @import("./writer/Sanity.zig"),
+        else => @compileError("Unsupported test runner"),
+    };
+}
+
+fn Runner(comptime kind: RunnerKind) type {
+    return switch (kind) {
+        .operations => @import("./runner/Operations.zig"),
+        .sanity => @import("./runner/Sanity.zig"),
+        else => @compileError("Unsupported test runner"),
+    };
+}
 
 pub fn main() !void {
-    const supported_forks = [_]ForkSeq{
-        .phase0,
-        .altair,
-        .bellatrix,
-        .capella,
-        .deneb,
-        .electra,
-    };
-    const supported_test_runners = [_]RunnerKind{
-        .operations,
-        .sanity,
-    };
-
     const test_case_dir = "test/spec/test_case/";
 
-    inline for (supported_test_runners) |test_runner| {
-        const test_case_file = test_case_dir ++ @tagName(test_runner) ++ "_tests.zig";
+    inline for (supported_test_runners) |kind| {
+        const test_case_file = test_case_dir ++ @tagName(kind) ++ "_tests.zig";
         const out = try std.fs.cwd().createFile(test_case_file, .{});
         defer out.close();
 
         const writer = out.writer().any();
-        try writeTests(&supported_forks, test_runner, writer);
+        try writeTests(&supported_forks, kind, writer);
     }
 
     {
@@ -89,19 +81,7 @@ pub fn writeTests(
     comptime kind: RunnerKind,
     writer: std.io.AnyWriter,
 ) !void {
-    const TestWriter = switch (kind) {
-        .operations => @import("./writer/Operations.zig"),
-        .sanity => @import("./writer/Sanity.zig"),
-        else => @compileError("Unsupported test runner"),
-    };
-
-    const Runner = switch (kind) {
-        .operations => @import("./runner/Operations.zig"),
-        .sanity => @import("./runner/Sanity.zig"),
-        else => @compileError("Unsupported test runner"),
-    };
-
-    try TestWriter.writeHeader(writer);
+    try TestWriter(kind).writeHeader(writer);
 
     var root_dir = try std.fs.cwd().openDir(spec_test_options.spec_test_out_dir ++ "/" ++ spec_test_options.spec_test_version, .{});
     defer root_dir.close();
@@ -114,7 +94,7 @@ pub fn writeTests(
         var fork_dir = try preset_dir.openDir(@tagName(fork) ++ "/" ++ @tagName(kind), .{});
         defer fork_dir.close();
 
-        inline for (Runner.handlers) |handler| {
+        inline for (Runner(kind).handlers) |handler| {
             st: {
                 var suite_dir = fork_dir.openDir(comptime handler.suiteName(), .{ .iterate = true }) catch break :st;
                 defer suite_dir.close();
@@ -126,7 +106,7 @@ pub fn writeTests(
                     }
                     const test_case_name = test_case_entry.name;
 
-                    try TestWriter.writeTest(writer, fork, handler, test_case_name);
+                    try TestWriter(kind).writeTest(writer, fork, handler, test_case_name);
                 }
             }
         }

@@ -4,12 +4,12 @@ This framework generates and runs Zig-based tests for Ethereum consensus specifi
 
 ## Overview
 
-The framework automates the creation of test files for various forks and test runners, ensuring compliance with spec tests. It uses Zig to load, process, and validate test cases from SSZ-encoded data.
+The framework automates the creation of test files for various forks and test runners, ensuring compliance with spec tests.
 
 Key components:
 - **write_spec_tests.zig**: Main script to generate test files.
-- **runner/**: Directory containing runner implementations (e.g., Operations.zig).
 - **writer/**: Directory containing writer implementations for generating test code.
+- **runner/**: Directory containing runner implementations (e.g., Operations.zig).
 
 Generated files:
 - `test/spec/test_case/<runner>_tests.zig`: Contains test functions for each runner.
@@ -25,8 +25,8 @@ Generated files:
 
 ## Supported Components
 
-- **Forks**: phase0, altair, bellatrix, capella, deneb, electra.
-- **Test Runners**: Currently supports operations; see below for adding more.
+- **Forks**: See `supported_forks` in `write_spec_tests.zig`
+- **Test Runners**: See `supported_test_runners` in `write_spec_tests.zig`; see below for adding more.
 
 ## Adding a New Test Runner
 
@@ -35,8 +35,7 @@ To add support for a new test runner (e.g., `fork` or `sanity`):
 1. **Implement the Runner Module**: Create `runner/NewRunner.zig` defining the test case structure, handlers, and execution logic (similar to `Operations.zig`).
 2. **Implement the Writer Module**: Create `writer/NewRunner.zig` with functions to generate test code (e.g., `writeHeader` and `writeTest`).
 3. **Update RunnerKind Enum**: Add the new runner to the `RunnerKind` enum in `runner_kind.zig`.
-4. **Modify write_spec_tests.zig**: Add cases in the switches for `TestWriter` and `Runner` to import and use the new modules.
-5. **Update Supported Runners**: Add the new runner to the `supported_test_runners` array in `main()`.
+4. **Modify write_spec_tests.zig**: Add the new runner to the `supported_test_runners`, Add cases in the switches for `TestWriter` and `Runner` to import and use the new modules.
 
 Ensure the new runner follows the spec test formats and integrates with existing state transition logic.
 
