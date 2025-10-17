@@ -58,7 +58,7 @@ pub fn writeTestRoot(comptime kinds: []const RunnerKind, writer: std.io.AnyWrite
     , .{});
     inline for (kinds) |kind| {
         try writer.print(
-            \\     testing.refAllDecls(@import("./test_case/{s}_tests.zig"));
+            \\    testing.refAllDecls(@import("./test_case/{s}_tests.zig"));
             \\
         , .{@tagName(kind)});
     }
