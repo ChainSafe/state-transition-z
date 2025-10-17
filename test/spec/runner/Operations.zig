@@ -65,8 +65,6 @@ pub const Operation = enum {
 
 pub const Handler = Operation;
 
-pub const handlers = std.enums.values(Operation);
-
 pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime valid: bool) type {
     const ForkTypes = @field(ssz, fork.forkName());
     const OpType = @field(ForkTypes, operation.operationObject());

@@ -25,14 +25,6 @@ fn TestWriter(comptime kind: RunnerKind) type {
     };
 }
 
-fn Runner(comptime kind: RunnerKind) type {
-    return switch (kind) {
-        .operations => @import("./runner/Operations.zig"),
-        .sanity => @import("./runner/Sanity.zig"),
-        else => @compileError("Unsupported test runner"),
-    };
-}
-
 pub fn main() !void {
     const test_case_dir = "test/spec/test_case/";
 
@@ -94,7 +86,7 @@ pub fn writeTests(
         var fork_dir = try preset_dir.openDir(@tagName(fork) ++ "/" ++ @tagName(kind), .{});
         defer fork_dir.close();
 
-        inline for (Runner(kind).handlers) |handler| {
+        inline for (TestWriter(kind).handlers) |handler| {
             st: {
                 var suite_dir = fork_dir.openDir(comptime handler.suiteName(), .{ .iterate = true }) catch break :st;
                 defer suite_dir.close();

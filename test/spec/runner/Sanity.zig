@@ -21,8 +21,6 @@ pub const Handler = enum {
     }
 };
 
-pub const handlers = std.enums.values(Handler);
-
 pub fn SlotsTestCase(comptime fork: ForkSeq) type {
     const ForkTypes = @field(ssz, fork.forkName());
 

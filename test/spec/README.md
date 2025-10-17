@@ -33,9 +33,9 @@ Generated files:
 To add support for a new test runner (e.g., `fork` or `sanity`):
 
 1. **Implement the Runner Module**: Create `runner/NewRunner.zig` defining the test case structure, handlers, and execution logic (similar to `Operations.zig`).
-2. **Implement the Writer Module**: Create `writer/NewRunner.zig` with functions to generate test code (e.g., `writeHeader` and `writeTest`).
+2. **Implement the Writer Module**: Create `writer/NewRunner.zig` with decls to generate test code (e.g.,`handlers`, `writeHeader` and `writeTest`).
 3. **Update RunnerKind Enum**: Add the new runner to the `RunnerKind` enum in `runner_kind.zig`.
-4. **Modify write_spec_tests.zig**: Add the new runner to the `supported_test_runners`, Add cases in the switches for `TestWriter` and `Runner` to import and use the new modules.
+4. **Modify write_spec_tests.zig**: Add the new runner to the `supported_test_runners`, Add cases in the switches for `TestWriter` to import and use the new modules.
 
 Ensure the new runner follows the spec test formats and integrates with existing state transition logic.
 
