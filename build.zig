@@ -231,6 +231,7 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("blst", dep_blst.module("blst"));
     module_state_transition.addImport("preset", module_preset);
     module_state_transition.addImport("constants", module_constants);
+    module_state_transition.addImport("hex", module_hex);
 
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 

@@ -96,16 +96,18 @@ fn processSlotsWithTransientCache(
     }
 }
 
+pub const TransitionOpt = struct {
+    verify_state_root: bool = true,
+    verify_proposer: bool = true,
+    verify_signatures: bool = false,
+    do_not_transfer_cache: bool = false,
+};
+
 pub fn stateTransition(
     allocator: std.mem.Allocator,
     state: *CachedBeaconStateAllForks,
     signed_block: SignedBlock,
-    opts: struct {
-        verify_state_root: bool = true,
-        verify_proposer: bool = true,
-        verify_signatures: bool = false,
-        do_not_transfer_cache: bool = false,
-    },
+    opts: TransitionOpt,
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.message();
     const block_slot = switch (block) {

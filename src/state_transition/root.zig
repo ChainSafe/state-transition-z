@@ -49,6 +49,10 @@ pub const processOperations = @import("./block/process_operations.zig").processO
 pub const processSyncAggregate = @import("./block/process_sync_committee.zig").processSyncAggregate;
 pub const processBlobKzgCommitments = @import("./block/process_blob_kzg_commitments.zig").processBlobKzgCommitments;
 
+// utils
+pub const getBlockRootAtSlot = @import("./utils/block_root.zig").getBlockRootAtSlot;
+pub const computeStartSlotAtEpoch = @import("./utils/epoch.zig").computeStartSlotAtEpoch;
+
 pub const WithdrawalsResult = @import("./block/process_withdrawals.zig").WithdrawalsResult;
 
 pub const test_utils = @import("test_utils/root.zig");
