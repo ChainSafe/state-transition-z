@@ -3,7 +3,6 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
-const s = @import("ssz");
 const preset = @import("preset").preset;
 const ForkSeq = @import("config").ForkSeq;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
