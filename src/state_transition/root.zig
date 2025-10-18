@@ -6,6 +6,7 @@ pub const BeaconBlock = @import("./types/beacon_block.zig").BeaconBlock;
 pub const BeaconBlockBody = @import("./types/beacon_block.zig").BeaconBlockBody;
 pub const BeaconStateAllForks = @import("./types/beacon_state.zig").BeaconStateAllForks;
 pub const CachedBeaconStateAllForks = @import("./cache/state_cache.zig").CachedBeaconStateAllForks;
+pub const EffectiveBalanceIncrements = @import("./cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
 
 pub const EpochCacheImmutableData = @import("./cache/epoch_cache.zig").EpochCacheImmutableData;
 pub const EpochCacheRc = @import("./cache/epoch_cache.zig").EpochCacheRc;
@@ -36,6 +37,7 @@ pub const processHistoricalRootsUpdate = @import("./epoch/process_historical_roo
 pub const processParticipationRecordUpdates = @import("./epoch/process_participation_record_updates.zig").processParticipationRecordUpdates;
 pub const processParticipationFlagUpdates = @import("./epoch/process_participation_flag_updates.zig").processParticipationFlagUpdates;
 pub const processSyncCommitteeUpdates = @import("./epoch/process_sync_committee_updates.zig").processSyncCommitteeUpdates;
+pub const getNextSyncCommitteeIndices = @import("./utils/sync_committee.zig").getNextSyncCommitteeIndices;
 
 // Block
 pub const processBlockHeader = @import("./block/process_block_header.zig").processBlockHeader;
@@ -56,6 +58,10 @@ pub const processBlsToExecutionChange = @import("./block/process_bls_to_executio
 pub const processDepositRequest = @import("./block/process_deposit_request.zig").processDepositRequest;
 pub const processWithdrawalRequest = @import("./block/process_withdrawal_request.zig").processWithdrawalRequest;
 pub const processConsolidationRequest = @import("./block/process_consolidation_request.zig").processConsolidationRequest;
+
+// utils
+pub const getBlockRootAtSlot = @import("./utils/block_root.zig").getBlockRootAtSlot;
+pub const computeStartSlotAtEpoch = @import("./utils/epoch.zig").computeStartSlotAtEpoch;
 
 pub const WithdrawalsResult = @import("./block/process_withdrawals.zig").WithdrawalsResult;
 

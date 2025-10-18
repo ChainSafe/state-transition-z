@@ -2,6 +2,7 @@ const std = @import("std");
 const ssz = @import("consensus_types");
 const Allocator = std.mem.Allocator;
 const BeaconConfig = @import("config").BeaconConfig;
+const TestCachedBeaconStateAllForks = @import("../test_utils/root.zig").TestCachedBeaconStateAllForks;
 const EpochCacheRc = @import("./epoch_cache.zig").EpochCacheRc;
 const EpochCache = @import("./epoch_cache.zig").EpochCache;
 const EpochCacheImmutableData = @import("./epoch_cache.zig").EpochCacheImmutableData;
@@ -27,14 +28,18 @@ pub const CachedBeaconStateAllForks = struct {
     /// This class takes ownership of state after this function and has responsibility to deinit it
     pub fn createCachedBeaconState(allocator: Allocator, state: *BeaconStateAllForks, immutable_data: EpochCacheImmutableData, option: ?EpochCacheOpts) !*CachedBeaconStateAllForks {
         const epoch_cache = try EpochCache.createFromState(allocator, state, immutable_data, option);
+        errdefer epoch_cache.deinit();
         const epoch_cache_ref = try EpochCacheRc.init(allocator, epoch_cache);
+        errdefer epoch_cache_ref.release();
         const cached_state = try allocator.create(CachedBeaconStateAllForks);
+        errdefer allocator.destroy(cached_state);
         cached_state.* = .{
             .allocator = allocator,
             .config = immutable_data.config,
             .epoch_cache_ref = epoch_cache_ref,
             .state = state,
         };
+
         return cached_state;
     }
 
@@ -44,34 +49,22 @@ pub const CachedBeaconStateAllForks = struct {
     }
 
     pub fn clone(self: *CachedBeaconStateAllForks, allocator: Allocator) !*CachedBeaconStateAllForks {
-        const cloned = try self.state.clone(allocator);
+        const cached_state = try allocator.create(CachedBeaconStateAllForks);
+        errdefer allocator.destroy(cached_state);
 
-        const ecr = self.epoch_cache_ref.get();
-        const pubkey_index_map = try ecr.pubkey_to_index.clone();
-        var index_pubkey_cache = try ecr.index_to_pubkey.clone();
-
-        const immutable_data = EpochCacheImmutableData{
+        cached_state.* = .{
+            .allocator = allocator,
             .config = self.config,
-            .index_to_pubkey = &index_pubkey_cache,
-            .pubkey_to_index = pubkey_index_map,
+            .epoch_cache_ref = self.epoch_cache_ref.acquire(),
+            .state = try self.state.clone(allocator),
         };
-
-        const cached_state = CachedBeaconStateAllForks.createCachedBeaconState(
-            self.allocator,
-            cloned,
-            immutable_data,
-            .{
-                .skip_sync_committee_cache = false,
-                .skip_sync_pubkeys = false,
-            },
-        );
         return cached_state;
     }
 
-    pub fn deinit(self: *CachedBeaconStateAllForks, allocator: Allocator) void {
+    pub fn deinit(self: *CachedBeaconStateAllForks) void {
         // should not deinit config since we don't take ownership of it, it's singleton across applications
         self.epoch_cache_ref.release();
-        self.state.deinit(allocator);
+        self.state.deinit(self.allocator);
         self.allocator.destroy(self.state);
     }
 
@@ -83,3 +76,15 @@ pub const CachedBeaconStateAllForks = struct {
     // this is used to create a CachedBeaconStateAllForks based on a tree and an exising CachedBeaconStateAllForks at fork transition
     // implement this once we switch to TreeView
 };
+
+test "CachedBeaconStateAllForks.clone()" {
+    const allocator = std.testing.allocator;
+    var test_state = try TestCachedBeaconStateAllForks.init(allocator, 256);
+    defer test_state.deinit();
+    // test clone() api works fine with no memory leak
+    const cloned_cached_state = try test_state.cached_state.clone(allocator);
+    defer {
+        cloned_cached_state.deinit();
+        allocator.destroy(cloned_cached_state);
+    }
+}

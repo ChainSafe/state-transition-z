@@ -20,9 +20,10 @@ const SyncCommitteeInfo = struct {
 };
 
 /// Consumer must deallocate the returned `SyncCommitteeInfo` struct
-pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: std.ArrayList(ValidatorIndex), effecitve_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
+/// TODO: remove if not used
+pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllForks, active_validators_indices: std.ArrayList(ValidatorIndex), effective_balance_increment: EffiectiveBalanceIncrements) !*SyncCommitteeInfo {
     const indices = std.ArrayList(ValidatorIndex).init(allocator).resize(preset.SYNC_COMMITTEE_SIZE);
-    try getNextSyncCommitteeIndices(allocator, state, active_validators_indices, effecitve_balance_increment, indices.items);
+    try getNextSyncCommitteeIndices(allocator, state, active_validators_indices, effective_balance_increment, indices.items);
 
     // Using the index2pubkey cache is slower because it needs the serialized pubkey.
     var pubkeys: [preset.SYNC_COMMITTEE_SIZE]PublicKey = undefined;
@@ -32,6 +33,7 @@ pub fn getNextSyncCommittee(allocator: Allocator, state: *const BeaconStateAllFo
 
     const aggregated_pk = try AggregatePublicKey.aggregateSerialized(pubkeys[0..], false);
     const sync_committee = try allocator.create(SyncCommittee);
+    errdefer allocator.destroy(sync_committee);
     sync_committee.* = .{
         .pubkeys = pubkeys,
         .aggregate_pubkey = aggregated_pk,

@@ -278,6 +278,7 @@ pub const EpochCache = struct {
         }
 
         const epoch_cache_ptr = try allocator.create(EpochCache);
+        errdefer allocator.destroy(epoch_cache_ptr);
 
         epoch_cache_ptr.* = .{
             .allocator = allocator,
@@ -329,7 +330,6 @@ pub const EpochCache = struct {
         self.allocator.destroy(self);
     }
 
-    /// TODO: state_transition when calling this function needs to decrease EpochCache rc before using a new one
     pub fn clone(self: *const EpochCache, allocator: Allocator) !*EpochCache {
         const epoch_cache = .EpochCache{
             .allocator = self.allocator,
@@ -367,6 +367,7 @@ pub const EpochCache = struct {
         };
 
         const epoch_cache_ptr = try allocator.create(EpochCache);
+        errdefer allocator.destroy(epoch_cache_ptr);
         epoch_cache_ptr.* = epoch_cache;
         return epoch_cache_ptr;
     }
@@ -413,14 +414,14 @@ pub const EpochCache = struct {
             next_shuffling_active_indices,
             upcoming_epoch,
         );
-        self.next_shuffling = EpochShufflingRc.init(next_shuffling);
+        self.next_shuffling = try EpochShufflingRc.init(self.allocator, next_shuffling);
 
         var upcoming_proposer_seed: [32]u8 = undefined;
         try getSeed(state, upcoming_epoch, c.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
-        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment, &self.proposers);
+        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment.get(), &self.proposers);
 
-        self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.items.len);
-        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.forkSeq(state.slot()), self.current_shuffling.get().active_indices.items.len);
+        self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.len);
+        self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.forkSeq(state.slot()), self.current_shuffling.get().active_indices.len);
 
         const exit_queue_epoch = computeActivationExitEpoch(upcoming_epoch);
         if (exit_queue_epoch > self.exit_queue_epoch) {
@@ -428,7 +429,7 @@ pub const EpochCache = struct {
             self.exit_queue_churn = 0;
         }
 
-        self.total_active_balance_increments = epoch_transition_cache.total_active_balance_increments;
+        self.total_active_balance_increments = epoch_transition_cache.next_epoch_total_active_balance_by_increment;
         if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
             self.sync_participant_reward = computeSyncParticipantReward(self.total_active_balance_increments);
             self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
