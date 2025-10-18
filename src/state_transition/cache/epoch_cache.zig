@@ -47,7 +47,7 @@ const IndexedAttestation = @import("../types/attestation.zig").IndexedAttestatio
 
 const syncPubkeys = @import("./pubkey_cache.zig").syncPubkeys;
 
-const ReferenceCount = @import("../utils/reference_count.zig").ReferenceCount;
+const RefCount = @import("../utils/ref_count.zig").RefCount;
 
 pub const EpochCacheImmutableData = struct {
     config: *const BeaconConfig,
@@ -65,7 +65,7 @@ pub const PROPOSER_WEIGHT_FACTOR = c.PROPOSER_WEIGHT / (c.WEIGHT_DENOMINATOR - c
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
 /// and decrease the reference count when it is deinitialized
-pub const EpochCacheRc = ReferenceCount(*EpochCache);
+pub const EpochCacheRc = RefCount(*EpochCache);
 
 pub const EpochCache = struct {
     allocator: Allocator,
@@ -316,16 +316,16 @@ pub const EpochCache = struct {
         // pubkey_to_index and index_to_pubkey are shared across applications, EpochCache does not own this field so should not deinit()
 
         // unref the epoch shufflings
-        self.previous_shuffling.release();
-        self.current_shuffling.release();
-        self.next_shuffling.release();
+        self.previous_shuffling.unref();
+        self.current_shuffling.unref();
+        self.next_shuffling.unref();
 
         // unref the effective balance increments
-        self.effective_balance_increment.release();
+        self.effective_balance_increment.unref();
 
         // unref the sync committee caches
-        self.current_sync_committee_indexed.release();
-        self.next_sync_committee_indexed.release();
+        self.current_sync_committee_indexed.unref();
+        self.next_sync_committee_indexed.unref();
         self.allocator.destroy(self);
     }
 
@@ -341,11 +341,11 @@ pub const EpochCache = struct {
             .proposers = self.proposers,
             .proposer_prev_epoch = self.proposer_prev_epoch,
             // reuse the same instances, increase reference count
-            .previous_shuffling = self.previous_shuffling.acquire(),
-            .current_shuffling = self.current_shuffling.acquire(),
-            .next_shuffling = self.next_shuffling.acquire(),
+            .previous_shuffling = self.previous_shuffling.ref(),
+            .current_shuffling = self.current_shuffling.ref(),
+            .next_shuffling = self.next_shuffling.ref(),
             // reuse the same instances, increase reference count, cloned only when necessary before an epoch transition
-            .effective_balance_increment = self.effective_balance_increment.acquire(),
+            .effective_balance_increment = self.effective_balance_increment.ref(),
             .total_slashings_by_increment = self.total_slashings_by_increment,
             // Basic types (numbers) cloned implicitly
             .sync_participant_reward = self.sync_participant_reward,
@@ -359,8 +359,8 @@ pub const EpochCache = struct {
             .current_target_unslashed_balance_increments = self.current_target_unslashed_balance_increments,
             .previous_target_unslashed_balance_increments = self.previous_target_unslashed_balance_increments,
             // reuse the same instances, increase reference count
-            .current_sync_committee_indexed = self.current_sync_committee_indexed.acquire(),
-            .next_sync_committee_indexed = self.next_sync_committee_indexed.acquire(),
+            .current_sync_committee_indexed = self.current_sync_committee_indexed.ref(),
+            .next_sync_committee_indexed = self.next_sync_committee_indexed.ref(),
             .sync_period = self.sync_period,
             .epoch = self.epoch,
             .next_epoch = self.next_epoch,
@@ -400,7 +400,7 @@ pub const EpochCache = struct {
         const upcoming_epoch = self.next_epoch;
 
         // move current to previous
-        self.previous_shuffling.release();
+        self.previous_shuffling.unref();
         // no need to release current_shuffling and next_shuffling
         self.previous_shuffling = self.current_shuffling;
         self.current_shuffling = self.next_shuffling;
@@ -446,7 +446,7 @@ pub const EpochCache = struct {
         var effective_balance_increment = try EffectiveBalanceIncrements.initCapacity(self.allocator, self.effective_balance_increment.get().items.len);
         try effective_balance_increment.appendSlice(self.effective_balance_increment.get().items);
         // unref the previous effective balance increment
-        self.effective_balance_increment.release();
+        self.effective_balance_increment.unref();
         self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(self.allocator, effective_balance_increment);
     }
 
@@ -636,9 +636,9 @@ pub const EpochCache = struct {
 
     pub fn rotateSyncCommitteeIndexed(self: *EpochCache, allocator: Allocator, next_sync_committee_indices: []const ValidatorIndex) !void {
         // unref the old instance
-        self.current_sync_committee_indexed.release();
+        self.current_sync_committee_indexed.unref();
         // this is the transfer of reference count
-        // should not do an release() then acquire() here as it may trigger a deinit()
+        // should not do an unref() then ref() here as it may trigger a deinit()
         self.current_sync_committee_indexed = self.next_sync_committee_indexed;
         const next_sync_committee_indexed = try SyncCommitteeCacheAllForks.initValidatorIndices(allocator, next_sync_committee_indices);
         self.next_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, next_sync_committee_indexed);
@@ -657,7 +657,7 @@ pub const EpochCache = struct {
         if (index >= effective_balance_increments.items.len) {
             // Clone and extend effectiveBalanceIncrements
             effective_balance_increments = try getEffectiveBalanceIncrementsWithLen(self.allocator, index + 1);
-            self.effective_balance_increment.release();
+            self.effective_balance_increment.unref();
             self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(allocator, effective_balance_increments);
         }
         self.effective_balance_increment.get().items[index] = @intCast(@divFloor(effective_balance, preset.EFFECTIVE_BALANCE_INCREMENT));
