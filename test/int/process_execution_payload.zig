@@ -12,11 +12,8 @@ test "process execution payload - sanity" {
     var message: ssz.electra.BeaconBlock.Type = ssz.electra.BeaconBlock.default_value;
     message.body = body;
 
-    var beacon_block: ssz.electra.SignedBeaconBlock.Type = ssz.electra.SignedBeaconBlock.default_value;
-    beacon_block.message = message;
-
-    const signed_beacon_block = SignedBeaconBlock{ .electra = &beacon_block };
-    const block = SignedBlock{ .regular = &signed_beacon_block };
+    const beacon_block = BeaconBlock{ .electra = &message };
+    const block = Block{ .regular = beacon_block };
 
     try processExecutionPayload(
         allocator,
@@ -34,4 +31,6 @@ const state_transition = @import("state_transition");
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const processExecutionPayload = state_transition.processExecutionPayload;
 const SignedBlock = state_transition.SignedBlock;
+const Block = state_transition.Block;
 const SignedBeaconBlock = state_transition.SignedBeaconBlock;
+const BeaconBlock = state_transition.BeaconBlock;
