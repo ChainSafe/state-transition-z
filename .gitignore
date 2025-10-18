@@ -5,3 +5,4 @@ test/bun/benchmark_data/
 bun/node_modules/
 bun/benchmark_data/
 test/spec/spec_tests/
+test/spec/test_case/

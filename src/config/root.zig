@@ -7,6 +7,7 @@ pub const ForkInfo = @import("./fork.zig").ForkInfo;
 pub const forkSeqByForkName = @import("./fork.zig").forkSeqByForkName;
 pub const TOTAL_FORKS = @import("./fork.zig").TOTAL_FORKS;
 pub const mainnet_chain_config = @import("./chain/networks/mainnet.zig").mainnet_chain_config;
+pub const minimal_chain_config = @import("./chain/networks/minimal.zig").minimal_chain_config;
 pub const gnosis_chain_config = @import("./chain/networks/gnosis.zig").gnosis_chain_config;
 pub const chiado_chain_config = @import("./chain/networks/chiado.zig").chiado_chain_config;
 pub const sepolia_chain_config = @import("./chain/networks/sepolia.zig").sepolia_chain_config;

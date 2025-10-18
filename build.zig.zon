@@ -4,15 +4,19 @@
     .name = .state_transition_z,
     .version = "0.0.0",
     .fingerprint = 0xd1ddb6abe067ee04,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.14.1",
     .dependencies = .{
         .blst = .{
             .url = "git+https://github.com/chainsafe/blst-z#4e64cb54bf7e0c4a7ff8af67cebe9a31bcccaecb",
             .hash = "blst_z-0.0.0-td3FNDOMAACf6Apg5icx1KkzpVeIR-9oOSK0WSILFHx8",
         },
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z#76cde3c7ea23b33d2789e8e372003272abe0e335",
+            .url = "git+https://github.com/chainSafe/ssz-z#76cde3c7ea23b33d2789e8e372003272abe0e335",
             .hash = "ssz-0.1.0-yORmzN0NBQDTFE4aEPt3iwqZCa66VEPtpWTZ9_eS3cYO",
+        },
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy.zig#ede2ad602ac9ffa506e3724a2bf5fc14c806187f",
+            .hash = "snappy-0.1.0-n4AaqtMYAACgB1kHWQ2_CFI-gbtYEUCbXyYlQZ2ENyfd",
         },
     },
     .paths = .{ "build.zig", "build.zig.zon", "src" },

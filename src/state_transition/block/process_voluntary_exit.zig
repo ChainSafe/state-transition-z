@@ -23,6 +23,11 @@ pub fn isValidVoluntaryExit(cached_state: *CachedBeaconStateAllForks, signed_vol
     const epoch_cache = cached_state.getEpochCache();
     const config = cached_state.config.chain;
     const voluntary_exit = signed_voluntary_exit.message;
+
+    if (voluntary_exit.validator_index >= state.validators().items.len) {
+        return false;
+    }
+
     const validator = state.validators().items[voluntary_exit.validator_index];
     const current_epoch = epoch_cache.epoch;
 

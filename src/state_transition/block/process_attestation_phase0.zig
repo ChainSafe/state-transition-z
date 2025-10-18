@@ -74,12 +74,9 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
         if (data.index != 0) {
             return error.InvalidAttestationNonZeroDataIndex;
         }
-        var full_committee_indices: [preset.MAX_COMMITTEES_PER_SLOT]usize = undefined;
-        const count = try attestation.committee_bits.getTrueBitIndexes(full_committee_indices[0..]);
-        if (count != committee_count) {
-            return error.InvalidAttestationCommitteeBitsCountMismatch;
-        }
-        const committee_indices = full_committee_indices[0..committee_count];
+        var committee_indices_buffer: [preset.MAX_COMMITTEES_PER_SLOT]usize = undefined;
+        const committee_indices_len = try attestation.committee_bits.getTrueBitIndexes(committee_indices_buffer[0..]);
+        const committee_indices = committee_indices_buffer[0..committee_indices_len];
         if (committee_indices.len == 0) {
             return error.InvalidAttestationCommitteeBitsEmpty;
         }
@@ -90,17 +87,17 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
             return error.InvalidAttestationInvalidLstCommitteeIndex;
         }
 
-        var full_aggregation_bits_array: [preset.MAX_VALIDATORS_PER_COMMITTEE * preset.MAX_COMMITTEES_PER_SLOT]bool = undefined;
-        if (attestation.aggregation_bits.bit_len > full_aggregation_bits_array.len) {
-            return error.InvalidAttestationAggregationBitsLengthExceedsMax;
-        }
-        var aggregation_bits_array = full_aggregation_bits_array[0..(attestation.aggregation_bits.bit_len)];
-        try attestation.aggregation_bits.toBoolSlice(&aggregation_bits_array);
-
+        var aggregation_bits_buffer: [preset.MAX_VALIDATORS_PER_COMMITTEE * preset.MAX_COMMITTEES_PER_SLOT]bool = undefined;
+        var aggregation_bits_slice = aggregation_bits_buffer[0..attestation.aggregation_bits.bit_len];
+        try attestation.aggregation_bits.toBoolSlice(&aggregation_bits_slice);
+        const aggregation_bits_array = aggregation_bits_slice;
         // instead of implementing/calling getBeaconCommittees(slot, committee_indices.items), we call getBeaconCommittee(slot, index)
         var committee_offset: usize = 0;
         for (committee_indices) |committee_index| {
             const committee_validators = try epoch_cache.getBeaconCommittee(slot, committee_index);
+            if (committee_offset + committee_validators.len > aggregation_bits_array.len) {
+                return error.InvalidAttestationCommitteeAggregationBitsLengthTooShort;
+            }
             const committee_aggregation_bits = aggregation_bits_array[committee_offset..(committee_offset + committee_validators.len)];
 
             // Assert aggregation bits in this committee have at least one true bit

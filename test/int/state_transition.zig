@@ -5,7 +5,7 @@ const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeac
 const generateElectraBlock = state_transition.test_utils.generateElectraBlock;
 const ssz = @import("consensus_types");
 const Root = ssz.primitive.Root.Type;
-const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+const ZERO_HASH = @import("constants").ZERO_HASH;
 
 const state_transition = @import("state_transition");
 const stateTransition = state_transition.state_transition.stateTransition;

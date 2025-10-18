@@ -4,7 +4,7 @@ const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const preset = @import("preset").preset;
 const Root = ssz.primitive.Root.Type;
-const ZERO_HASH = @import("../constants.zig").ZERO_HASH;
+const ZERO_HASH = @import("constants").ZERO_HASH;
 
 const ExecutionPayload = @import("types/execution_payload.zig").ExecutionPayload;
 
@@ -48,7 +48,7 @@ pub const BlockExternalData = struct {
     },
 };
 
-fn processSlotsWithTransientCache(
+pub fn processSlotsWithTransientCache(
     allocator: std.mem.Allocator,
     post_state: *CachedBeaconStateAllForks,
     slot: Slot,

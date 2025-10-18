@@ -13,7 +13,7 @@ test "process withdrawals - sanity" {
     var withdrawal_balances = std.AutoHashMap(ValidatorIndex, usize).init(allocator);
     defer withdrawal_balances.deinit();
 
-    try getExpectedWithdrawalsResult(allocator, &withdrawals_result, &withdrawal_balances, test_state.cached_state);
+    try getExpectedWithdrawals(allocator, &withdrawals_result, &withdrawal_balances, test_state.cached_state);
     try processWithdrawals(test_state.cached_state, withdrawals_result);
 }
 
@@ -23,7 +23,7 @@ const state_transition = @import("state_transition");
 const preset = @import("preset").preset;
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const processWithdrawals = state_transition.processWithdrawals;
-const getExpectedWithdrawalsResult = state_transition.getExpectedWithdrawalsResult;
+const getExpectedWithdrawals = state_transition.getExpectedWithdrawals;
 const WithdrawalsResult = state_transition.WithdrawalsResult;
 const ssz = @import("consensus_types");
 const Withdrawals = ssz.capella.Withdrawals.Type;

@@ -2,7 +2,7 @@
     .name = .state_transition_z,
     .version = "0.0.0",
     .fingerprint = 0xd1ddb6abe067ee04,
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.14.1",
     .paths = .{
         "build.zig",
         "build.zig.zon",
@@ -13,7 +13,11 @@
             .url = "git+https://github.com/chainsafe/blst-z#4e64cb54bf7e0c4a7ff8af67cebe9a31bcccaecb",
         },
         .ssz = .{
-            .url = "git+https://github.com/chainsafe/ssz-z#76cde3c7ea23b33d2789e8e372003272abe0e335",
+            .url = "git+https://github.com/chainSafe/ssz-z#76cde3c7ea23b33d2789e8e372003272abe0e335",
+        },
+        .snappy = .{
+            .url = "git+https://github.com/chainsafe/snappy.zig#ede2ad602ac9ffa506e3724a2bf5fc14c806187f",
+            .hash = "snappy-0.1.0-n4AaqtMYAACgB1kHWQ2_CFI-gbtYEUCbXyYlQZ2ENyfd",
         },
     },
     .options_modules = .{
@@ -78,6 +82,12 @@
                 .imports = .{.spec_test_options},
             },
         },
+        .write_spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/write_spec_tests.zig",
+                .imports = .{ .spec_test_options, .config, .preset, .consensus_types, .state_transition },
+            },
+        },
     },
     .tests = .{
         .int = .{
@@ -91,6 +101,22 @@
                     .consensus_types,
                     .preset,
                     .constants,
+                },
+            },
+            .filters = .{},
+        },
+        .spec_tests = .{
+            .root_module = .{
+                .root_source_file = "test/spec/root.zig",
+                .imports = .{
+                    .spec_test_options,
+                    .consensus_types,
+                    .config,
+                    .preset,
+                    .snappy,
+                    .state_transition,
+                    .ssz,
+                    .blst,
                 },
             },
             .filters = .{},
