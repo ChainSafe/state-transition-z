@@ -20,6 +20,7 @@ pub const RootCache = struct {
 
     pub fn init(allocator: Allocator, cached_state: *const CachedBeaconStateAllForks) !*RootCache {
         const instance = try allocator.create(RootCache);
+        errdefer allocator.destroy(instance);
         const state = cached_state.state;
         instance.* = RootCache{
             .allocator = allocator,

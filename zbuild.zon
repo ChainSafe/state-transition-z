@@ -71,6 +71,7 @@
                 .blst,
                 .preset,
                 .constants,
+                .hex,
             },
         },
     },

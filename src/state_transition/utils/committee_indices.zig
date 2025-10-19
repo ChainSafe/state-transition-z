@@ -101,6 +101,7 @@ fn ComputeShuffledIndex(comptime T: type) type {
                 var source_by_position = self.source_by_position_by_index[@intCast(i)];
                 if (source_by_position == null) {
                     const _source_by_position = try allocator.create(U8ArrayByT);
+                    errdefer allocator.destroy(_source_by_position);
                     _source_by_position.* = U8ArrayByT.init(allocator);
                     try _source_by_position.*.ensureTotalCapacity(256);
                     self.source_by_position_by_index[@intCast(i)] = _source_by_position;
