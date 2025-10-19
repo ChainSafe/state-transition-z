@@ -28,6 +28,7 @@ pub const SignedBeaconBlock = union(enum) {
     capella: *const ssz.capella.SignedBeaconBlock.Type,
     deneb: *const ssz.deneb.SignedBeaconBlock.Type,
     electra: *const ssz.electra.SignedBeaconBlock.Type,
+    fulu: *const ssz.fulu.SignedBeaconBlock.Type,
 
     pub fn beaconBlock(self: *const SignedBeaconBlock) BeaconBlock {
         return switch (self.*) {
@@ -37,12 +38,13 @@ pub const SignedBeaconBlock = union(enum) {
             .capella => |block| .{ .capella = &block.message },
             .deneb => |block| .{ .deneb = &block.message },
             .electra => |block| .{ .electra = &block.message },
+            .fulu => |block| .{ .fulu = &block.message },
         };
     }
 
     pub fn signature(self: *const SignedBeaconBlock) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.signature,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |block| block.signature,
         };
     }
 };
@@ -74,6 +76,7 @@ pub const BeaconBlock = union(enum) {
     capella: *const ssz.capella.BeaconBlock.Type,
     deneb: *const ssz.deneb.BeaconBlock.Type,
     electra: *const ssz.electra.BeaconBlock.Type,
+    fulu: *const ssz.fulu.BeaconBlock.Type,
 
     pub fn hashTreeRoot(self: *const BeaconBlock, allocator: std.mem.Allocator, out: *[32]u8) !void {
         switch (self.*) {
@@ -83,6 +86,7 @@ pub const BeaconBlock = union(enum) {
             .capella => |block| try ssz.capella.BeaconBlock.hashTreeRoot(allocator, block, out),
             .deneb => |block| try ssz.deneb.BeaconBlock.hashTreeRoot(allocator, block, out),
             .electra => |block| try ssz.electra.BeaconBlock.hashTreeRoot(allocator, block, out),
+            .fulu => |block| try ssz.fulu.BeaconBlock.hashTreeRoot(allocator, block, out),
         }
     }
     pub fn format(
@@ -94,7 +98,7 @@ pub const BeaconBlock = union(enum) {
         _ = fmt;
         _ = options;
         return switch (self) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => {
                 try writer.print("{s} (at slot {})", .{ @tagName(self), self.slot() });
             },
         };
@@ -102,25 +106,25 @@ pub const BeaconBlock = union(enum) {
 
     pub fn slot(self: *const BeaconBlock) Slot {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.slot,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |block| block.slot,
         };
     }
 
     pub fn proposerIndex(self: *const BeaconBlock) ValidatorIndex {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.proposer_index,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |block| block.proposer_index,
         };
     }
 
     pub fn parentRoot(self: *const BeaconBlock) Root {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.parent_root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |block| block.parent_root,
         };
     }
 
     pub fn stateRoot(self: *const BeaconBlock) Root {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |block| block.state_root,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |block| block.state_root,
         };
     }
 
@@ -132,6 +136,7 @@ pub const BeaconBlock = union(enum) {
             .capella => |block| .{ .capella = &block.body },
             .deneb => |block| .{ .deneb = &block.body },
             .electra => |block| .{ .electra = &block.body },
+            .fulu => |block| .{ .fulu = &block.body },
         };
     }
 };
@@ -191,6 +196,7 @@ pub const BeaconBlockBody = union(enum) {
     capella: *const ssz.capella.BeaconBlockBody.Type,
     deneb: *const ssz.deneb.BeaconBlockBody.Type,
     electra: *const ssz.electra.BeaconBlockBody.Type,
+    fulu: *const ssz.fulu.BeaconBlockBody.Type,
 
     pub fn format(
         self: BeaconBlockBody,
@@ -201,7 +207,7 @@ pub const BeaconBlockBody = union(enum) {
         _ = fmt;
         _ = options;
         return switch (self) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => try writer.print("{s}", .{@tagName(self)}),
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => try writer.print("{s}", .{@tagName(self)}),
         };
     }
 
@@ -213,6 +219,7 @@ pub const BeaconBlockBody = union(enum) {
             .capella => |body| try ssz.capella.BeaconBlockBody.hashTreeRoot(allocator, body, out),
             .deneb => |body| try ssz.deneb.BeaconBlockBody.hashTreeRoot(allocator, body, out),
             .electra => |body| try ssz.electra.BeaconBlockBody.hashTreeRoot(allocator, body, out),
+            .fulu => |body| try ssz.fulu.BeaconBlockBody.hashTreeRoot(allocator, body, out),
         };
     }
 
@@ -227,31 +234,31 @@ pub const BeaconBlockBody = union(enum) {
     // phase0 fields
     pub fn randaoReveal(self: *const BeaconBlockBody) ssz.primitive.BLSSignature.Type {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.randao_reveal,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| body.randao_reveal,
         };
     }
 
     pub fn eth1Data(self: *const BeaconBlockBody) *const ssz.phase0.Eth1Data.Type {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.eth1_data,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| &body.eth1_data,
         };
     }
 
     pub fn graffiti(self: *const BeaconBlockBody) ssz.primitive.Bytes32.Type {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.graffiti,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| body.graffiti,
         };
     }
 
     pub fn proposerSlashings(self: *const BeaconBlockBody) []ProposerSlashing {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.proposer_slashings.items,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| body.proposer_slashings.items,
         };
     }
 
     pub fn attesterSlashings(self: *const BeaconBlockBody) AttesterSlashings {
         return switch (self.*) {
-            .electra => |body| .{ .electra = body.attester_slashings },
+            inline .electra, .fulu => |body| .{ .electra = body.attester_slashings },
             inline .phase0, .altair, .bellatrix, .capella, .deneb => |body| .{ .phase0 = body.attester_slashings },
         };
     }
@@ -259,26 +266,26 @@ pub const BeaconBlockBody = union(enum) {
     pub fn attestations(self: *const BeaconBlockBody) Attestations {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => |body| .{ .phase0 = &body.attestations },
-            .electra => |body| .{ .electra = &body.attestations },
+            inline .electra, .fulu => |body| .{ .electra = &body.attestations },
         };
     }
 
     pub fn deposits(self: *const BeaconBlockBody) []Deposit {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.deposits.items,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| body.deposits.items,
         };
     }
 
     pub fn voluntaryExits(self: *const BeaconBlockBody) []SignedVoluntaryExit {
         return switch (self.*) {
-            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => |body| body.voluntary_exits.items,
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| body.voluntary_exits.items,
         };
     }
 
     // altair fields
     pub fn syncAggregate(self: *const BeaconBlockBody) *const ssz.altair.SyncAggregate.Type {
         return switch (self.*) {
-            inline .altair, .bellatrix, .capella, .deneb, .electra => |body| &body.sync_aggregate,
+            inline .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |body| &body.sync_aggregate,
             else => @panic("SyncAggregate is not available in phase0"),
         };
     }
@@ -290,6 +297,7 @@ pub const BeaconBlockBody = union(enum) {
             .capella => |body| .{ .capella = &body.execution_payload },
             .deneb => |body| .{ .deneb = &body.execution_payload },
             .electra => |body| .{ .electra = &body.execution_payload },
+            .fulu => |body| .{ .electra = &body.execution_payload },
             else => panic("ExecutionPayload is not available in {}", .{self}),
         };
     }
@@ -297,9 +305,7 @@ pub const BeaconBlockBody = union(enum) {
     // capella fields
     pub fn blsToExecutionChanges(self: *const BeaconBlockBody) []SignedBLSToExecutionChange {
         return switch (self.*) {
-            .capella => |body| body.bls_to_execution_changes.items,
-            .deneb => |body| body.bls_to_execution_changes.items,
-            .electra => |body| body.bls_to_execution_changes.items,
+            inline .capella, .deneb, .electra, .fulu => |body| body.bls_to_execution_changes.items,
             else => panic("BlsToExecutionChanges is not available in {}", .{self}),
         };
     }
@@ -307,8 +313,7 @@ pub const BeaconBlockBody = union(enum) {
     // deneb fields
     pub fn blobKzgCommitments(self: *const BeaconBlockBody) *const ssz.deneb.BlobKzgCommitments.Type {
         return switch (self.*) {
-            .deneb => |body| &body.blob_kzg_commitments,
-            .electra => |body| &body.blob_kzg_commitments,
+            inline .deneb, .electra, .fulu => |body| &body.blob_kzg_commitments,
             else => panic("BlobKzgCommitments is not available in {}", .{self}),
         };
     }
@@ -316,28 +321,28 @@ pub const BeaconBlockBody = union(enum) {
     // electra fields
     pub fn executionRequests(self: *const BeaconBlockBody) *const ssz.electra.ExecutionRequests.Type {
         return switch (self.*) {
-            .electra => |body| &body.execution_requests,
+            inline .electra, .fulu => |body| &body.execution_requests,
             else => panic("ExecutionRequests is not available in {}", .{self}),
         };
     }
 
     pub fn depositRequests(self: *const BeaconBlockBody) []DepositRequest {
         return switch (self.*) {
-            .electra => |body| body.execution_requests.deposits.items,
+            inline .electra, .fulu => |body| body.execution_requests.deposits.items,
             else => panic("DepositRequests is not available in {}", .{self}),
         };
     }
 
     pub fn withdrawalRequests(self: *const BeaconBlockBody) []WithdrawalRequest {
         return switch (self.*) {
-            .electra => |body| body.execution_requests.withdrawals.items,
+            inline .electra, .fulu => |body| body.execution_requests.withdrawals.items,
             else => panic("WithdrawalRequests is not available in {}", .{self}),
         };
     }
 
     pub fn consolidationRequests(self: *const BeaconBlockBody) []ConsolidationRequest {
         return switch (self.*) {
-            .electra => |body| body.execution_requests.consolidations.items,
+            inline .electra, .fulu => |body| body.execution_requests.consolidations.items,
             else => panic("ConsolidationRequests is not available in {}", .{self}),
         };
     }
