@@ -473,9 +473,9 @@ pub const EpochCache = struct {
         return @intCast((committees_since_epoch_start + committee_index) % c.ATTESTATION_SUBNET_COUNT);
     }
 
-    /// Get the beacon proposer for a slot (pre-Fulu forks only)
-    /// NOTE: For Fulu fork, use CachedBeaconStateAllForks.getBeaconProposer() instead,
-    /// which properly accesses proposer_lookahead from the state.
+    /// Gets the beacon proposer for a slot. This is for pre-Fulu forks only.
+    /// NOTE: For the Fulu fork, use `CachedBeaconStateAllForks.getBeaconProposer()` instead,
+    /// which properly accesses `proposer_lookahead` from the state.
     pub fn getBeaconProposer(self: *const EpochCache, slot: Slot) !ValidatorIndex {
         const epoch = computeEpochAtSlot(slot);
         if (epoch != self.epoch) return error.NotCurrentEpoch;

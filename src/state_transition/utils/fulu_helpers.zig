@@ -17,8 +17,8 @@ const digest = @import("./sha256.zig").digest;
 const ByteCount = @import("./committee_indices.zig").ByteCount;
 const getActiveValidatorIndices = @import("./validator.zig").getActiveValidatorIndices;
 
-/// Compute proposer indices for a given epoch
-/// Returns an array of SLOTS_PER_EPOCH proposer indices
+/// Computes proposer indices for a given epoch.
+/// Returns an array of SLOTS_PER_EPOCH proposer indices.
 pub fn computeProposerIndices(
     allocator: Allocator,
     epoch: Epoch,
@@ -27,6 +27,7 @@ pub fn computeProposerIndices(
     effective_balance_increments: *const EffectiveBalanceIncrements,
     out: []ValidatorIndex,
 ) !void {
+    std.debug.assert(effective_balance_increments.items.len > 0);
     std.debug.assert(out.len == preset.SLOTS_PER_EPOCH);
 
     const start_slot = computeStartSlotAtEpoch(epoch);
@@ -58,15 +59,16 @@ pub fn computeProposerIndices(
     }
 }
 
-/// Get beacon proposer indices for a given epoch
-/// Allocates and returns an array of SLOTS_PER_EPOCH proposer indices
-/// Caller owns the returned slice and must free it
+/// Gets beacon proposer indices for a given epoch.
+/// Allocates and returns an array of SLOTS_PER_EPOCH proposer indices.
+/// The caller owns the returned slice and must free it.
 pub fn getBeaconProposerIndices(
     allocator: Allocator,
     state: *const BeaconStateAllForks,
     epoch: Epoch,
     effective_balance_increments: *const EffectiveBalanceIncrements,
 ) ![]ValidatorIndex {
+    std.debug.assert(effective_balance_increments.items.len > 0);
     var active_indices_list = try getActiveValidatorIndices(allocator, state, epoch);
     defer active_indices_list.deinit();
 
@@ -86,14 +88,15 @@ pub fn getBeaconProposerIndices(
     return proposer_indices;
 }
 
-/// Initialize proposer_lookahead during Electra -> Fulu upgrade
-/// Fills the proposer_lookahead field with (MIN_SEED_LOOKAHEAD + 1) epochs worth of proposer indices
+/// Initializes `proposer_lookahead` during the Electra -> Fulu upgrade.
+/// Fills the `proposer_lookahead` field with `(MIN_SEED_LOOKAHEAD + 1)` epochs worth of proposer indices.
 pub fn initializeProposerLookahead(
     allocator: Allocator,
     state: *const BeaconStateAllForks,
     effective_balance_increments: *const EffectiveBalanceIncrements,
     out: []ValidatorIndex,
 ) !void {
+    std.debug.assert(effective_balance_increments.items.len > 0);
     const lookahead_epochs = preset.MIN_SEED_LOOKAHEAD + 1;
     const expected_len = lookahead_epochs * preset.SLOTS_PER_EPOCH;
     std.debug.assert(out.len == expected_len);
@@ -116,13 +119,14 @@ pub fn initializeProposerLookahead(
     }
 }
 
-/// Update proposer_lookahead during epoch processing
-/// Shifts out the oldest epoch and appends the new epoch at the end
+/// Updates `proposer_lookahead` during epoch processing.
+/// Shifts out the oldest epoch and appends the new epoch at the end.
 pub fn processProposerLookahead(
     allocator: Allocator,
     state: *BeaconStateAllForks,
     effective_balance_increments: *const EffectiveBalanceIncrements,
 ) !void {
+    std.debug.assert(effective_balance_increments.items.len > 0);
     // Only process for Fulu fork
     if (!state.isFulu()) return;
 

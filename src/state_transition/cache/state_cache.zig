@@ -76,9 +76,9 @@ pub const CachedBeaconStateAllForks = struct {
     // this is used to create a CachedBeaconStateAllForks based on a tree and an exising CachedBeaconStateAllForks at fork transition
     // implement this once we switch to TreeView
 
-    /// Get the beacon proposer index for a given slot
-    /// For Fulu fork, uses proposer_lookahead from state
-    /// For earlier forks, uses EpochCache.getBeaconProposer()
+    /// Gets the beacon proposer index for a given slot.
+    /// For the Fulu fork, this uses `proposer_lookahead` from the state.
+    /// For earlier forks, this uses `EpochCache.getBeaconProposer()`.
     pub fn getBeaconProposer(self: *const CachedBeaconStateAllForks, slot: ssz.primitive.Slot.Type) !ValidatorIndex {
         const preset_import = @import("preset").preset;
         const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;

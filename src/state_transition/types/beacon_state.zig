@@ -145,9 +145,9 @@ pub const BeaconStateAllForks = union(enum) {
                 try ssz.electra.BeaconState.clone(allocator, state, cloned_state);
             },
             .fulu => |state| {
-                var cloned = ssz.fulu.BeaconState.default_value;
-                try ssz.fulu.BeaconState.clone(allocator, state, &cloned);
-                var out: BeaconStateAllForks = .{ .fulu = &cloned };
+                const cloned_state = try allocator.create(BeaconStateFulu);
+                errdefer allocator.destroy(cloned_state);
+                out.* = .{ .fulu = cloned_state };
                 try ssz.fulu.BeaconState.clone(allocator, state, cloned_state);
             },
         }
@@ -189,8 +189,12 @@ pub const BeaconStateAllForks = union(enum) {
                 ssz.deneb.BeaconState.deinit(allocator, state);
                 allocator.destroy(state);
             },
-            inline .electra, .fulu => |state| {
+            .electra => |state| {
                 ssz.electra.BeaconState.deinit(allocator, state);
+                allocator.destroy(state);
+            },
+            .fulu => |state| {
+                ssz.fulu.BeaconState.deinit(allocator, state);
                 allocator.destroy(state);
             },
         }
@@ -757,12 +761,6 @@ pub const BeaconStateAllForks = union(enum) {
 
                 // Compute effective balance increments from the electra state
                 const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
-                const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
-                const getActiveValidatorIndices = @import("../utils/validator.zig").getActiveValidatorIndices;
-
-                const current_epoch = computeEpochAtSlot(wrapped_state.slot());
-                var active_indices = try getActiveValidatorIndices(allocator, &wrapped_state, current_epoch);
-                defer active_indices.deinit();
 
                 var effective_balance_increments = EffectiveBalanceIncrements.init(allocator);
                 defer effective_balance_increments.deinit();
