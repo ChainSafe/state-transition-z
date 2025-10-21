@@ -34,7 +34,7 @@ pub fn verifySingleSignatureSet(set: *const SingleSignatureSet) !bool {
 pub fn verifyAggregatedSignatureSet(set: *const AggregatedSignatureSet) !bool {
     // All signatures are not trusted and must be group checked (p2.subgroup_check)
     const signature = try Signature.uncompress(&set.signature);
-    return fastAggregateVerify(&set.signing_root, set.pubkeys, &signature, null);
+    return fastAggregateVerify(&set.signing_root, set.pubkeys, &signature, null, null);
 }
 
 pub fn createSingleSignatureSetFromComponents(pubkey: *const PublicKey, signing_root: Root, signature: BLSSignature) SingleSignatureSet {

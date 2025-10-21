@@ -26,9 +26,10 @@ pub fn verify(msg: []const u8, pk: *const PublicKey, sig: *const Signature, in_p
 
 threadlocal var pairing_buf: [blst.Pairing.sizeOf()]u8 = undefined;
 
-pub fn fastAggregateVerify(msg: []const u8, pks: []const PublicKey, sig: *const Signature, in_sigs_group_check: ?bool) !bool {
+pub fn fastAggregateVerify(msg: []const u8, pks: []const PublicKey, sig: *const Signature, in_pk_validate: ?bool, in_sigs_group_check: ?bool) !bool {
     const sigs_groupcheck = in_sigs_group_check orelse false;
-    return sig.fastAggregateVerify(sigs_groupcheck, &pairing_buf, msg[0..32], DST, pks, false) catch return false;
+    const pks_validate = in_pk_validate orelse false;
+    return sig.fastAggregateVerify(sigs_groupcheck, &pairing_buf, msg[0..32], DST, pks, pks_validate) catch return false;
 }
 
 // TODO: unit tests
