@@ -189,7 +189,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                     try state_transition.processProposerSlashing(self.pre.cached_state, &self.op, verify);
                 },
                 .sync_aggregate => {
-                    return error.SkipZigTest;
+                    try state_transition.processSyncAggregate(self.pre.cached_state, &self.op, verify);
                 },
                 .voluntary_exit => {
                     try state_transition.processVoluntaryExit(self.pre.cached_state, &self.op, verify);
