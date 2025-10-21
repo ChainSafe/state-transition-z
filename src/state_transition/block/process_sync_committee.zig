@@ -16,6 +16,7 @@ const BLSPubkey = ssz.primitive.BLSPubkey.Type;
 const computeSigningRoot = @import("../utils/signing_root.zig").computeSigningRoot;
 const verifyAggregatedSignatureSet = @import("../utils/signature_sets.zig").verifyAggregatedSignatureSet;
 const balance_utils = @import("../utils/balance.zig");
+const getBlockRootAtSlot = @import("../utils/block_root.zig").getBlockRootAtSlot;
 const increaseBalance = balance_utils.increaseBalance;
 const decreaseBalance = balance_utils.decreaseBalance;
 
@@ -43,8 +44,7 @@ pub fn processSyncAggregate(
         // When there's no participation we consider the signature valid and just ignore it
         if (participant_indices.items.len > 0) {
             const previous_slot = @max(state.slot(), 1) - 1;
-            const root_signed = state.blockRoots().*[previous_slot];
-
+            const root_signed = try getBlockRootAtSlot(state, previous_slot);
             const domain = try cached_state.config.getDomain(state.slot(), c.DOMAIN_SYNC_COMMITTEE, previous_slot);
 
             const pubkeys = try allocator.alloc(blst.PublicKey, participant_indices.items.len);
@@ -52,8 +52,10 @@ pub fn processSyncAggregate(
             for (0..participant_indices.items.len) |i| {
                 pubkeys[i] = epoch_cache.index_to_pubkey.items[participant_indices.items[i]];
             }
+
             var signing_root: Root = undefined;
             try computeSigningRoot(ssz.primitive.Root, &root_signed, domain, &signing_root);
+
             const signature_set = AggregatedSignatureSet{
                 .pubkeys = pubkeys,
                 .signing_root = signing_root,
