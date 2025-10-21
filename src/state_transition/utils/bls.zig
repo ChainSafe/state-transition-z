@@ -48,6 +48,6 @@ test "bls - sanity" {
 
     var pks = [_]PublicKey{pk};
     var pks_slice: []const PublicKey = pks[0..1];
-    const result = try fastAggregateVerify(&msg, pks_slice[0..], &sig, null);
+    const result = try fastAggregateVerify(&msg, pks_slice[0..], &sig, null, null);
     try std.testing.expect(result);
 }
