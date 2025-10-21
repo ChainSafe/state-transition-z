@@ -199,7 +199,7 @@ pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
                     self.pre.allocator,
                     state,
                     .{
-                        .regular = &signed_block,
+                        .regular = signed_block,
                     },
                     .{},
                 );
