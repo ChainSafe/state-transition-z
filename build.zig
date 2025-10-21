@@ -6,12 +6,6 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const dep_blst = b.dependency("blst", .{});
-
-    const dep_ssz = b.dependency("ssz", .{});
-
-    const dep_snappy = b.dependency("snappy", .{});
-
     const options_build_options = b.addOptions();
     const option_preset = b.option([]const u8, "preset", "") orelse "mainnet";
     options_build_options.addOption([]const u8, "preset", option_preset);
@@ -25,6 +19,21 @@ pub fn build(b: *std.Build) void {
     const option_spec_test_out_dir = b.option([]const u8, "spec_test_out_dir", "") orelse "test/spec/spec_tests";
     options_spec_test_options.addOption([]const u8, "spec_test_out_dir", option_spec_test_out_dir);
     const options_module_spec_test_options = options_spec_test_options.createModule();
+
+    const dep_blst = b.dependency("blst", .{
+        .optimize = optimize,
+        .target = target,
+    });
+
+    const dep_ssz = b.dependency("ssz", .{
+        .optimize = optimize,
+        .target = target,
+    });
+
+    const dep_snappy = b.dependency("snappy", .{
+        .optimize = optimize,
+        .target = target,
+    });
 
     const module_hex = b.createModule(.{
         .root_source_file = b.path("src/hex.zig"),
