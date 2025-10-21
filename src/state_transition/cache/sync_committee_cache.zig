@@ -75,9 +75,16 @@ const SyncCommitteeCache = struct {
 
     pub fn initValidatorIndices(allocator: Allocator, validator_indices: []ValidatorIndex) !*SyncCommitteeCache {
         const validator_index_map = try allocator.create(SyncComitteeValidatorIndexMap);
+        errdefer allocator.destroy(validator_index_map);
+
         validator_index_map.* = SyncComitteeValidatorIndexMap.init(allocator);
+        errdefer validator_index_map.deinit();
+
         try computeSyncCommitteeMap(allocator, validator_indices, validator_index_map);
+
         const cache_ptr = try allocator.create(SyncCommitteeCache);
+        errdefer allocator.destroy(cache_ptr);
+
         cache_ptr.* = SyncCommitteeCache{
             .allocator = allocator,
             .validator_indices = validator_indices,

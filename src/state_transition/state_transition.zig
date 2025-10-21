@@ -24,7 +24,6 @@ const BlindedBeaconBlock = @import("types/beacon_block.zig").BlindedBeaconBlock;
 const BlindedBeaconBlockBody = @import("types/beacon_block.zig").BlindedBeaconBlockBody;
 const BeaconBlockBody = @import("types/beacon_block.zig").BeaconBlockBody;
 const SignedBlindedBeaconBlock = @import("types/beacon_block.zig").SignedBlindedBeaconBlock;
-const TestCachedBeaconStateAllForks = @import("../../test/int/generate_state.zig").TestCachedBeaconStateAllForks;
 const EpochTransitionCacheOpts = @import("cache/epoch_transition_cache.zig").EpochTransitionCacheOpts;
 const EpochTransitionCache = @import("cache/epoch_transition_cache.zig").EpochTransitionCache;
 const ReusedEpochTransitionCache = @import("cache/epoch_transition_cache.zig").ReusedEpochTransitionCache;
@@ -55,21 +54,21 @@ pub fn processSlotsWithTransientCache(
     slot: Slot,
     _: EpochTransitionCacheOpts,
 ) !void {
-    var post_state_slot = post_state.state.slot();
-    if (post_state_slot > slot) return error.outdatedSlot;
+    var cached_state = post_state.state;
+    if (cached_state.slot() > slot) return error.outdatedSlot;
 
     const validator_count = post_state.epoch_cache_ref.get().current_shuffling.get().active_indices.len;
 
+    // TODO: do not always allocate
     var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
     defer reused_epoch_transition_cache.deinit();
     var epoch_transition_cache: EpochTransitionCache = undefined;
     defer epoch_transition_cache.deinit();
 
-    while (post_state_slot < slot) {
+    while (cached_state.slot() < slot) {
         try processSlot(allocator, post_state);
 
-        if ((post_state_slot + 1) % preset.SLOTS_PER_EPOCH == 0) {
-            _ = post_state.config.forkSeq(post_state_slot);
+        if ((cached_state.slot() + 1) % preset.SLOTS_PER_EPOCH == 0) {
             // TODO(bing): metrics
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
@@ -79,14 +78,16 @@ pub fn processSlotsWithTransientCache(
 
             // TODO(bing): registerValidatorStatuses
 
-            post_state_slot += 1;
+            cached_state.slotPtr().* += 1;
 
-            // afterProcessEpoch
+            try post_state.epoch_cache_ref.get().afterProcessEpoch(post_state, &epoch_transition_cache);
             // post_state.commit
+        } else {
+            cached_state.slotPtr().* += 1;
         }
 
         //epochTransitionTimer
-        const state_epoch = computeEpochAtSlot(post_state_slot);
+        const state_epoch = computeEpochAtSlot(cached_state.slot());
 
         for (post_state.config.forks_descending_epoch_order) |f| {
             if (state_epoch == f.epoch) {
@@ -97,16 +98,18 @@ pub fn processSlotsWithTransientCache(
     }
 }
 
+pub const TransitionOpt = struct {
+    verify_state_root: bool = true,
+    verify_proposer: bool = true,
+    verify_signatures: bool = false,
+    do_not_transfer_cache: bool = false,
+};
+
 pub fn stateTransition(
     allocator: std.mem.Allocator,
     state: *CachedBeaconStateAllForks,
     signed_block: SignedBlock,
-    opts: struct {
-        verify_state_root: bool = true,
-        verify_proposer: bool = true,
-        verify_signatures: bool = false,
-        do_not_transfer_cache: bool = false,
-    },
+    opts: TransitionOpt,
 ) !*CachedBeaconStateAllForks {
     const block = signed_block.message();
     const block_slot = switch (block) {
@@ -115,6 +118,11 @@ pub fn stateTransition(
     };
 
     const post_state = try state.clone(allocator);
+
+    errdefer {
+        post_state.deinit();
+        allocator.destroy(post_state);
+    }
 
     //TODO(bing): metrics
     //if (metrics) {
@@ -139,7 +147,7 @@ pub fn stateTransition(
             .execution_payload_status = .valid,
             .data_availability_status = .available,
         },
-        .{},
+        .{ .verify_signature = opts.verify_signatures },
     );
     //
     // TODO(bing): commit
