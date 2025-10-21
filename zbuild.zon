@@ -101,6 +101,7 @@
                     .consensus_types,
                     .preset,
                     .constants,
+                    .blst,
                 },
             },
             .filters = .{},

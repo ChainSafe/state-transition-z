@@ -99,7 +99,7 @@ pub const Body = union(enum) {
         };
     }
 
-    pub fn syncAggregate(self: *const Body) *const ssz.altair.SyncAggregate.Type {
+    pub fn syncAggregate(self: *const Body) *const SyncAggregate {
         return switch (self.*) {
             inline .regular, .blinded => |b| b.syncAggregate(),
         };
@@ -149,6 +149,7 @@ const ConsolidationRequest = ssz.electra.ConsolidationRequest.Type;
 
 const Attestation = @import("attestation.zig").Attestation;
 const Attestations = @import("attestation.zig").Attestations;
+const SyncAggregate = ssz.altair.SyncAggregate.Type;
 const AttesterSlashings = @import("attester_slashing.zig").AttesterSlashings;
 const ProposerSlashing = ssz.phase0.ProposerSlashing.Type;
 const SignedVoluntaryExit = ssz.phase0.SignedVoluntaryExit.Type;
