@@ -88,7 +88,7 @@ pub fn processBlock(
     try processEth1Data(allocator, cached_state, body.eth1Data());
     try processOperations(allocator, cached_state, body, opts);
     if (state.isPostAltair()) {
-        try processSyncAggregate(allocator, cached_state, block, opts.verify_signature);
+        try processSyncAggregate(allocator, cached_state, body.syncAggregate(), opts.verify_signature);
     }
 
     if (state.isPostDeneb()) {
