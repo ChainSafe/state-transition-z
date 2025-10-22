@@ -74,6 +74,7 @@ const EpochShuffling = @import("./utils/epoch_shuffling.zig");
 pub const SignedBlock = @import("./types/signed_block.zig").SignedBlock;
 pub const SignedBeaconBlock = @import("./types/beacon_block.zig").SignedBeaconBlock;
 pub const Attestations = @import("./types/attestation.zig").Attestations;
+pub const fulu_helpers = @import("./utils/fulu_helpers.zig");
 
 test {
     testing.refAllDecls(@This());

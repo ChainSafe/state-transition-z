@@ -10,6 +10,7 @@ const supported_forks = [_]ForkSeq{
     .capella,
     .deneb,
     .electra,
+    .fulu,
 };
 
 const supported_test_runners = [_]RunnerKind{

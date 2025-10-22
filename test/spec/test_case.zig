@@ -11,6 +11,7 @@ const bellatrix = consensus_types.bellatrix;
 const capella = consensus_types.capella;
 const deneb = consensus_types.deneb;
 const electra = consensus_types.electra;
+const fulu = consensus_types.fulu;
 
 pub const BlsSetting = enum {
     default,
@@ -83,6 +84,9 @@ pub fn expectEqualBeaconStates(expected: BeaconStateAllForks, actual: BeaconStat
         },
         .electra => {
             if (!electra.BeaconState.equals(expected.electra, actual.electra)) return error.NotEqual;
+        },
+        .fulu => {
+            if (!fulu.BeaconState.equals(expected.fulu, actual.fulu)) return error.NotEqual;
         },
     }
 }

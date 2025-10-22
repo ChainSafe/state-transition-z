@@ -10,6 +10,7 @@ const BeaconStateBellatrix = ssz.bellatrix.BeaconState.Type;
 const BeaconStateCapella = ssz.capella.BeaconState.Type;
 const BeaconStateDeneb = ssz.deneb.BeaconState.Type;
 const BeaconStateElectra = ssz.electra.BeaconState.Type;
+const BeaconStateFulu = ssz.fulu.BeaconState.Type;
 const ExecutionPayloadHeader = @import("./execution_payload.zig").ExecutionPayloadHeader;
 const Root = ssz.primitive.Root.Type;
 const Fork = ssz.phase0.Fork.Type;
@@ -29,6 +30,7 @@ const PendingConsolidation = ssz.electra.PendingConsolidation.Type;
 const Bytes32 = ssz.primitive.Bytes32.Type;
 const Gwei = ssz.primitive.Gwei.Type;
 const Epoch = ssz.primitive.Epoch.Type;
+const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const ForkSeq = @import("config").ForkSeq;
 
 /// wrapper for all BeaconState types across forks so that we don't have to do switch/case for all methods
@@ -41,6 +43,7 @@ pub const BeaconStateAllForks = union(enum) {
     capella: *BeaconStateCapella,
     deneb: *BeaconStateDeneb,
     electra: *BeaconStateElectra,
+    fulu: *BeaconStateFulu,
 
     pub fn init(f: ForkSeq, state_any: anytype) !@This() {
         var state: @This() = undefined;
@@ -75,6 +78,11 @@ pub const BeaconStateAllForks = union(enum) {
                 const T = ssz.electra.BeaconState;
                 const src: *T.Type = @ptrCast(@alignCast(state_any));
                 state = .{ .electra = src };
+            },
+            .fulu => {
+                const T = ssz.fulu.BeaconState;
+                const src: *T.Type = @ptrCast(@alignCast(state_any));
+                state = .{ .fulu = src };
             },
         }
 
@@ -136,6 +144,12 @@ pub const BeaconStateAllForks = union(enum) {
                 out.* = .{ .electra = cloned_state };
                 try ssz.electra.BeaconState.clone(allocator, state, cloned_state);
             },
+            .fulu => |state| {
+                const cloned_state = try allocator.create(BeaconStateFulu);
+                errdefer allocator.destroy(cloned_state);
+                out.* = .{ .fulu = cloned_state };
+                try ssz.fulu.BeaconState.clone(allocator, state, cloned_state);
+            },
         }
 
         return out;
@@ -149,6 +163,7 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| try ssz.capella.BeaconState.hashTreeRoot(allocator, state, out),
             .deneb => |state| try ssz.deneb.BeaconState.hashTreeRoot(allocator, state, out),
             .electra => |state| try ssz.electra.BeaconState.hashTreeRoot(allocator, state, out),
+            .fulu => |state| try ssz.fulu.BeaconState.hashTreeRoot(allocator, state, out),
         };
     }
 
@@ -178,6 +193,10 @@ pub const BeaconStateAllForks = union(enum) {
                 ssz.electra.BeaconState.deinit(allocator, state);
                 allocator.destroy(state);
             },
+            .fulu => |state| {
+                ssz.fulu.BeaconState.deinit(allocator, state);
+                allocator.destroy(state);
+            },
         }
     }
 
@@ -189,6 +208,7 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => .capella,
             .deneb => .deneb,
             .electra => .electra,
+            .fulu => .fulu,
         };
     }
 
@@ -300,6 +320,27 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn isPostElectra(self: *const BeaconStateAllForks) bool {
         return switch (self.*) {
             inline .phase0, .altair, .bellatrix, .capella, .deneb => false,
+            else => true,
+        };
+    }
+
+    pub fn isFulu(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .fulu => true,
+            else => false,
+        };
+    }
+
+    pub fn isPreFulu(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            .phase0, .altair, .bellatrix, .capella, .deneb, .electra => true,
+            else => false,
+        };
+    }
+
+    pub fn isPostFulu(self: *const BeaconStateAllForks) bool {
+        return switch (self.*) {
+            inline .phase0, .altair, .bellatrix, .capella, .deneb, .electra => false,
             else => true,
         };
     }
@@ -441,7 +482,7 @@ pub const BeaconStateAllForks = union(enum) {
     pub fn previousEpochParticipations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(u8) {
         return switch (self.*) {
             .phase0 => @panic("previous_epoch_participation is not available in phase0"),
-            inline .altair, .bellatrix, .capella, .deneb, .electra => |state| &state.previous_epoch_participation,
+            inline .altair, .bellatrix, .capella, .deneb, .electra, .fulu => |state| &state.previous_epoch_participation,
         };
     }
 
@@ -519,7 +560,7 @@ pub const BeaconStateAllForks = union(enum) {
         return switch (self.*) {
             .bellatrix => |state| &.{ .bellatrix = state.latest_execution_payload_header },
             .capella => |state| &.{ .capella = state.latest_execution_payload_header },
-            .deneb, .electra => |state| &.{ .deneb = state.latest_execution_payload_header },
+            .deneb, .electra, .fulu => |state| &.{ .deneb = state.latest_execution_payload_header },
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         };
     }
@@ -530,6 +571,7 @@ pub const BeaconStateAllForks = union(enum) {
             .capella => |state| state.latest_execution_payload_header = header.*.capella,
             .deneb => |state| state.latest_execution_payload_header = header.*.deneb,
             .electra => |state| state.latest_execution_payload_header = header.*.electra,
+            .fulu => |state| state.latest_execution_payload_header = header.*.electra,
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         }
     }
@@ -599,22 +641,31 @@ pub const BeaconStateAllForks = union(enum) {
 
     pub fn pendingDeposits(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingDeposit) {
         return switch (self.*) {
-            .electra => |state| &state.pending_deposits,
+            inline .electra, .fulu => |state| &state.pending_deposits,
             else => panic("pending_deposits is not available in {}", .{self}),
         };
     }
 
     pub fn pendingPartialWithdrawals(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingPartialWithdrawal) {
         return switch (self.*) {
-            .electra => |state| &state.pending_partial_withdrawals,
+            inline .electra, .fulu => |state| &state.pending_partial_withdrawals,
             else => panic("pending_partial_withdrawals is not available in {}", .{self}),
         };
     }
 
     pub fn pendingConsolidations(self: *const BeaconStateAllForks) *std.ArrayListUnmanaged(PendingConsolidation) {
         return switch (self.*) {
-            .electra => |state| &state.pending_consolidations,
+            inline .electra, .fulu => |state| &state.pending_consolidations,
             else => panic("pending_consolidations is not available in {}", .{self}),
+        };
+    }
+
+    /// Get proposer_lookahead
+    /// Returns a slice of ValidatorIndex with length (MIN_SEED_LOOKAHEAD + 1) * SLOTS_PER_EPOCH
+    pub fn proposerLookahead(self: *const BeaconStateAllForks) []ValidatorIndex {
+        return switch (self.*) {
+            .fulu => |state| &state.proposer_lookahead,
+            else => panic("proposer_lookahead is not available in {}", .{self}),
         };
     }
 
@@ -704,8 +755,46 @@ pub const BeaconStateAllForks = union(enum) {
                 allocator.destroy(state);
                 return self;
             },
-            .electra => |_| {
-                @panic("upgrade state from electra to fulu unimplemented");
+            .electra => |state| {
+                // Create wrapped state for initialization functions
+                const wrapped_state = BeaconStateAllForks{ .electra = state };
+
+                // Compute effective balance increments from the electra state
+                const EffectiveBalanceIncrements = @import("../cache/effective_balance_increments.zig").EffectiveBalanceIncrements;
+
+                var effective_balance_increments = EffectiveBalanceIncrements.init(allocator);
+                defer effective_balance_increments.deinit();
+
+                const validator_list = wrapped_state.validators();
+                for (0..validator_list.items.len) |i| {
+                    const validator = &validator_list.items[i];
+                    const balance_increment: u16 = @intCast(validator.effective_balance / preset.EFFECTIVE_BALANCE_INCREMENT);
+                    try effective_balance_increments.append(balance_increment);
+                }
+
+                // Create the fulu state
+                const fulu_state = try populateFields(
+                    ssz.electra.BeaconState,
+                    ssz.fulu.BeaconState,
+                    allocator,
+                    state,
+                );
+
+                // Initialize proposer_lookahead
+                const initializeProposerLookahead = @import("../utils/fulu_helpers.zig").initializeProposerLookahead;
+                try initializeProposerLookahead(
+                    allocator,
+                    &wrapped_state,
+                    &effective_balance_increments,
+                    &fulu_state.proposer_lookahead,
+                );
+
+                self.* = .{ .fulu = fulu_state };
+                allocator.destroy(state);
+                return self;
+            },
+            .fulu => {
+                @panic("upgrade state from fulu to glaos unimplemented");
             },
         }
     }

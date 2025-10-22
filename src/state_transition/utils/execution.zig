@@ -34,7 +34,7 @@ pub fn isExecutionEnabled(state: *const BeaconStateAllForks, block: *const Signe
                 .bellatrix => |bd| ssz.bellatrix.ExecutionPayload.equals(&bd.execution_payload, &ssz.bellatrix.ExecutionPayload.default_value),
                 .capella => |bd| ssz.capella.ExecutionPayload.equals(&bd.execution_payload, &ssz.capella.ExecutionPayload.default_value),
                 .deneb => |bd| ssz.deneb.ExecutionPayload.equals(&bd.execution_payload, &ssz.deneb.ExecutionPayload.default_value),
-                .electra => |bd| ssz.electra.ExecutionPayload.equals(&bd.execution_payload, &ssz.electra.ExecutionPayload.default_value),
+                .electra, .fulu => |bd| ssz.electra.ExecutionPayload.equals(&bd.execution_payload, &ssz.electra.ExecutionPayload.default_value),
             };
         },
     }
