@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
+const s = @import("ssz");
 const preset = @import("preset").preset;
 const ForkSeq = @import("config").ForkSeq;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
@@ -21,9 +22,13 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
 
     try validateAttestation(*const Phase0Attestation, cached_state, attestation);
 
+    // should store a clone of aggregation_bits on Phase0 BeaconState to avoid double free error
+    var cloned_aggregation_bits: s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).Type = undefined;
+    try s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).clone(allocator, &attestation.aggregation_bits, &cloned_aggregation_bits);
+
     const pending_attestation = PendingAttestation{
         .data = data,
-        .aggregation_bits = attestation.aggregation_bits,
+        .aggregation_bits = cloned_aggregation_bits,
         .inclusion_delay = slot - data.slot,
         .proposer_index = try epoch_cache.getBeaconProposer(slot),
     };
