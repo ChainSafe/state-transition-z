@@ -25,6 +25,12 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
     // should store a clone of aggregation_bits on Phase0 BeaconState to avoid double free error
     var cloned_aggregation_bits: s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).Type = undefined;
     try s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).clone(allocator, &attestation.aggregation_bits, &cloned_aggregation_bits);
+    var appended: bool = false;
+    errdefer {
+        if (!appended) {
+            cloned_aggregation_bits.deinit(allocator);
+        }
+    }
 
     const pending_attestation = PendingAttestation{
         .data = data,
@@ -44,6 +50,8 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         }
         try state.previousEpochPendingAttestations().append(allocator, pending_attestation);
     }
+    appended = true;
+
     var indexed_attestation: ssz.phase0.IndexedAttestation.Type = undefined;
     try epoch_cache.computeIndexedAttestationPhase0(attestation, &indexed_attestation);
     defer indexed_attestation.attesting_indices.deinit(allocator);
