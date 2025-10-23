@@ -451,6 +451,7 @@ pub const EpochCache = struct {
         self.effective_balance_increment = try EffectiveBalanceIncrementsRc.init(self.allocator, effective_balance_increment);
     }
 
+    /// Consumer borrows the returned slice
     pub fn getBeaconCommittee(self: *const EpochCache, slot: Slot, index: CommitteeIndex) ![]const ValidatorIndex {
         const shuffling = self.getShufflingAtSlotOrNull(slot) orelse return error.EpochShufflingNotFound;
         const slot_committees = shuffling.committees[slot % preset.SLOTS_PER_EPOCH];
@@ -488,36 +489,45 @@ pub const EpochCache = struct {
 
     /// consumer takes ownership of the returned indexed attestation
     /// hence it needs to deinit attesting_indices inside
-    /// TODO: unit test
-    pub fn getIndexedAttestation(self: *const EpochCache, attestation: Attestation) !IndexedAttestation {
-        var attesting_indices_ = switch (attestation) {
-            .phase0 => |phase0_attestation| try self.getAttestingIndicesPhase0(&phase0_attestation),
-            .electra => |electra_attestation| try self.getAttestingIndicesElectra(&electra_attestation),
-        };
-        const attesting_indices = attesting_indices_.moveToUnmanaged();
-
+    pub fn computeIndexedAttestationPhase0(self: *const EpochCache, attestation: *const ssz.phase0.Attestation.Type, out: *ssz.phase0.IndexedAttestation.Type) !void {
+        var attesting_indices_ = try self.getAttestingIndicesPhase0(attestation);
         const sort_fn = struct {
             pub fn sort(_: void, a: ValidatorIndex, b: ValidatorIndex) bool {
                 return a < b;
             }
         }.sort;
+        const attesting_indices = attesting_indices_.moveToUnmanaged();
         std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
 
-        return switch (attestation) {
-            .phase0 => |phase0_attestation| IndexedAttestation{
-                .phase0 = &ssz.phase0.IndexedAttestation.Type{
-                    .attesting_indices = attesting_indices,
-                    .data = phase0_attestation.data,
-                    .signature = phase0_attestation.signature,
-                },
-            },
-            .electra => |electra_attestation| IndexedAttestation{
-                .electra = &ssz.electra.IndexedAttestation.Type{
-                    .attesting_indices = attesting_indices,
-                    .data = electra_attestation.data,
-                    .signature = electra_attestation.signature,
-                },
-            },
+        out.attesting_indices = attesting_indices;
+        out.data = attestation.data;
+        out.signature = attestation.signature;
+        out.* = .{
+            .attesting_indices = attesting_indices,
+            .data = attestation.data,
+            .signature = attestation.signature,
+        };
+    }
+
+    /// consumer takes ownership of the returned indexed attestation
+    /// hence it needs to deinit attesting_indices inside
+    pub fn computeIndexedAttestationElectra(self: *const EpochCache, attestation: *const ssz.electra.Attestation.Type, out: *ssz.electra.IndexedAttestation.Type) !void {
+        var attesting_indices_ = try self.getAttestingIndicesElectra(attestation);
+        const sort_fn = struct {
+            pub fn sort(_: void, a: ValidatorIndex, b: ValidatorIndex) bool {
+                return a < b;
+            }
+        }.sort;
+        const attesting_indices = attesting_indices_.moveToUnmanaged();
+        std.mem.sort(ValidatorIndex, attesting_indices.items, {}, sort_fn);
+
+        out.attesting_indices = attesting_indices;
+        out.data = attestation.data;
+        out.signature = attestation.signature;
+        out.* = .{
+            .attesting_indices = attesting_indices,
+            .data = attestation.data,
+            .signature = attestation.signature,
         };
     }
 

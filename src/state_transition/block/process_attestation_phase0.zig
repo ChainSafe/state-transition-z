@@ -39,11 +39,13 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         }
         try state.previousEpochPendingAttestations().append(allocator, pending_attestation);
     }
-    const indexed_attestation = try epoch_cache.getIndexedAttestation(.{
-        .phase0 = attestation.*,
-    });
+    var indexed_attestation: ssz.phase0.IndexedAttestation.Type = undefined;
+    try epoch_cache.computeIndexedAttestationPhase0(attestation, &indexed_attestation);
+    defer indexed_attestation.attesting_indices.deinit(allocator);
 
-    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, indexed_attestation.phase0, verify_signature);
+    if (!try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, &indexed_attestation, verify_signature)) {
+        return error.InvalidAttestationInvalidIndexedAttestation;
+    }
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
