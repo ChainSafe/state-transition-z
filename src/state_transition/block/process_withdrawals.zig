@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ssz = @import("consensus_types");
+const Root = ssz.primitive.Root.Type;
 const preset = @import("preset").preset;
 const c = @import("constants");
 const ForkSeq = @import("config").ForkSeq;
@@ -23,14 +24,23 @@ pub const WithdrawalsResult = struct {
 };
 
 pub fn processWithdrawals(
+    allocator: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
     expected_withdrawals_result: WithdrawalsResult,
+    payload_withdrawals_root: Root,
 ) !void {
     const state = cached_state.state;
     // processedPartialWithdrawalsCount is withdrawals coming from EL since electra (EIP-7002)
     const processed_partial_withdrawals_count = expected_withdrawals_result.processed_partial_withdrawals_count;
     const expected_withdrawals = expected_withdrawals_result.withdrawals.items;
     const num_withdrawals = expected_withdrawals.len;
+
+    var expected_withdrawals_root: [32]u8 = undefined;
+    try ssz.capella.Withdrawals.hashTreeRoot(allocator, &expected_withdrawals_result.withdrawals, &expected_withdrawals_root);
+
+    if (!std.mem.eql(u8, &expected_withdrawals_root, &payload_withdrawals_root)) {
+        return error.WithdrawalsRootMismatch;
+    }
 
     for (0..num_withdrawals) |i| {
         const withdrawal = expected_withdrawals[i];
