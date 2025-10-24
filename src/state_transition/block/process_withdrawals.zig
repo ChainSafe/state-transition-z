@@ -70,7 +70,7 @@ pub fn processWithdrawals(
     } else {
         // expected withdrawals came up short in the bound, so we move nextWithdrawalValidatorIndex to
         // the next post the bound
-        next_withdrawal_index.* = (state.nextWithdrawalValidatorIndex().* + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len;
+        next_withdrawal_index.* = (next_withdrawal_index.* + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len;
     }
 }
 
