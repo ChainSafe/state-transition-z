@@ -112,7 +112,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
 
             var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
 
-            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks);
+            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
 
             // init the post state if this is a "valid" test case
 
