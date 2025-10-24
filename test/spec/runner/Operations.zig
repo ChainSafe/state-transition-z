@@ -182,7 +182,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                         self.pre.allocator,
                         self.pre.cached_state,
                         .{ .regular = @unionInit(state_transition.BeaconBlockBody, @tagName(fork), &self.op) },
-                        .{ .data_availability_status = .available, .execution_payload_status = .valid },
+                        .{ .data_availability_status = .available, .execution_payload_status = if (valid) .valid else .invalid },
                     );
                 },
                 .proposer_slashing => {
