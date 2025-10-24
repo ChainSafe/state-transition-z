@@ -108,12 +108,11 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
                     }
                 }
             }
-
-            // Do the discrete math inside the loop to ensure a deterministic result
-            const total_increments = total_balance_increments_with_weight;
-            const proposer_reward_numerator = total_increments * epoch_cache.base_reward_per_increment;
-            proposer_reward += @divFloor(proposer_reward_numerator, PROPOSER_REWARD_DOMINATOR);
         }
+        // Do the discrete math inside the loop to ensure a deterministic result
+        const total_increments = total_balance_increments_with_weight;
+        const proposer_reward_numerator = total_increments * epoch_cache.base_reward_per_increment;
+        proposer_reward += @divFloor(proposer_reward_numerator, PROPOSER_REWARD_DOMINATOR);
 
         increaseBalance(state, try epoch_cache.getBeaconProposer(state_slot), proposer_reward);
     }
