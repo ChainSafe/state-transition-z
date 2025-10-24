@@ -57,6 +57,7 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
         // we can verify only that and nothing else.
         if (verify_signature) {
             const sig_set = try getAttestationWithIndicesSignatureSet(allocator, cached_state, &attestation.data, attestation.signature, attesting_indices.items);
+            defer allocator.free(sig_set.pubkeys);
             if (!try verifyAggregatedSignatureSet(&sig_set)) {
                 return error.InvalidSignature;
             }
