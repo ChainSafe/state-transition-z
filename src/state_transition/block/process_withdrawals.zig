@@ -23,6 +23,10 @@ pub const WithdrawalsResult = struct {
     processed_partial_withdrawals_count: usize = 0,
 };
 
+/// right now for the implementation we pass in processBlock()
+/// for the spec, we pass in params from Operations.zig
+/// TODO: spec and implementation should be the same
+/// refer to https://github.com/ethereum/consensus-specs/blob/dev/specs/electra/beacon-chain.md#modified-process_withdrawals
 pub fn processWithdrawals(
     allocator: Allocator,
     cached_state: *const CachedBeaconStateAllForks,
@@ -63,14 +67,15 @@ pub fn processWithdrawals(
     }
 
     // Update the nextWithdrawalValidatorIndex
+    const nextWithdrawalValidatorIndex = state.nextWithdrawalValidatorIndex();
     if (expected_withdrawals.len == preset.MAX_WITHDRAWALS_PER_PAYLOAD) {
         // All slots filled, nextWithdrawalValidatorIndex should be validatorIndex having next turn
-        next_withdrawal_index.* =
+        nextWithdrawalValidatorIndex.* =
             (expected_withdrawals[expected_withdrawals.len - 1].validator_index + 1) % state.validators().items.len;
     } else {
         // expected withdrawals came up short in the bound, so we move nextWithdrawalValidatorIndex to
         // the next post the bound
-        next_withdrawal_index.* = (next_withdrawal_index.* + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len;
+        nextWithdrawalValidatorIndex.* = (nextWithdrawalValidatorIndex.* + preset.MAX_VALIDATORS_PER_WITHDRAWALS_SWEEP) % state.validators().items.len;
     }
 }
 
@@ -172,6 +177,7 @@ pub fn getExpectedWithdrawals(
                 .address = execution_address,
                 .amount = balance,
             });
+            withdrawal_index += 1;
         } else if ((effective_balance == if (state.isPostElectra())
             getMaxEffectiveBalance(withdrawal_credentials)
         else
