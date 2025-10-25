@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const BeaconStateAllForks = @import("../types/beacon_state.zig").BeaconStateAllForks;
 const ssz = @import("consensus_types");
+const s = @import("ssz");
 const preset = @import("preset").preset;
 const ForkSeq = @import("config").ForkSeq;
 const computeEpochAtSlot = @import("../utils/epoch.zig").computeEpochAtSlot;
@@ -21,9 +22,19 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
 
     try validateAttestation(*const Phase0Attestation, cached_state, attestation);
 
+    // should store a clone of aggregation_bits on Phase0 BeaconState to avoid double free error
+    var cloned_aggregation_bits: s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).Type = undefined;
+    try s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).clone(allocator, &attestation.aggregation_bits, &cloned_aggregation_bits);
+    var appended: bool = false;
+    errdefer {
+        if (!appended) {
+            cloned_aggregation_bits.deinit(allocator);
+        }
+    }
+
     const pending_attestation = PendingAttestation{
         .data = data,
-        .aggregation_bits = attestation.aggregation_bits,
+        .aggregation_bits = cloned_aggregation_bits,
         .inclusion_delay = slot - data.slot,
         .proposer_index = try epoch_cache.getBeaconProposer(slot),
     };
@@ -39,11 +50,15 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
         }
         try state.previousEpochPendingAttestations().append(allocator, pending_attestation);
     }
-    const indexed_attestation = try epoch_cache.getIndexedAttestation(.{
-        .phase0 = attestation.*,
-    });
+    appended = true;
 
-    _ = try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, indexed_attestation.phase0, verify_signature);
+    var indexed_attestation: ssz.phase0.IndexedAttestation.Type = undefined;
+    try epoch_cache.computeIndexedAttestationPhase0(attestation, &indexed_attestation);
+    defer indexed_attestation.attesting_indices.deinit(allocator);
+
+    if (!try isValidIndexedAttestation(ssz.phase0.IndexedAttestation.Type, cached_state, &indexed_attestation, verify_signature)) {
+        return error.InvalidAttestationInvalidIndexedAttestation;
+    }
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation

@@ -1,4 +1,5 @@
 const ssz = @import("consensus_types");
+const Root = ssz.primitive.Root.Type;
 const ForkSeq = @import("config").ForkSeq;
 const Preset = @import("preset").Preset;
 const preset = @import("preset").preset;
@@ -112,7 +113,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
 
             var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
 
-            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks);
+            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
 
             // init the post state if this is a "valid" test case
 
@@ -182,7 +183,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                         self.pre.allocator,
                         self.pre.cached_state,
                         .{ .regular = @unionInit(state_transition.BeaconBlockBody, @tagName(fork), &self.op) },
-                        .{ .data_availability_status = .available, .execution_payload_status = .valid },
+                        .{ .data_availability_status = .available, .execution_payload_status = if (valid) .valid else .invalid },
                     );
                 },
                 .proposer_slashing => {
@@ -211,7 +212,11 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                     try state_transition.getExpectedWithdrawals(self.pre.allocator, &withdrawals_result, &withdrawal_balances, self.pre.cached_state);
                     defer withdrawals_result.withdrawals.deinit(self.pre.allocator);
 
-                    try state_transition.processWithdrawals(self.pre.cached_state, withdrawals_result);
+                    var payload_withdrawals_root: Root = undefined;
+                    // self.op is ExecutionPayload in this case
+                    try ssz.capella.Withdrawals.hashTreeRoot(self.pre.allocator, &self.op.withdrawals, &payload_withdrawals_root);
+
+                    try state_transition.processWithdrawals(self.pre.allocator, self.pre.cached_state, withdrawals_result, payload_withdrawals_root);
                 },
             }
         }

@@ -125,11 +125,11 @@ fn applyPendingDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAll
 
     if (!is_validator_known) {
         // Verify the deposit signature (proof of possession) which is not checked by the deposit contract
-        if (try isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
+        if (isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
             try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credential, amount);
         }
 
-        if (try isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
+        if (isValidDepositSignature(cached_state.config, pubkey, withdrawal_credential, amount, signature)) {
             try addValidatorToRegistry(allocator, cached_state, pubkey, withdrawal_credential, amount);
             try cache.is_compounding_validator_arr.append(hasCompoundingWithdrawalCredential(withdrawal_credential));
             // set balance, so that the next deposit of same pubkey will increase the balance correctly

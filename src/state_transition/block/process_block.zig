@@ -3,6 +3,7 @@ const Allocator = std.mem.Allocator;
 const CachedBeaconStateAllForks = @import("../cache/state_cache.zig").CachedBeaconStateAllForks;
 const ForkSeq = @import("config").ForkSeq;
 const ssz = @import("consensus_types");
+const Root = ssz.primitive.Root.Type;
 const ValidatorIndex = ssz.primitive.ValidatorIndex.Type;
 const preset = @import("preset").preset;
 const BeaconBlock = @import("../types/beacon_block.zig").BeaconBlock;
@@ -56,23 +57,16 @@ pub fn processBlock(
             defer withdrawals_result.withdrawals.clearRetainingCapacity();
 
             const body = block.beaconBlockBody();
-            switch (body) {
-                .regular => |b| {
+            const payload_withdrawals_root = switch (body) {
+                .regular => |b| blk: {
                     const actual_withdrawals = b.executionPayload().getWithdrawals();
-                    std.debug.assert(withdrawals_result.withdrawals.items.len == actual_withdrawals.items.len);
-                    for (withdrawals_result.withdrawals.items, actual_withdrawals.items) |expected, actual| {
-                        std.debug.assert(ssz.capella.Withdrawal.equals(&expected, &actual));
-                    }
+                    var root: Root = undefined;
+                    try ssz.capella.Withdrawals.hashTreeRoot(allocator, &actual_withdrawals, &root);
+                    break :blk root;
                 },
-                .blinded => |b| {
-                    const header = b.executionPayloadHeader();
-                    var expected: [32]u8 = undefined;
-                    try ssz.capella.Withdrawals.hashTreeRoot(allocator, &withdrawals_result.withdrawals, &expected);
-                    var actual = header.getWithdrawalsRoot();
-                    std.debug.assert(std.mem.eql(u8, &expected, &actual));
-                },
-            }
-            try processWithdrawals(cached_state, withdrawals_result);
+                .blinded => |b| b.executionPayloadHeader().getWithdrawalsRoot(),
+            };
+            try processWithdrawals(allocator, cached_state, withdrawals_result, payload_withdrawals_root);
         }
 
         try processExecutionPayload(

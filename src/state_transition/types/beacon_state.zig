@@ -515,21 +515,22 @@ pub const BeaconStateAllForks = union(enum) {
         }
     }
 
-    pub fn latestExecutionPayloadHeader(self: *const BeaconStateAllForks) *const ExecutionPayloadHeader {
+    pub fn latestExecutionPayloadHeader(self: *const BeaconStateAllForks) ExecutionPayloadHeader {
         return switch (self.*) {
-            .bellatrix => |state| &.{ .bellatrix = state.latest_execution_payload_header },
-            .capella => |state| &.{ .capella = state.latest_execution_payload_header },
-            .deneb, .electra => |state| &.{ .deneb = state.latest_execution_payload_header },
+            .bellatrix => |state| .{ .bellatrix = &state.latest_execution_payload_header },
+            .capella => |state| .{ .capella = &state.latest_execution_payload_header },
+            .deneb => |state| .{ .deneb = &state.latest_execution_payload_header },
+            .electra => |state| .{ .electra = &state.latest_execution_payload_header },
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         };
     }
 
     pub fn setLatestExecutionPayloadHeader(self: *BeaconStateAllForks, header: *const ExecutionPayloadHeader) void {
         switch (self.*) {
-            .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix,
-            .capella => |state| state.latest_execution_payload_header = header.*.capella,
-            .deneb => |state| state.latest_execution_payload_header = header.*.deneb,
-            .electra => |state| state.latest_execution_payload_header = header.*.electra,
+            .bellatrix => |state| state.latest_execution_payload_header = header.*.bellatrix.*,
+            .capella => |state| state.latest_execution_payload_header = header.*.capella.*,
+            .deneb => |state| state.latest_execution_payload_header = header.*.deneb.*,
+            .electra => |state| state.latest_execution_payload_header = header.*.electra.*,
             else => panic("latest_execution_payload_header is not available in {}", .{self}),
         }
     }

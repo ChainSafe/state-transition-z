@@ -15,6 +15,7 @@ pub fn isValidIndexedAttestation(comptime IA: type, cached_state: *const CachedB
 
     if (verify_signature) {
         const signature_set = try getIndexedAttestationSignatureSet(IA, cached_state.allocator, cached_state, indexed_attestation);
+        defer cached_state.allocator.free(signature_set.pubkeys);
         return try verifyAggregatedSignatureSet(&signature_set);
     } else {
         return true;
