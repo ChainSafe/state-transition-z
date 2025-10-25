@@ -166,6 +166,7 @@ pub const TestCachedBeaconStateAllForks = struct {
         owned_state.* = state.*;
 
         const pubkey_index_map = try PubkeyIndexMap.init(allocator);
+        errdefer allocator.destroy(pubkey_index_map);
         const index_pubkey_cache = try allocator.create(Index2PubkeyCache);
         errdefer allocator.destroy(index_pubkey_cache);
         index_pubkey_cache.* = Index2PubkeyCache.init(allocator);

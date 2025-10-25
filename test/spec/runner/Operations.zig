@@ -104,16 +104,23 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
             // init the pre state
 
             const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
+            var transfered_pre_state: bool = false;
             errdefer {
-                ForkTypes.BeaconState.deinit(allocator, pre_state);
-                allocator.destroy(pre_state);
+                if (!transfered_pre_state) {
+                    ForkTypes.BeaconState.deinit(allocator, pre_state);
+                    allocator.destroy(pre_state);
+                }
             }
             pre_state.* = ForkTypes.BeaconState.default_value;
             try loadSszValue(ForkTypes.BeaconState, allocator, dir, "pre.ssz_snappy", pre_state);
 
+            transfered_pre_state = true;
+
             var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
 
             tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
+
+            errdefer tc.pre.deinit();
 
             // init the post state if this is a "valid" test case
 
