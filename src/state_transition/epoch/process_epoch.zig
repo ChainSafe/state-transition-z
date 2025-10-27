@@ -60,7 +60,9 @@ pub fn processEpoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSta
         try processParticipationFlagUpdates(cached_state, allocator);
     }
 
-    try processSyncCommitteeUpdates(allocator, cached_state);
+    if (state.isPostAltair()) {
+        try processSyncCommitteeUpdates(allocator, cached_state);
+    }
 
     // TODO(fulu)
     // processProposerLookahead(fork, state);

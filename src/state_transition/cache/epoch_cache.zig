@@ -397,8 +397,8 @@ pub const EpochCache = struct {
     }
 
     /// Utility method to return SyncCommitteeCache so that consumers don't have to deal with ".get()" call
-    pub fn getEffectiveBalanceIncrements(self: *const EpochCache) *const EffectiveBalanceIncrements {
-        return &self.effective_balance_increment.get();
+    pub fn getEffectiveBalanceIncrements(self: *const EpochCache) EffectiveBalanceIncrements {
+        return self.effective_balance_increment.get();
     }
 
     pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {

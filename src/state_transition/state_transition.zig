@@ -172,18 +172,18 @@ pub fn stateTransition(
 
     // Verify state root
     if (opts.verify_state_root) {
-        var out: [32]u8 = undefined;
+        var post_state_root: [32]u8 = undefined;
         //    const hashTreeRootTimer = metrics?.stateHashTreeRootTime.startTimer({
         //      source: StateHashTreeRootSource.stateTransition,
         //    });
-        try post_state.state.hashTreeRoot(allocator, &out);
+        try post_state.state.hashTreeRoot(allocator, &post_state_root);
         //    hashTreeRootTimer?.();
 
         const block_state_root = switch (block) {
             .regular => |b| b.stateRoot(),
             .blinded => |b| b.stateRoot(),
         };
-        if (!std.mem.eql(u8, &out, &block_state_root)) {
+        if (!std.mem.eql(u8, &post_state_root, &block_state_root)) {
             return error.InvalidStateRoot;
         }
     }
