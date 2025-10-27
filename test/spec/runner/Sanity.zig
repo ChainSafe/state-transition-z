@@ -55,15 +55,20 @@ pub fn SlotsTestCase(comptime fork: ForkSeq) type {
 
             // Load pre state
             const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
+            var transfered_pre_state: bool = false;
             errdefer {
-                ForkTypes.BeaconState.deinit(allocator, pre_state);
-                allocator.destroy(pre_state);
+                if (!transfered_pre_state) {
+                    ForkTypes.BeaconState.deinit(allocator, pre_state);
+                    allocator.destroy(pre_state);
+                }
             }
             pre_state.* = ForkTypes.BeaconState.default_value;
             try loadSszValue(ForkTypes.BeaconState, allocator, dir, "pre.ssz_snappy", pre_state);
+            transfered_pre_state = true;
 
             var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
-            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks);
+            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
+            errdefer tc.pre.deinit();
 
             // Load post state
             const post_state = try allocator.create(ForkTypes.BeaconState.Type);
@@ -99,13 +104,14 @@ pub fn SlotsTestCase(comptime fork: ForkSeq) type {
     };
 }
 
-pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
+pub fn BlocksTestCase(comptime fork: ForkSeq) type {
     const ForkTypes = @field(ssz, fork.forkName());
     const SignedBeaconBlock = @field(ForkTypes, "SignedBeaconBlock");
 
     return struct {
         pre: TestCachedBeaconStateAllForks,
-        post: if (valid) BeaconStateAllForks else void,
+        // a null post state means the test is expected to fail
+        post: ?BeaconStateAllForks,
         blocks: []SignedBeaconBlock.Type,
 
         const Self = @This();
@@ -138,15 +144,20 @@ pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
 
             // Load pre state
             const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
+            var transfered_pre_state: bool = false;
             errdefer {
-                ForkTypes.BeaconState.deinit(allocator, pre_state);
-                allocator.destroy(pre_state);
+                if (!transfered_pre_state) {
+                    ForkTypes.BeaconState.deinit(allocator, pre_state);
+                    allocator.destroy(pre_state);
+                }
             }
             pre_state.* = ForkTypes.BeaconState.default_value;
             try loadSszValue(ForkTypes.BeaconState, allocator, dir, "pre.ssz_snappy", pre_state);
+            transfered_pre_state = true;
 
             var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
-            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks);
+            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
+            errdefer tc.pre.deinit();
 
             // Load blocks
             tc.blocks = try allocator.alloc(SignedBeaconBlock.Type, blocks_count);
@@ -158,13 +169,20 @@ pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
             }
             for (tc.blocks, 0..) |*block, i| {
                 block.* = SignedBeaconBlock.default_value;
-                const block_filename = try std.fmt.allocPrint(allocator, "block_{d}.ssz_snappy", .{i});
+                const block_filename = try std.fmt.allocPrint(allocator, "blocks_{d}.ssz_snappy", .{i});
                 defer allocator.free(block_filename);
                 try loadSszValue(SignedBeaconBlock, allocator, dir, block_filename, block);
             }
 
-            // Load post state if valid
-            if (valid) {
+            tc.post = null;
+            const post_exist = if (dir.statFile("post.ssz_snappy")) |_| true else |err| blk: {
+                if (err == error.FileNotFound) {
+                    break :blk false;
+                } else {
+                    return err;
+                }
+            };
+            if (post_exist) {
                 const post_state = try allocator.create(ForkTypes.BeaconState.Type);
                 errdefer {
                     ForkTypes.BeaconState.deinit(allocator, post_state);
@@ -186,8 +204,8 @@ pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
             }
             self.pre.allocator.free(self.blocks);
             self.pre.deinit();
-            if (valid) {
-                self.post.deinit(self.pre.allocator);
+            if (self.post) |*post| {
+                post.deinit(self.pre.allocator);
             }
         }
 
@@ -208,9 +226,9 @@ pub fn BlocksTestCase(comptime fork: ForkSeq, comptime valid: bool) type {
         }
 
         pub fn runTest(self: *Self) !void {
-            if (valid) {
+            if (self.post) |post| {
                 try self.process();
-                try expectEqualBeaconStates(self.post, self.pre.cached_state.state.*);
+                try expectEqualBeaconStates(post, self.pre.cached_state.state.*);
             } else {
                 self.process() catch |err| {
                     if (err == error.SkipZigTest) {
