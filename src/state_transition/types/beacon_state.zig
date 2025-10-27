@@ -642,8 +642,8 @@ pub const BeaconStateAllForks = union(enum) {
     /// Allocates a new `state` of the next fork, clones all fields of the current `state` to it and assigns `self` to it.
     /// Destroys the old `state`.
     ///
-    /// Caller must free upgraded state.
-    pub fn upgrade(self: *BeaconStateAllForks, allocator: std.mem.Allocator) !*BeaconStateAllForks {
+    /// Caller must make sure an upgrade is needed by checking BeaconConfig then free upgraded state.
+    pub fn upgradeUnsafe(self: *BeaconStateAllForks, allocator: std.mem.Allocator) !*BeaconStateAllForks {
         switch (self.*) {
             .phase0 => |state| {
                 self.* = .{

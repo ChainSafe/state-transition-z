@@ -59,11 +59,18 @@ pub fn processSlotsWithTransientCache(
 
     const validator_count = post_state.epoch_cache_ref.get().current_shuffling.get().active_indices.len;
 
-    // TODO: do not always allocate
-    var reused_epoch_transition_cache = try ReusedEpochTransitionCache.init(allocator, validator_count);
-    defer reused_epoch_transition_cache.deinit();
+    const post_epoch = computeEpochAtSlot(slot);
+    const run_epoch_transition = post_epoch > post_state.getEpochCache().epoch;
+    var reused_epoch_transition_cache = if (run_epoch_transition) try ReusedEpochTransitionCache.init(allocator, validator_count) else null;
     var epoch_transition_cache: EpochTransitionCache = undefined;
-    defer epoch_transition_cache.deinit();
+    defer {
+        if (reused_epoch_transition_cache) |*rec| {
+            rec.deinit();
+        }
+        if (run_epoch_transition) {
+            epoch_transition_cache.deinit();
+        }
+    }
 
     while (cached_state.slot() < slot) {
         try processSlot(allocator, post_state);
@@ -73,7 +80,8 @@ pub fn processSlotsWithTransientCache(
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
             // TODO(bing): metrics: time beforeProcessEpoch
-            try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache, &epoch_transition_cache);
+            std.debug.assert(reused_epoch_transition_cache != null);
+            try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache.?, &epoch_transition_cache);
             try processEpoch(allocator, post_state, &epoch_transition_cache);
 
             // TODO(bing): registerValidatorStatuses
@@ -89,9 +97,9 @@ pub fn processSlotsWithTransientCache(
         //epochTransitionTimer
         const state_epoch = computeEpochAtSlot(cached_state.slot());
 
-        for (post_state.config.forks_descending_epoch_order) |f| {
-            if (state_epoch == f.epoch) {
-                _ = try post_state.state.upgrade(allocator);
+        inline for (post_state.config.forks_descending_epoch_order) |f| {
+            if (post_state.state.forkSeq().lt(f.fork_seq) and state_epoch == f.epoch) {
+                _ = try post_state.state.upgradeUnsafe(allocator);
                 break; // no need to check all forks once one hits
             }
         }
