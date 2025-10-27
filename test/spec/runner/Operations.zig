@@ -66,13 +66,14 @@ pub const Operation = enum {
 
 pub const Handler = Operation;
 
-pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime valid: bool) type {
+pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation) type {
     const ForkTypes = @field(ssz, fork.forkName());
     const OpType = @field(ForkTypes, operation.operationObject());
 
     return struct {
         pre: TestCachedBeaconStateAllForks,
-        post: if (valid) BeaconStateAllForks else void,
+        // a null post state means the test is expected to fail
+        post: ?BeaconStateAllForks,
         op: OpType.Type,
         bls_setting: BlsSetting,
 
@@ -122,9 +123,15 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
 
             errdefer tc.pre.deinit();
 
-            // init the post state if this is a "valid" test case
-
-            if (valid) {
+            tc.post = null;
+            const post_exist = if (dir.statFile("post.ssz_snappy")) |_| true else |err| blk: {
+                if (err == error.FileNotFound) {
+                    break :blk false;
+                } else {
+                    return err;
+                }
+            };
+            if (post_exist) {
                 const post_state = try allocator.create(ForkTypes.BeaconState.Type);
                 errdefer {
                     ForkTypes.BeaconState.deinit(allocator, post_state);
@@ -142,8 +149,8 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                 OpType.deinit(self.pre.allocator, &self.op);
             }
             self.pre.deinit();
-            if (valid) {
-                self.post.deinit(self.pre.allocator);
+            if (self.post) |*post| {
+                post.deinit(self.pre.allocator);
             }
         }
 
@@ -190,7 +197,7 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
                         self.pre.allocator,
                         self.pre.cached_state,
                         .{ .regular = @unionInit(state_transition.BeaconBlockBody, @tagName(fork), &self.op) },
-                        .{ .data_availability_status = .available, .execution_payload_status = if (valid) .valid else .invalid },
+                        .{ .data_availability_status = .available, .execution_payload_status = if (self.post != null) .valid else .invalid },
                     );
                 },
                 .proposer_slashing => {
@@ -229,9 +236,9 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation, comptime 
         }
 
         pub fn runTest(self: *Self) !void {
-            if (valid) {
+            if (self.post) |post| {
                 try self.process();
-                try expectEqualBeaconStates(self.post, self.pre.cached_state.state.*);
+                try expectEqualBeaconStates(post, self.pre.cached_state.state.*);
             } else {
                 self.process() catch |err| {
                     if (err == error.SkipZigTest) {
