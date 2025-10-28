@@ -63,19 +63,18 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
             // TODO: describe issue. Compute progressive target balances
             // Must update target balances for consistency, see comments below
             if (state.isPostAltair()) {
-                const delta_effective_balance_increment = new_effective_balance_increment - effective_balance_increment;
                 const previous_epoch_participation = state.previousEpochParticipations().items;
                 const current_epoch_participation = state.currentEpochParticipations().items;
 
                 if (!validator.slashed) {
                     if (previous_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
-                        epoch_cache.previous_target_unslashed_balance_increments += delta_effective_balance_increment;
+                        epoch_cache.previous_target_unslashed_balance_increments += new_effective_balance_increment - effective_balance_increment;
                     }
 
                     // currentTargetUnslashedBalanceIncrements is transfered to previousTargetUnslashedBalanceIncrements in afterEpochTransitionCache
                     // at epoch transition of next epoch (in EpochTransitionCache), prevTargetUnslStake is calculated based on newEffectiveBalanceIncrement
                     if (current_epoch_participation[i] & TIMELY_TARGET == TIMELY_TARGET) {
-                        epoch_cache.current_target_unslashed_balance_increments += delta_effective_balance_increment;
+                        epoch_cache.current_target_unslashed_balance_increments += new_effective_balance_increment - effective_balance_increment;
                     }
                 }
             }
