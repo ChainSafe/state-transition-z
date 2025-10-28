@@ -133,8 +133,6 @@ pub const EpochCache = struct {
 
     epoch: Epoch,
 
-    next_epoch: Epoch,
-
     pub fn createFromState(allocator: Allocator, state: *const BeaconStateAllForks, immutable_data: EpochCacheImmutableData, option: ?EpochCacheOpts) !*EpochCache {
         const config = immutable_data.config;
         const pubkey_to_index = immutable_data.pubkey_to_index;
@@ -312,7 +310,6 @@ pub const EpochCache = struct {
             .next_sync_committee_indexed = try SyncCommitteeCacheRc.init(allocator, next_sync_committee_indexed),
             .sync_period = computeSyncPeriodAtEpoch(current_epoch),
             .epoch = current_epoch,
-            .next_epoch = next_epoch,
         };
 
         return epoch_cache_ptr;
@@ -368,7 +365,6 @@ pub const EpochCache = struct {
             .next_sync_committee_indexed = self.next_sync_committee_indexed.acquire(),
             .sync_period = self.sync_period,
             .epoch = self.epoch,
-            .next_epoch = self.next_epoch,
         };
 
         const epoch_cache_ptr = try allocator.create(EpochCache);
@@ -403,7 +399,8 @@ pub const EpochCache = struct {
 
     pub fn afterProcessEpoch(self: *EpochCache, cached_state: *const CachedBeaconStateAllForks, epoch_transition_cache: *const EpochTransitionCache) !void {
         const state = cached_state.state;
-        const upcoming_epoch = self.next_epoch;
+        const upcoming_epoch = self.epoch + 1;
+        const epoch_after_upcoming = upcoming_epoch + 1;
 
         // move current to previous
         self.previous_shuffling.release();
@@ -417,7 +414,7 @@ pub const EpochCache = struct {
             self.allocator,
             state,
             next_shuffling_active_indices,
-            upcoming_epoch,
+            epoch_after_upcoming,
         );
         self.next_shuffling = try EpochShufflingRc.init(self.allocator, next_shuffling);
 
@@ -625,7 +622,7 @@ pub const EpochCache = struct {
         const previous_epoch = if (self.epoch == GENESIS_EPOCH) GENESIS_EPOCH else self.epoch - 1;
         const shuffling = if (epoch == previous_epoch)
             self.getPreviousShuffling()
-        else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.next_epoch)
+        else if (epoch == self.epoch) self.getCurrentShuffling() else if (epoch == self.epoch + 1)
             self.getNextEpochShuffling()
         else
             null;
