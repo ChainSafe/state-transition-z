@@ -458,7 +458,7 @@ pub const BeaconStateAllForks = union(enum) {
             inline else => |state| {
                 state.previous_epoch_participation.clearRetainingCapacity();
                 try state.previous_epoch_participation.appendSlice(allocator, state.current_epoch_participation.items);
-                state.current_epoch_participation.clearRetainingCapacity();
+                @memset(state.current_epoch_participation.items, 0);
             },
         }
     }
