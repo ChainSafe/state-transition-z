@@ -5,6 +5,7 @@ const Preset = @import("preset").Preset;
 const state_transition = @import("state_transition");
 const TestCachedBeaconStateAllForks = state_transition.test_utils.TestCachedBeaconStateAllForks;
 const BeaconStateAllForks = state_transition.BeaconStateAllForks;
+const CachedBeaconStateAllForks = state_transition.CachedBeaconStateAllForks;
 const test_case = @import("../test_case.zig");
 const loadSszValue = test_case.loadSszSnappyValue;
 const expectEqualBeaconStates = test_case.expectEqualBeaconStates;
@@ -209,28 +210,43 @@ pub fn BlocksTestCase(comptime fork: ForkSeq) type {
             }
         }
 
-        pub fn process(self: *Self) !void {
-            var state = self.pre.cached_state;
-            for (self.blocks) |*block| {
+        pub fn process(self: *Self) !*CachedBeaconStateAllForks {
+            var post_state: *CachedBeaconStateAllForks = self.pre.cached_state;
+            for (self.blocks, 0..) |*block, i| {
                 const signed_block = @unionInit(state_transition.SignedBeaconBlock, @tagName(fork), block);
-                state = try state_transition.state_transition.stateTransition(
-                    self.pre.allocator,
-                    state,
-                    .{
-                        .regular = &signed_block,
-                    },
-                    .{},
-                );
+                {
+                    const new_post_state = try state_transition.state_transition.stateTransition(
+                        self.pre.allocator,
+                        post_state,
+                        .{
+                            .regular = &signed_block,
+                        },
+                        .{},
+                    );
+
+                    // don't deinit the initial pre state, we do it in deinit()
+                    const to_destroy = if (i > 0) post_state else null;
+                    post_state = new_post_state;
+                    if (to_destroy) |state| {
+                        state.deinit();
+                        self.pre.allocator.destroy(state);
+                    }
+                }
             }
-            self.pre.cached_state = state;
+
+            return post_state;
         }
 
         pub fn runTest(self: *Self) !void {
             if (self.post) |post| {
-                try self.process();
-                try expectEqualBeaconStates(post, self.pre.cached_state.state.*);
+                const actual = try self.process();
+                try expectEqualBeaconStates(post, actual.state.*);
+                defer {
+                    actual.deinit();
+                    self.pre.allocator.destroy(actual);
+                }
             } else {
-                self.process() catch |err| {
+                _ = self.process() catch |err| {
                     if (err == error.SkipZigTest) {
                         return err;
                     }
