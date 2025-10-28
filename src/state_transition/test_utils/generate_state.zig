@@ -123,7 +123,7 @@ pub fn generateElectraState(allocator: Allocator, chain_config: ChainConfig, val
     beacon_state.* = .{ .electra = electra_state };
     const validators = beacon_state.validators();
     var next_sync_committee_indices: [preset.SYNC_COMMITTEE_SIZE]ValidatorIndex = undefined;
-    try getNextSyncCommitteeIndices(allocator, beacon_state, active_validator_indices.items, &effective_balance_increments, &next_sync_committee_indices);
+    try getNextSyncCommitteeIndices(allocator, beacon_state, active_validator_indices.items, effective_balance_increments, &next_sync_committee_indices);
 
     var next_sync_committee_pubkeys: [preset.SYNC_COMMITTEE_SIZE]BLSPubkey = undefined;
     var next_sync_committee_pubkeys_slices: [preset.SYNC_COMMITTEE_SIZE]blst.PublicKey = undefined;

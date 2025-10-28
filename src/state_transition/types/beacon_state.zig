@@ -757,9 +757,9 @@ test "upgrade state - sanity" {
     phase0_state.* = ssz.phase0.BeaconState.default_value;
 
     var phase0 = BeaconStateAllForks{ .phase0 = phase0_state };
-    var altair = try phase0.upgrade(allocator);
-    const bellatrix = try altair.upgrade(allocator);
-    const capella = try bellatrix.upgrade(allocator);
-    var deneb = try capella.upgrade(allocator);
+    var altair = try phase0.upgradeUnsafe(allocator);
+    const bellatrix = try altair.upgradeUnsafe(allocator);
+    const capella = try bellatrix.upgradeUnsafe(allocator);
+    var deneb = try capella.upgradeUnsafe(allocator);
     defer deneb.deinit(allocator);
 }
