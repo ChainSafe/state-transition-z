@@ -51,7 +51,7 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
         {
             // Update the state tree
             // Should happen rarely, so it's fine to update the tree
-            var validator = validators.items[i];
+            var validator = &validators.items[i];
             effective_balance = @min(
                 balance - (balance % preset.EFFECTIVE_BALANCE_INCREMENT),
                 effective_balance_limit,

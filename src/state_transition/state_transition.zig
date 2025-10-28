@@ -90,6 +90,8 @@ pub fn processSlotsWithTransientCache(
 
             try post_state.epoch_cache_ref.get().afterProcessEpoch(post_state, &epoch_transition_cache);
             // post_state.commit
+            var root: Root = undefined;
+            try cached_state.hashTreeRoot(allocator, &root);
         } else {
             cached_state.slotPtr().* += 1;
         }
