@@ -52,7 +52,7 @@ pub fn SlotsTestCase(comptime fork: ForkSeq) type {
             const slots_content = try slots_file.readToEndAlloc(allocator, 1024);
             defer allocator.free(slots_content);
             // Parse YAML for slots (simplified; assume single value)
-            tc.slots = std.fmt.parseInt(u64, std.mem.trim(u8, slots_content, " \n"), 10) catch 0;
+            tc.slots = std.fmt.parseInt(u64, std.mem.trim(u8, slots_content, "... \n"), 10) catch 0;
 
             // Load pre state
             const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
