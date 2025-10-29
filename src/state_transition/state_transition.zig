@@ -30,6 +30,7 @@ const ReusedEpochTransitionCache = @import("cache/epoch_transition_cache.zig").R
 const processEpoch = @import("epoch/process_epoch.zig").processEpoch;
 const computeEpochAtSlot = @import("utils/epoch.zig").computeEpochAtSlot;
 const processSlot = @import("slot/process_slot.zig").processSlot;
+const deinitReusedEpochTransitionCache = @import("cache/epoch_transition_cache.zig").deinitReusedEpochTransitionCache;
 
 const SignedBlock = @import("types/signed_block.zig").SignedBlock;
 
@@ -57,22 +58,6 @@ pub fn processSlotsWithTransientCache(
     var cached_state = post_state.state;
     if (cached_state.slot() > slot) return error.outdatedSlot;
 
-    const validator_count = post_state.epoch_cache_ref.get().current_shuffling.get().active_indices.len;
-
-    const post_epoch = computeEpochAtSlot(slot);
-    const run_epoch_transition = post_epoch > post_state.getEpochCache().epoch;
-    // TODO: should init at global level and reuse
-    var reused_epoch_transition_cache = if (run_epoch_transition) try ReusedEpochTransitionCache.init(allocator, validator_count) else null;
-    var epoch_transition_cache: EpochTransitionCache = undefined;
-    defer {
-        if (reused_epoch_transition_cache) |*rec| {
-            rec.deinit();
-        }
-        if (run_epoch_transition) {
-            epoch_transition_cache.deinit();
-        }
-    }
-
     while (cached_state.slot() < slot) {
         try processSlot(allocator, post_state);
 
@@ -81,15 +66,18 @@ pub fn processSlotsWithTransientCache(
             // const epochTransitionTimer = metrics?.epochTransitionTime.startTimer();
 
             // TODO(bing): metrics: time beforeProcessEpoch
-            std.debug.assert(reused_epoch_transition_cache != null);
-            try EpochTransitionCache.beforeProcessEpoch(allocator, post_state, &reused_epoch_transition_cache.?, &epoch_transition_cache);
-            try processEpoch(allocator, post_state, &epoch_transition_cache);
+            var epoch_transition_cache = try EpochTransitionCache.init(allocator, post_state);
+            defer {
+                epoch_transition_cache.deinit();
+                allocator.destroy(epoch_transition_cache);
+            }
+            try processEpoch(allocator, post_state, epoch_transition_cache);
 
             // TODO(bing): registerValidatorStatuses
 
             cached_state.slotPtr().* += 1;
 
-            try post_state.epoch_cache_ref.get().afterProcessEpoch(post_state, &epoch_transition_cache);
+            try post_state.epoch_cache_ref.get().afterProcessEpoch(post_state, epoch_transition_cache);
             // post_state.commit
             var root: Root = undefined;
             try cached_state.hashTreeRoot(allocator, &root);
@@ -192,4 +180,8 @@ pub fn stateTransition(
     }
 
     return post_state;
+}
+
+pub fn deinitStateTransition() void {
+    deinitReusedEpochTransitionCache();
 }
