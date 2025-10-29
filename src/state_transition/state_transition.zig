@@ -61,6 +61,7 @@ pub fn processSlotsWithTransientCache(
 
     const post_epoch = computeEpochAtSlot(slot);
     const run_epoch_transition = post_epoch > post_state.getEpochCache().epoch;
+    // TODO: should init at global level and reuse
     var reused_epoch_transition_cache = if (run_epoch_transition) try ReusedEpochTransitionCache.init(allocator, validator_count) else null;
     var epoch_transition_cache: EpochTransitionCache = undefined;
     defer {

@@ -85,7 +85,8 @@ pub fn processEffectiveBalanceUpdates(cached_state: *CachedBeaconStateAllForks, 
         }
 
         // TODO: Do this in afterEpochTransitionCache, looping a Uint8Array should be very cheap
-        if (cache.is_active_next_epoch[i]) {
+        // post-electra we may add new validator to registry in processPendingDeposits()
+        if (i < cache.is_active_next_epoch.len and cache.is_active_next_epoch[i]) {
             // We track nextEpochTotalActiveBalanceByIncrement as ETH to fit total network balance in a JS number (53 bits)
             next_epoch_total_active_balance_by_increment += effective_balance_increment;
         }
