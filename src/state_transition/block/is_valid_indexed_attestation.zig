@@ -38,8 +38,10 @@ pub fn isValidIndexedAttestationIndices(cached_state: *const CachedBeaconStateAl
     // Just check if they are monotonically increasing,
     // instead of creating a set and sorting it. Should be (O(n)) instead of O(n log(n))
     var prev: ValidatorIndex = 0;
-    for (indices) |index| {
-        if (index <= prev) return false;
+    for (indices, 0..) |index, i| {
+        if (i >= 1 and index <= prev) {
+            return false;
+        }
         prev = index;
     }
 
