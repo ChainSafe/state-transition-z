@@ -34,7 +34,10 @@ pub fn SlotsTestCase(comptime fork: ForkSeq) type {
 
         pub fn execute(allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
             var tc = try Self.init(allocator, dir);
-            defer tc.deinit();
+            defer {
+                tc.deinit();
+                state_transition.deinitStateTransition();
+            }
 
             try tc.runTest();
         }
@@ -119,7 +122,10 @@ pub fn BlocksTestCase(comptime fork: ForkSeq) type {
 
         pub fn execute(allocator: std.mem.Allocator, dir: std.fs.Dir) !void {
             var tc = try Self.init(allocator, dir);
-            defer tc.deinit();
+            defer {
+                tc.deinit();
+                state_transition.deinitStateTransition();
+            }
 
             try tc.runTest();
         }
@@ -215,6 +221,13 @@ pub fn BlocksTestCase(comptime fork: ForkSeq) type {
             for (self.blocks, 0..) |*block, i| {
                 const signed_block = @unionInit(state_transition.SignedBeaconBlock, @tagName(fork), block);
                 {
+                    // if error, clean pre_state of stateTransition() function
+                    errdefer {
+                        if (i > 0) {
+                            post_state.deinit();
+                            self.pre.allocator.destroy(post_state);
+                        }
+                    }
                     const new_post_state = try state_transition.state_transition.stateTransition(
                         self.pre.allocator,
                         post_state,
@@ -225,11 +238,13 @@ pub fn BlocksTestCase(comptime fork: ForkSeq) type {
                     );
 
                     // don't deinit the initial pre state, we do it in deinit()
-                    const to_destroy = if (i > 0) post_state else null;
+                    const to_destroy = post_state;
                     post_state = new_post_state;
-                    if (to_destroy) |state| {
-                        state.deinit();
-                        self.pre.allocator.destroy(state);
+
+                    // clean post_state of stateTransition() function
+                    if (i > 0) {
+                        to_destroy.deinit();
+                        self.pre.allocator.destroy(to_destroy);
                     }
                 }
             }
