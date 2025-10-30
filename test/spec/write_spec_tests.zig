@@ -27,6 +27,7 @@ fn TestWriter(comptime kind: RunnerKind) type {
 
 pub fn main() !void {
     const test_case_dir = "test/spec/test_case/";
+    try std.fs.cwd().makeDir(test_case_dir);
 
     inline for (supported_test_runners) |kind| {
         const test_case_file = test_case_dir ++ @tagName(kind) ++ "_tests.zig";
