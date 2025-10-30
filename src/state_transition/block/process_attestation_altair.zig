@@ -78,8 +78,8 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
             // At epoch boundary, 100% of attestations belong to previous epoch
             // so we want to update the participation flag tree in batch
 
-            // Note ParticipationFlags type uses option {setBitwiseOR: true}, .set() does a |= operation
-            epoch_participation[validator_index] = flags_attestation;
+            // no setBitwiseOR implemented in zig ssz, so we do it manually here
+            epoch_participation[validator_index] = flags_attestation | flags;
 
             // Returns flags that are NOT set before (~ bitwise NOT) AND are set after
             const flags_new_set = ~flags & flags_attestation;
@@ -113,9 +113,8 @@ pub fn processAttestationsAltair(allocator: Allocator, cached_state: *const Cach
         const total_increments = total_balance_increments_with_weight;
         const proposer_reward_numerator = total_increments * epoch_cache.base_reward_per_increment;
         proposer_reward += @divFloor(proposer_reward_numerator, PROPOSER_REWARD_DOMINATOR);
-
-        increaseBalance(state, try epoch_cache.getBeaconProposer(state_slot), proposer_reward);
     }
+    increaseBalance(state, try epoch_cache.getBeaconProposer(state_slot), proposer_reward);
 }
 
 pub fn getAttestationParticipationStatus(state: *const BeaconStateAllForks, data: ssz.phase0.AttestationData.Type, inclusion_delay: u64, current_epoch: Epoch, root_cache: *RootCache) !u8 {
