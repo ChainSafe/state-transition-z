@@ -46,6 +46,7 @@ pub fn processBlock(
         // TODO Deneb: Allow to disable withdrawals for interop testing
         // https://github.com/ethereum/consensus-specs/blob/b62c9e877990242d63aa17a2a59a49bc649a2f2e/specs/eip4844/beacon-chain.md#disabling-withdrawals
         if (state.isPostCapella()) {
+            // TODO: given max withdrawals of MAX_WITHDRAWALS_PER_PAYLOAD, can use fixed size array instead of heap alloc
             var withdrawals_result = WithdrawalsResult{ .withdrawals = try Withdrawals.initCapacity(
                 allocator,
                 preset.MAX_WITHDRAWALS_PER_PAYLOAD,
@@ -54,7 +55,7 @@ pub fn processBlock(
             defer withdrawal_balances.deinit();
 
             try getExpectedWithdrawals(allocator, &withdrawals_result, &withdrawal_balances, cached_state);
-            defer withdrawals_result.withdrawals.clearRetainingCapacity();
+            defer withdrawals_result.withdrawals.deinit(allocator);
 
             const body = block.beaconBlockBody();
             const payload_withdrawals_root = switch (body) {
