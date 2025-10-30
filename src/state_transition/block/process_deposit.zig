@@ -63,7 +63,7 @@ pub fn processDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllF
     if (!verifyMerkleBranch(
         deposit_data_root,
         &deposit.proof,
-        preset.DEPOSIT_CONTRACT_TREE_DEPTH + 1,
+        c.DEPOSIT_CONTRACT_TREE_DEPTH + 1,
         state.eth1DepositIndex(),
         state.eth1Data().deposit_root,
     )) {
@@ -108,7 +108,7 @@ pub fn applyDeposit(allocator: Allocator, cached_state: *CachedBeaconStateAllFor
             .withdrawal_credentials = withdrawal_credentials,
             .amount = amount,
             .signature = signature,
-            .slot = preset.GENESIS_SLOT, // Use GENESIS_SLOT to distinguish from a pending deposit request
+            .slot = c.GENESIS_SLOT, // Use GENESIS_SLOT to distinguish from a pending deposit request
         };
 
         if (is_new_validator) {
