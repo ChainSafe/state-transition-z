@@ -108,17 +108,12 @@ jobs:
         with:
           path: test/spec/spec_tests
           key: spec-test-data-${{ hashFiles('build.zig') }} # spec test version is defined in build.zig
-        if: matrix.os == 'ubuntu-latest'
       - name: Download Spec Tests
         run: |
           zig build run:download_spec_tests
-        if: matrix.os == 'ubuntu-latest'
       - name: Write Spec Tests
         run: |
           zig build run:write_spec_tests
-        if: matrix.os == 'ubuntu-latest'
       - name: Run Spec Tests
         run: |
           zig build test:spec_tests
-        if: matrix.os == 'ubuntu-latest'
-
