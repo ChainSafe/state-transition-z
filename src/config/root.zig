@@ -13,6 +13,18 @@ pub const chiado_chain_config = @import("./chain/networks/chiado.zig").chiado_ch
 pub const sepolia_chain_config = @import("./chain/networks/sepolia.zig").sepolia_chain_config;
 pub const hoodi_chain_config = @import("./chain/networks/hoodi.zig").hoodi_chain_config;
 
+pub fn hexToBytesComptime(comptime n: usize, comptime input: []const u8) [n]u8 {
+    var out: [n]u8 = undefined;
+    const input_slice = if (std.mem.startsWith(u8, input, "0x"))
+        input[2..]
+    else
+        input;
+
+    _ = std.fmt.hexToBytes(&out, input_slice) catch
+        @compileError(std.fmt.comptimePrint("Failed to convert hex {s} to bytes at comptime", .{input}));
+    return out;
+}
+
 test {
     testing.refAllDecls(@This());
 }

@@ -2,7 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ssz = @import("consensus_types");
 const s = @import("ssz");
-const hex = @import("hex");
+const hexToRoot = @import("root.zig").hexToRoot;
 const Slot = ssz.primitive.Slot.Type;
 const preset = @import("preset").preset;
 const state_transition = @import("../root.zig");
@@ -67,7 +67,7 @@ pub fn generateElectraBlock(allocator: Allocator, cached_state: *const CachedBea
             .slot = state.slot() + 1,
             // value is generated after running real state transition int test
             .proposer_index = 41,
-            .parent_root = try hex.hexToRoot("0x0833505580088dab43dab615abbdaa7c914a5f4ebeca79332a9373d5b25daeac"),
+            .parent_root = try hexToRoot("0x0833505580088dab43dab615abbdaa7c914a5f4ebeca79332a9373d5b25daeac"),
             // this could be computed later
             .state_root = [_]u8{0} ** 32,
             .body = .{

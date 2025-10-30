@@ -35,13 +35,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
-    const module_hex = b.createModule(.{
-        .root_source_file = b.path("src/hex.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    b.modules.put(b.dupe("hex"), module_hex) catch @panic("OOM");
-
     const module_constants = b.createModule(.{
         .root_source_file = b.path("src/constants/root.zig"),
         .target = target,
@@ -124,20 +117,6 @@ pub fn build(b: *std.Build) void {
     tls_run_exe_write_spec_tests.dependOn(&run_exe_write_spec_tests.step);
 
     const tls_run_test = b.step("test", "Run all tests");
-
-    const test_hex = b.addTest(.{
-        .name = "hex",
-        .root_module = module_hex,
-        .filters = b.option([][]const u8, "hex.filters", "hex test filters") orelse &[_][]const u8{},
-    });
-    const install_test_hex = b.addInstallArtifact(test_hex, .{});
-    const tls_install_test_hex = b.step("build-test:hex", "Install the hex test");
-    tls_install_test_hex.dependOn(&install_test_hex.step);
-
-    const run_test_hex = b.addRunArtifact(test_hex);
-    const tls_run_test_hex = b.step("test:hex", "Run the hex test");
-    tls_run_test_hex.dependOn(&run_test_hex.step);
-    tls_run_test.dependOn(&run_test_hex.step);
 
     const test_constants = b.addTest(.{
         .name = "constants",
@@ -282,7 +261,6 @@ pub fn build(b: *std.Build) void {
     module_config.addImport("build_options", options_module_build_options);
     module_config.addImport("preset", module_preset);
     module_config.addImport("consensus_types", module_consensus_types);
-    module_config.addImport("hex", module_hex);
     module_config.addImport("constants", module_constants);
 
     module_consensus_types.addImport("build_options", options_module_build_options);
@@ -300,7 +278,6 @@ pub fn build(b: *std.Build) void {
     module_state_transition.addImport("blst", dep_blst.module("blst"));
     module_state_transition.addImport("preset", module_preset);
     module_state_transition.addImport("constants", module_constants);
-    module_state_transition.addImport("hex", module_hex);
 
     module_download_spec_tests.addImport("spec_test_options", options_module_spec_test_options);
 
