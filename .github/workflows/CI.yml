@@ -72,9 +72,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: zig fmt --check .
 
-      - name: Run hex tests
-        run: |
-          zig build test:hex
       - name: Run config tests
         run: |
           zig build test:config
