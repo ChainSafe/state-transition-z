@@ -60,7 +60,10 @@ pub const EpochCacheOpts = struct {
     skip_sync_pubkeys: bool,
 };
 
-pub const PROPOSER_WEIGHT_FACTOR = c.PROPOSER_WEIGHT / (c.WEIGHT_DENOMINATOR - c.PROPOSER_WEIGHT);
+const proposer_weight: f64 = @floatFromInt(c.PROPOSER_WEIGHT);
+const weight_denominator: f64 = @floatFromInt(c.WEIGHT_DENOMINATOR);
+
+pub const proposer_weight_factor: f64 = proposer_weight / (weight_denominator - proposer_weight);
 
 /// an EpochCache is shared by multiple CachedBeaconStateAllForks instances
 /// a CachedBeaconStateAllForks should increase the reference count of EpochCache when it is created
@@ -235,7 +238,8 @@ pub const EpochCache = struct {
         // Values syncParticipantReward, syncProposerReward, baseRewardPerIncrement are only used after altair.
         // However, since they are very cheap to compute they are computed always to simplify upgradeState function.
         const sync_participant_reward = computeSyncParticipantReward(total_active_balance_increments);
-        const sync_proposer_reward = sync_participant_reward * PROPOSER_WEIGHT_FACTOR;
+        const sync_participant_reward_f64: f64 = @floatFromInt(sync_participant_reward);
+        const sync_proposer_reward: u64 = @intFromFloat(std.math.floor(sync_participant_reward_f64 * proposer_weight_factor));
         const base_reward_pre_increment = computeBaseRewardPerIncrement(total_active_balance_increments);
         const skip_sync_committee_cache = if (option) |opt| opt.skip_sync_committee_cache else !after_altair_fork;
         var current_sync_committee_indexed = if (skip_sync_committee_cache) SyncCommitteeCacheAllForks.initEmpty() else try SyncCommitteeCacheAllForks.initSyncCommittee(allocator, state.currentSyncCommittee(), pubkey_to_index);
@@ -434,7 +438,8 @@ pub const EpochCache = struct {
         self.total_active_balance_increments = epoch_transition_cache.next_epoch_total_active_balance_by_increment;
         if (upcoming_epoch >= self.config.chain.ALTAIR_FORK_EPOCH) {
             self.sync_participant_reward = computeSyncParticipantReward(self.total_active_balance_increments);
-            self.sync_proposer_reward = @intCast(self.sync_participant_reward * PROPOSER_WEIGHT_FACTOR);
+            const sync_participant_reward_f64: f64 = @floatFromInt(self.sync_participant_reward);
+            self.sync_proposer_reward = @intFromFloat(std.math.floor(sync_participant_reward_f64 * proposer_weight_factor));
             self.base_reward_per_increment = computeBaseRewardPerIncrement(self.total_active_balance_increments);
         }
 
