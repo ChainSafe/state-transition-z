@@ -35,7 +35,7 @@ pub fn processEpoch(allocator: std.mem.Allocator, cached_state: *CachedBeaconSta
 
     try processRewardsAndPenalties(allocator, cached_state, cache);
 
-    processEth1DataReset(cached_state, cache);
+    processEth1DataReset(allocator, cached_state, cache);
 
     if (state.isPostElectra()) {
         try processPendingDeposits(allocator, cached_state, cache);
