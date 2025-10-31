@@ -424,7 +424,7 @@ pub const EpochCache = struct {
 
         var upcoming_proposer_seed: [32]u8 = undefined;
         try getSeed(state, upcoming_epoch, c.DOMAIN_BEACON_PROPOSER, &upcoming_proposer_seed);
-        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, next_shuffling_active_indices, self.effective_balance_increment.get(), &self.proposers);
+        try computeProposers(self.allocator, self.config.forkSeqAtEpoch(upcoming_epoch), upcoming_proposer_seed, upcoming_epoch, self.current_shuffling.get().active_indices, self.effective_balance_increment.get(), &self.proposers);
 
         self.churn_limit = getChurnLimit(self.config, self.current_shuffling.get().active_indices.len);
         self.activation_churn_limit = getActivationChurnLimit(self.config, self.config.forkSeq(state.slot()), self.current_shuffling.get().active_indices.len);
