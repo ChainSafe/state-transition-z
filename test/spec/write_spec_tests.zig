@@ -19,8 +19,8 @@ const supported_test_runners = [_]RunnerKind{
 
 fn TestWriter(comptime kind: RunnerKind) type {
     return switch (kind) {
-        .operations => @import("./writer/Operations.zig"),
-        .sanity => @import("./writer/Sanity.zig"),
+        .operations => @import("./writer/operations.zig"),
+        .sanity => @import("./writer/sanity.zig"),
         else => @compileError("Unsupported test runner"),
     };
 }

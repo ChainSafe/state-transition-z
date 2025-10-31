@@ -24,7 +24,7 @@ pub const WithdrawalsResult = struct {
 };
 
 /// right now for the implementation we pass in processBlock()
-/// for the spec, we pass in params from Operations.zig
+/// for the spec, we pass in params from operations.zig
 /// TODO: spec and implementation should be the same
 /// refer to https://github.com/ethereum/consensus-specs/blob/dev/specs/electra/beacon-chain.md#modified-process_withdrawals
 pub fn processWithdrawals(

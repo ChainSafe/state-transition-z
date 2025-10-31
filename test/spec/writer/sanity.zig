@@ -2,7 +2,7 @@ const std = @import("std");
 const spec_test_options = @import("spec_test_options");
 const ForkSeq = @import("config").ForkSeq;
 const Preset = @import("preset").Preset;
-const Handler = @import("../runner/Operations.zig").Handler;
+const Handler = @import("../runner/sanity.zig").Handler;
 
 pub const handlers = std.enums.values(Handler);
 
@@ -14,7 +14,7 @@ pub const header =
     \\const ForkSeq = @import("config").ForkSeq;
     \\const active_preset = @import("preset").active_preset;
     \\const spec_test_options = @import("spec_test_options");
-    \\const Operations = @import("../runner/Operations.zig");
+    \\const Sanity = @import("../runner/sanity.zig");
     \\
     \\const allocator = std.testing.allocator;
     \\
@@ -22,16 +22,16 @@ pub const header =
 ;
 
 const test_template =
-    \\test "{s} operations {s} {s}" {{
+    \\test "{s} sanity {s} {s}" {{
     \\    const test_dir_name = try std.fs.path.join(allocator, &[_][]const u8{{
     \\        spec_test_options.spec_test_out_dir,
     \\        spec_test_options.spec_test_version,
-    \\        @tagName(active_preset) ++ "/tests/" ++ @tagName(active_preset) ++ "/{s}/operations/{s}/pyspec_tests/{s}",
+    \\        @tagName(active_preset) ++ "/tests/" ++ @tagName(active_preset) ++ "/{s}/sanity/{s}/pyspec_tests/{s}",
     \\    }});
     \\    defer allocator.free(test_dir_name);
     \\    const test_dir = std.fs.cwd().openDir(test_dir_name, .{{}}) catch return error.SkipZigTest;
     \\
-    \\    try Operations.TestCase(.{s}, .{s}).execute(allocator, test_dir);
+    \\    {s}
     \\}}
     \\
     \\
@@ -47,6 +47,11 @@ pub fn writeTest(
     handler: Handler,
     test_case_name: []const u8,
 ) !void {
+    const execute_call = switch (handler) {
+        .slots => std.fmt.allocPrint(std.heap.page_allocator, "try Sanity.SlotsTestCase(.{s}).execute(allocator, test_dir);", .{@tagName(fork)}) catch unreachable,
+        .blocks => std.fmt.allocPrint(std.heap.page_allocator, "try Sanity.BlocksTestCase(.{s}).execute(allocator, test_dir);", .{@tagName(fork)}) catch unreachable,
+    };
+    defer std.heap.page_allocator.free(execute_call);
     try writer.print(test_template, .{
         @tagName(fork),
         @tagName(handler),
@@ -56,7 +61,6 @@ pub fn writeTest(
         @tagName(handler),
         test_case_name,
 
-        @tagName(fork),
-        @tagName(handler),
+        execute_call,
     });
 }
