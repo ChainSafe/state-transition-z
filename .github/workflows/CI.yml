@@ -108,12 +108,15 @@ jobs:
         with:
           path: test/spec/spec_tests
           key: spec-test-data-${{ hashFiles('build.zig') }} # spec test version is defined in build.zig
-      - name: Download Spec Tests
+      - name: Download spec tests
         run: |
           zig build run:download_spec_tests
-      - name: Write Spec Tests
+      - name: Write spec tests
         run: |
           zig build run:write_spec_tests
-      - name: Run Spec Tests
+      - name: Run spec tests - minimal
         run: |
-          zig build test:spec_tests
+          zig build test:spec_tests -Dpreset=minimal
+      - name: Run spec tests - mainnet
+        run: |
+          zig build test:spec_tests -Dpreset=mainnet
