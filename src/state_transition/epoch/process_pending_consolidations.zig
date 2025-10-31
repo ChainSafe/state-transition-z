@@ -52,7 +52,11 @@ pub fn processPendingConsolidations(allocator: Allocator, cached_state: *CachedB
 
     if (next_pending_consolidation > 0) {
         const new_pending_consolidations = pending_consolidations.items[next_pending_consolidation..];
+        // cannot use memcpy due to overlap
+        const items = pending_consolidations.items;
+        for (0..new_pending_consolidations.len) |i| {
+            items[i] = items[i + next_pending_consolidation];
+        }
         try pending_consolidations.resize(allocator, new_pending_consolidations.len);
-        @memcpy(pending_consolidations.items[0..], new_pending_consolidations[0..]);
     }
 }
