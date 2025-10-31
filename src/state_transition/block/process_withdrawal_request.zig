@@ -27,7 +27,7 @@ pub fn processWithdrawalRequest(allocator: std.mem.Allocator, cached_state: *Cac
     const is_full_exit_request = amount == c.FULL_EXIT_REQUEST_AMOUNT;
 
     // If partial withdrawal queue is full, only full exits are processed
-    if (pending_partial_withdrawals.items.len >= c.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
+    if (pending_partial_withdrawals.items.len >= preset.PENDING_PARTIAL_WITHDRAWALS_LIMIT and
         !is_full_exit_request)
     {
         return;
