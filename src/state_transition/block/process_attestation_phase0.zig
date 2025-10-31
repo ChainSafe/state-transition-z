@@ -20,7 +20,7 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
     const slot = state.slot();
     const data = attestation.data;
 
-    try validateAttestation(*const Phase0Attestation, cached_state, attestation);
+    try validateAttestation(cached_state, attestation);
 
     // should store a clone of aggregation_bits on Phase0 BeaconState to avoid double free error
     var cloned_aggregation_bits: s.BitListType(preset.MAX_VALIDATORS_PER_COMMITTEE).Type = undefined;
@@ -62,10 +62,13 @@ pub fn processAttestationPhase0(allocator: Allocator, cached_state: *CachedBeaco
 }
 
 /// AT could be either Phase0Attestation or ElectraAttestation
-pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconStateAllForks, attestation: AT) !void {
+pub fn validateAttestation(cached_state: *const CachedBeaconStateAllForks, attestation: anytype) !void {
+    const T = @typeInfo(@TypeOf(attestation)).pointer.child;
+    std.debug.assert(T == Phase0Attestation or T == ElectraAttestation);
+    const is_electra = T == ElectraAttestation;
     const epoch_cache = cached_state.getEpochCache();
     const state = cached_state.state;
-    const slot = state.slot();
+    const state_slot = state.slot();
     const data = attestation.data;
     const computed_epoch = computeEpochAtSlot(data.slot);
     const committee_count = try epoch_cache.getCommitteeCountPerSlot(computed_epoch);
@@ -79,12 +82,12 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
     }
 
     // post deneb, the attestations are valid till end of next epoch
-    if (!(data.slot + preset.MIN_ATTESTATION_INCLUSION_DELAY <= slot and isTimelyTarget(state, slot - data.slot))) {
+    if (!(data.slot + preset.MIN_ATTESTATION_INCLUSION_DELAY <= state_slot and isTimelyTarget(state, state_slot - data.slot))) {
         return error.InvalidAttestationSlotNotWithInInclusionWindow;
     }
 
     // same to fork >= ForkSeq.electra but more type safe
-    if (AT == ElectraAttestation) {
+    if (is_electra) {
         if (data.index != 0) {
             return error.InvalidAttestationNonZeroDataIndex;
         }
@@ -108,7 +111,7 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
         // instead of implementing/calling getBeaconCommittees(slot, committee_indices.items), we call getBeaconCommittee(slot, index)
         var committee_offset: usize = 0;
         for (committee_indices) |committee_index| {
-            const committee_validators = try epoch_cache.getBeaconCommittee(slot, committee_index);
+            const committee_validators = try epoch_cache.getBeaconCommittee(data.slot, committee_index);
             if (committee_offset + committee_validators.len > aggregation_bits_array.len) {
                 return error.InvalidAttestationCommitteeAggregationBitsLengthTooShort;
             }
@@ -138,7 +141,7 @@ pub fn validateAttestation(comptime AT: type, cached_state: *const CachedBeaconS
             return error.InvalidAttestationInvalidCommitteeIndex;
         }
 
-        const committee = try epoch_cache.getBeaconCommittee(slot, data.index);
+        const committee = try epoch_cache.getBeaconCommittee(data.slot, data.index);
         if (attestation.aggregation_bits.bit_len != committee.len) {
             return error.InvalidAttestationInvalidAggregationBitLen;
         }
