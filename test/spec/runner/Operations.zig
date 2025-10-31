@@ -10,6 +10,7 @@ const BeaconStateAllForks = state_transition.BeaconStateAllForks;
 const Withdrawals = ssz.capella.Withdrawals.Type;
 const WithdrawalsResult = state_transition.WithdrawalsResult;
 const test_case = @import("../test_case.zig");
+const TestCaseUtils = test_case.TestCaseUtils;
 const loadSszValue = test_case.loadSszSnappyValue;
 const loadBlsSetting = test_case.loadBlsSetting;
 const expectEqualBeaconStates = test_case.expectEqualBeaconStates;
@@ -68,6 +69,7 @@ pub const Handler = Operation;
 
 pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation) type {
     const ForkTypes = @field(ssz, fork.forkName());
+    const tc_utils = TestCaseUtils(fork);
     const OpType = @field(ForkTypes, operation.operationObject());
 
     return struct {
@@ -93,8 +95,15 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation) type {
                 .op = OpType.default_value,
                 .bls_setting = loadBlsSetting(allocator, dir),
             };
-            // init the op
 
+            // load pre state
+            tc.pre = try tc_utils.loadPreState(allocator, dir);
+            errdefer tc.pre.deinit();
+
+            // load pre state
+            tc.post = try tc_utils.loadPostState(allocator, dir);
+
+            // load the op
             try loadSszValue(OpType, allocator, dir, comptime operation.inputName() ++ ".ssz_snappy", &tc.op);
             errdefer {
                 if (comptime @hasDecl(OpType, "deinit")) {
@@ -102,45 +111,6 @@ pub fn TestCase(comptime fork: ForkSeq, comptime operation: Operation) type {
                 }
             }
 
-            // init the pre state
-
-            const pre_state = try allocator.create(ForkTypes.BeaconState.Type);
-            var transfered_pre_state: bool = false;
-            errdefer {
-                if (!transfered_pre_state) {
-                    ForkTypes.BeaconState.deinit(allocator, pre_state);
-                    allocator.destroy(pre_state);
-                }
-            }
-            pre_state.* = ForkTypes.BeaconState.default_value;
-            try loadSszValue(ForkTypes.BeaconState, allocator, dir, "pre.ssz_snappy", pre_state);
-
-            transfered_pre_state = true;
-
-            var pre_state_all_forks = try BeaconStateAllForks.init(fork, pre_state);
-
-            tc.pre = try TestCachedBeaconStateAllForks.initFromState(allocator, &pre_state_all_forks, fork, pre_state_all_forks.fork().epoch);
-
-            errdefer tc.pre.deinit();
-
-            tc.post = null;
-            const post_exist = if (dir.statFile("post.ssz_snappy")) |_| true else |err| blk: {
-                if (err == error.FileNotFound) {
-                    break :blk false;
-                } else {
-                    return err;
-                }
-            };
-            if (post_exist) {
-                const post_state = try allocator.create(ForkTypes.BeaconState.Type);
-                errdefer {
-                    ForkTypes.BeaconState.deinit(allocator, post_state);
-                    allocator.destroy(post_state);
-                }
-                post_state.* = ForkTypes.BeaconState.default_value;
-                try loadSszValue(ForkTypes.BeaconState, allocator, dir, "post.ssz_snappy", post_state);
-                tc.post = try BeaconStateAllForks.init(fork, post_state);
-            }
             return tc;
         }
 
