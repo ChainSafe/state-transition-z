@@ -27,7 +27,10 @@ fn TestWriter(comptime kind: RunnerKind) type {
 
 pub fn main() !void {
     const test_case_dir = "test/spec/test_case/";
-    try std.fs.cwd().makeDir(test_case_dir);
+    std.fs.cwd().makeDir(test_case_dir) catch |err| {
+        if (err != error.PathAlreadyExists) return err;
+        // ignore if the directory already exists
+    };
 
     inline for (supported_test_runners) |kind| {
         const test_case_file = test_case_dir ++ @tagName(kind) ++ "_tests.zig";
